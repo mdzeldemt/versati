@@ -33,6 +33,8 @@ android {
 }
 
 dependencies {
+    implementation(project(":miniflux"))
+
     coreLibraryDesugaring(libs.desugar)
     implementation(libs.kotlin.stdlib)
 
