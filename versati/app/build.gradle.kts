@@ -67,6 +67,11 @@ dependencies {
     implementation(libs.reorderable)
     implementation(libs.composableTable)
     implementation(libs.accompanist.systemuicontroller)
+    implementation(libs.androidx.constraintlayout.compose)
+
+    // Async Images
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     // JSON serialization and deserialization
     implementation(libs.gson)
