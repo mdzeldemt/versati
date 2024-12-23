@@ -56,6 +56,7 @@ class MainActivity: ComponentActivity() {
                         limit = 10
                     ).entries.map { entry ->
                         Entry(
+                            id = entry.id,
                             title = entry.title,
                             feedTitle = entry.feed.title,
                             publishedAt = entry.publishedAt,
@@ -83,7 +84,7 @@ class MainActivity: ComponentActivity() {
                     item {
                         EntryListView(
                             items,
-                            contentSpacing = 20.dp
+                            onEntryTileTapped = {}
                         )
                     }
 
