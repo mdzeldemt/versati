@@ -13,12 +13,12 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import androidx.core.text.HtmlCompat
 import com.liuvil.versati.api.MinifluxApi
 import com.liuvil.versati.api.data.Entry
 import com.liuvil.versati.api.data.SortDirection
 import com.liuvil.versati.components.EntryTile
 import dagger.hilt.android.AndroidEntryPoint
+import org.jsoup.Jsoup
 import java.time.Duration
 import java.time.OffsetDateTime
 import javax.inject.Inject
@@ -55,7 +55,7 @@ class MainActivity: ComponentActivity() {
                             title = it.title,
                             feedTitle = it.feed.title,
                             timeSincePublished = Duration.between(it.publishedAt, OffsetDateTime.now()),
-                            content = HtmlCompat.fromHtml(it.content, 0).toString(),
+                            content = Jsoup.parse(it.content).text(),
                             imageUrl = it.enclosures.firstOrNull()?.url
                         )
                     }

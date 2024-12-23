@@ -75,4 +75,7 @@ dependencies {
 
     // JSON serialization and deserialization
     implementation(libs.gson)
+
+    // HTML parsing
+    implementation(libs.jsoup)
 }
