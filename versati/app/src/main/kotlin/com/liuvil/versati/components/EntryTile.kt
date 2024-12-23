@@ -5,12 +5,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import java.net.URL
@@ -22,7 +25,9 @@ fun EntryTile(
     feedTitle: String,
     timeSincePublished: Duration,
     content: String,
-    imageUrl: URL? = null
+    imageUrl: URL? = null,
+    imagePadding: Dp = 8.dp,
+    imageCornerRadius: Dp = 4.dp
 ) {
     val text = @Composable {
         Text(title, fontWeight = FontWeight.Bold, maxLines = 3, overflow = TextOverflow.Ellipsis)
@@ -47,7 +52,8 @@ fun EntryTile(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .aspectRatio(1.2f)
-                        .padding(start = 4.dp, bottom = 4.dp)
+                        .padding(start = imagePadding, bottom = imagePadding)
+                        .clip(RoundedCornerShape(imageCornerRadius))
                 )
             },
             wrapperContent = { text() }
