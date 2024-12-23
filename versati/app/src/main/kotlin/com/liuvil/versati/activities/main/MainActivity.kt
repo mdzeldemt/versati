@@ -4,24 +4,37 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.api.MinifluxApi
-import com.liuvil.versati.api.data.Entry
 import com.liuvil.versati.api.data.SortDirection
-import com.liuvil.versati.components.EntryTile
 import dagger.hilt.android.AndroidEntryPoint
 import org.jsoup.Jsoup
-import java.time.Duration
-import java.time.OffsetDateTime
+import java.net.URL
 import javax.inject.Inject
+
+fun parseEntryContent(entryContent: String): EntryContent {
+    val document = Jsoup.parse(entryContent)
+    return EntryContent(
+        text = document.text(),
+        imageURLs = document.getElementsByTag("img")
+            .mapNotNull { it.attribute("src") }
+            .map { URL(it.value) }
+    )
+}
 
 @AndroidEntryPoint
 class MainActivity: ComponentActivity() {
@@ -33,37 +46,54 @@ class MainActivity: ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val entries = remember { mutableStateListOf<Entry>() }
+            var loading by remember { mutableStateOf(true) }
+            val items = remember { mutableStateListOf<Entry>() }
 
             LaunchedEffect(Unit) {
-                entries.addAll(
+                items.addAll(
                     minifluxApi.getEntries(
                         direction = SortDirection.DESCENDING,
                         limit = 10
-                    ).entries
-                )
-            }
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = PaddingValues(4.dp)
-            ) {
-                entries.forEach {
-                    item {
-                        EntryTile(
-                            title = it.title,
-                            feedTitle = it.feed.title,
-                            timeSincePublished = Duration.between(it.publishedAt, OffsetDateTime.now()),
-                            content = Jsoup.parse(it.content).text(),
-                            imageUrl = it.enclosures.firstOrNull()?.url
+                    ).entries.map { entry ->
+                        Entry(
+                            title = entry.title,
+                            feedTitle = entry.feed.title,
+                            publishedAt = entry.publishedAt,
+                            content = parseEntryContent(entry.content),
+                            enclosures = entry.enclosures.map { enclosure ->
+                                Enclosure(enclosure.url)
+                            }
                         )
                     }
-                }
+                )
 
-                item {
-                    Button(onClick = {}) {
-                        Text("Mark this page as read")
+                loading = false
+            }
+
+            LazyColumn (
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                if (loading) {
+                    item {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    item {
+                        EntryListView(
+                            items,
+                            contentSpacing = 20.dp
+                        )
+                    }
+
+                    item {
+                        Button(
+                            onClick = {},
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text("Mark this page as read")
+                        }
                     }
                 }
             }
