@@ -14,12 +14,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.liuvil.versati.framework.viewmodel.bindViewModel
 
 @Composable
 fun MainScreen(
-    viewModel: MainViewModel = hiltViewModel()
 ) {
+    val viewModel = bindViewModel<MainViewModel>()
     val status by viewModel.status.collectAsState()
     val items by viewModel.items.collectAsState()
 

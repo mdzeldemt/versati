@@ -1,8 +1,10 @@
 package com.liuvil.versati.activities.main
 
-import androidx.lifecycle.ViewModel
+import com.liuvil.versati.activities.main.entry_list.Enclosure
+import com.liuvil.versati.activities.main.entry_list.Entry
 import com.liuvil.versati.api.MinifluxApi
 import com.liuvil.versati.api.data.SortDirection
+import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +21,7 @@ enum class Status {
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val minifluxApi: MinifluxApi
-): ViewModel() {
+): BaseViewModel<Unit>() {
 
     private val _status = MutableStateFlow(Status.UNINITIALIZED)
     private val _items = MutableStateFlow<List<Entry>>(emptyList())
