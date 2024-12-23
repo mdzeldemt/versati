@@ -1,4 +1,4 @@
-package com.liuvil.versati.components
+package com.liuvil.versati.activities.main
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.liuvil.versati.components.WrapperLayout
 import java.net.URL
 import java.time.Duration
 

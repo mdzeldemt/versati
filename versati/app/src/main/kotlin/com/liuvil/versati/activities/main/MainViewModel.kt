@@ -1,0 +1,61 @@
+package com.liuvil.versati.activities.main
+
+import androidx.lifecycle.ViewModel
+import com.liuvil.versati.api.MinifluxApi
+import com.liuvil.versati.api.data.SortDirection
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jsoup.Jsoup
+import java.net.URL
+import javax.inject.Inject
+
+enum class Status {
+    UNINITIALIZED,
+    LOADING,
+    IDLE
+}
+
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val minifluxApi: MinifluxApi
+): ViewModel() {
+
+    private val _status = MutableStateFlow(Status.UNINITIALIZED)
+    private val _items = MutableStateFlow<List<Entry>>(emptyList())
+
+    val status: StateFlow<Status> = _status
+    val items: StateFlow<List<Entry>> = _items
+
+    suspend fun loadEntries() {
+        _status.value = Status.LOADING
+
+        _items.value = minifluxApi.getEntries(
+            direction = SortDirection.DESCENDING,
+            limit = 10
+        ).entries.map { entry ->
+            Entry(
+                id = entry.id,
+                title = entry.title,
+                feedTitle = entry.feed.title,
+                publishedAt = entry.publishedAt,
+                content = parseEntryContent(entry.content),
+                enclosures = entry.enclosures.map { enclosure ->
+                    Enclosure(enclosure.url)
+                }
+            )
+        }
+
+        _status.value = Status.IDLE
+    }
+}
+
+private fun parseEntryContent(entryContent: String): EntryContent {
+    val document = Jsoup.parse(entryContent)
+    return EntryContent(
+        text = document.text(),
+        imageURLs = document.getElementsByTag("img")
+            .mapNotNull { it.attribute("src") }
+            .map { URL(it.value) }
+    )
+}

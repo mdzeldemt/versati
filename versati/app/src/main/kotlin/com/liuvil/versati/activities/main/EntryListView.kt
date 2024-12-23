@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.components.EntryTile
 import java.net.URL
 import java.time.Duration
 import java.time.OffsetDateTime
