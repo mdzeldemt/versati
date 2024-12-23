@@ -2,11 +2,13 @@ package com.liuvil.versati.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,12 +39,15 @@ fun EntryTile(
 
     imageUrl?.let {
         WrapperLayout(
-            pivotSize = 120.dp,
+            pivotSize = 100.dp,
             pivotContent = {
                 AsyncImage(
                     model = it.toString(),
                     contentDescription = null,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .aspectRatio(1.2f)
+                        .padding(start = 4.dp, bottom = 4.dp)
                 )
             },
             wrapperContent = { text() }
