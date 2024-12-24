@@ -6,17 +6,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.entry_list.EntryListView
 import com.liuvil.versati.framework.viewmodel.bindViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen(
@@ -24,41 +28,67 @@ fun MainScreen(
 ) {
     val viewModel = bindViewModel<MainViewModel>()
     val status by viewModel.status.collectAsState()
+    val feedTree by viewModel.feedTree.collectAsState()
     val entries by viewModel.entries.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.loadEntries()
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+
+    val coroutineScope = rememberCoroutineScope()
+
+    val updateSelection: suspend (Selection) -> Unit = remember {
+        {
+            drawerState.close()
+            viewModel.select(it)
+            viewModel.loadEntries()
+        }
     }
 
-    LazyColumn (
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize()
+    LaunchedEffect(Unit) {
+        viewModel.loadAll()
+    }
+
+    Drawer(
+        feedTree = feedTree,
+        drawerState = drawerState,
+        onCategoryNodeClicked = {
+           coroutineScope.launch {
+               updateSelection(Selection.Category(id = it))
+           }
+        },
+        onFeedNodeClicked = {
+            coroutineScope.launch {
+                updateSelection(Selection.Feed(id = it))
+            }
+        }
     ) {
-        when (status) {
-            Status.UNINITIALIZED -> {}
+        LazyColumn (
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            when (status) {
+                Status.UNINITIALIZED, Status.LOADING ->
+                    item {
+                        CircularProgressIndicator()
+                    }
 
-            Status.LOADING ->
-                item {
-                    CircularProgressIndicator()
-                }
+                Status.IDLE -> {
+                    item {
+                        EntryListView(
+                            entries,
+                            onEntryTileTapped = {
+                                onEntryOpenRequest(it)
+                            }
+                        )
+                    }
 
-            Status.IDLE -> {
-                item {
-                    EntryListView(
-                        entries,
-                        onEntryTileTapped = {
-                            onEntryOpenRequest(it)
+                    item {
+                        Button(
+                            onClick = {},
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text("Mark this page as read")
                         }
-                    )
-                }
-
-                item {
-                    Button(
-                        onClick = {},
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text("Mark this page as read")
                     }
                 }
             }

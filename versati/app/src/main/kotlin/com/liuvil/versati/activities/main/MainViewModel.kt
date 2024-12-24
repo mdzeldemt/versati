@@ -11,6 +11,21 @@ import java.net.URL
 import java.time.OffsetDateTime
 import javax.inject.Inject
 
+data class FeedTree(
+    val categoryNodes: List<CategoryNode>
+)
+
+data class CategoryNode(
+    val id: Int,
+    val title: String,
+    val feedNodes: List<FeedNode>
+)
+
+data class FeedNode(
+    val id: Int,
+    val title: String
+)
+
 data class Entry(
     val id: Int,
     val title: String,
@@ -35,39 +50,116 @@ enum class Status {
     IDLE
 }
 
+sealed class Selection {
+    data class Category(val id: Int): Selection()
+    data class Feed(val id: Int): Selection()
+}
+
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val minifluxApi: MinifluxApi
 ): BaseViewModel<Unit>() {
 
     private val _status = MutableStateFlow(Status.UNINITIALIZED)
+    private val _feedTree = MutableStateFlow(FeedTree(listOf()))
     private val _entries = MutableStateFlow<List<Entry>>(emptyList())
 
+    private val _selection = MutableStateFlow<Selection?>(null)
+
     val status: StateFlow<Status> = _status
+    val feedTree: StateFlow<FeedTree> = _feedTree
     val entries: StateFlow<List<Entry>> = _entries
+
+    val selection: StateFlow<Selection?> = _selection
+
+    suspend fun loadAll() {
+        _status.value = Status.LOADING
+
+        loadFeedTree()
+        loadEntries()
+
+        _status.value = Status.IDLE
+    }
+
+    private suspend fun loadFeedTree() {
+        val categories = minifluxApi.getCategories()
+        val feedsByCategoryId = minifluxApi.getFeeds().groupBy { it.category.id }
+
+        _feedTree.value = FeedTree(
+            categories.map { category ->
+                CategoryNode(
+                    id = category.id,
+                    title = category.title,
+                    feedNodes = feedsByCategoryId.getOrDefault(category.id, listOf())
+                        .map { feed ->
+                            FeedNode(
+                                id = feed.id,
+                                title = feed.title
+                            )
+                        }
+                )
+            }
+        )
+    }
 
     suspend fun loadEntries() {
         _status.value = Status.LOADING
 
+        _selection.value?.let {
+            when (it) {
+                is Selection.Category -> loadEntriesFromCategory(it.id)
+                is Selection.Feed -> loadEntriesFromFeed(it.id)
+            }
+        } ?: loadMainEntries()
+
+        _status.value = Status.IDLE
+    }
+
+    suspend fun select(selection: Selection) {
+        _selection.value = selection
+    }
+
+    private suspend fun loadMainEntries() {
         _entries.value = minifluxApi.getEntries(
             direction = SortDirection.DESCENDING,
             limit = 10
         ).entries.map { entry ->
-            Entry(
-                id = entry.id,
-                title = entry.title,
-                feedTitle = entry.feed.title,
-                publishedAt = entry.publishedAt,
-                content = parseEntryContent(entry.content),
-                enclosures = entry.enclosures.map { enclosure ->
-                    Enclosure(enclosure.url)
-                }
-            )
+            buildFromAPIModel(entry)
         }
+    }
 
-        _status.value = Status.IDLE
+    private suspend fun loadEntriesFromCategory(id: Int) {
+        _entries.value = minifluxApi.getCategoryEntries(
+            categoryId = id,
+            direction = SortDirection.DESCENDING,
+            limit = 10
+        ).entries.map { entry ->
+            buildFromAPIModel(entry)
+        }
+    }
+
+    private suspend fun loadEntriesFromFeed(id: Int) {
+        _entries.value = minifluxApi.getFeedEntries(
+            feedId = id,
+            direction = SortDirection.DESCENDING,
+            limit = 10
+        ).entries.map { entry ->
+            buildFromAPIModel(entry)
+        }
     }
 }
+
+private fun buildFromAPIModel(entry: com.liuvil.versati.api.data.Entry): Entry =
+    Entry(
+        id = entry.id,
+        title = entry.title,
+        feedTitle = entry.feed.title,
+        publishedAt = entry.publishedAt,
+        content = parseEntryContent(entry.content),
+        enclosures = entry.enclosures.map { enclosure ->
+            Enclosure(enclosure.url)
+        }
+    )
 
 // TODO: Move to separate package
 private fun parseEntryContent(entryContent: String): EntryContent {
