@@ -2,6 +2,7 @@ package com.liuvil.versati.activities.main
 
 import com.liuvil.versati.activities.main.entry_list.Enclosure
 import com.liuvil.versati.activities.main.entry_list.Entry
+import com.liuvil.versati.activities.main.entry_list.EntryContent
 import com.liuvil.versati.api.MinifluxApi
 import com.liuvil.versati.api.data.SortDirection
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
@@ -52,6 +53,7 @@ class MainViewModel @Inject constructor(
     }
 }
 
+// TODO: Move to separate package
 private fun parseEntryContent(entryContent: String): EntryContent {
     val document = Jsoup.parse(entryContent)
     return EntryContent(
