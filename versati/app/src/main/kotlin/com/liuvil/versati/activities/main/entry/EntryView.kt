@@ -1,9 +1,9 @@
 package com.liuvil.versati.activities.main.entry
 
 import android.net.Uri
+import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
@@ -31,9 +31,10 @@ fun EntryView(
 ) {
     val viewModel = bindViewModel<Int, EntryViewModel>(id)
     val entry by viewModel.entry.collectAsState()
+    val enclosure by viewModel.enclosure.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.loadEntry()
+        viewModel.loadAll()
     }
 
     entry?.let {
@@ -58,7 +59,7 @@ fun EntryView(
                 )
             )
 
-            it.enclosures.firstOrNull()?.let { enclosure ->
+            enclosure?.let { enclosure ->
                 AsyncImage(
                     model = enclosure.url.toString(),
                     contentDescription = null
@@ -69,6 +70,7 @@ fun EntryView(
                 factory = { context ->
                     WebView(context).apply {
                         clipToOutline = true
+
                         loadData(it.content.html(), "text/html", "UTF-8")
                     }
                 }

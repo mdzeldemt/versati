@@ -26,7 +26,7 @@ data class Entry(
     val title: String,
     val content: Document,
     val url: URL,
-    val enclosures: List<Enclosure>
+    val enclosureId: Int?
 )
 
 data class Enclosure(
@@ -40,14 +40,24 @@ class EntryViewModel @Inject constructor(
 
     private var _entryId: Int? = null
     private val _entry = MutableStateFlow<Entry?>(null)
+    private val _enclosure = MutableStateFlow<Enclosure?>(null)
 
     val entry: StateFlow<Entry?> = _entry
+    val enclosure: StateFlow<Enclosure?> = _enclosure
 
     override suspend fun initialize(initData: Int) {
         _entryId = initData
     }
 
-    suspend fun loadEntry() {
+    suspend fun loadAll() {
+        loadEntry()
+
+        _entry.value?.enclosureId?.let {
+            loadEnclosure(id = it)
+        }
+    }
+
+    private suspend fun loadEntry() {
         _entryId?.let { entryId ->
             _entry.value = minifluxApi.getEntry(entryId).let { entry ->
                 val content = Jsoup.parse(entry.content)
@@ -59,13 +69,14 @@ class EntryViewModel @Inject constructor(
                     title = entry.title,
                     content = content,
                     url = entry.url,
-                    enclosures = entry.enclosures
-                        .map { enclosure ->
-                            Enclosure(url = enclosure.url)
-                        }
+                    enclosureId = entry.enclosures.firstOrNull()?.id
                 )
             }
         }
+    }
+
+    private suspend fun loadEnclosure(id: Int) {
+        _enclosure.value = Enclosure(url = minifluxApi.getEnclosure(id).url)
     }
 
 }

@@ -1,6 +1,7 @@
 package com.liuvil.versati.api
 
 import com.liuvil.versati.api.data.Category
+import com.liuvil.versati.api.data.Enclosure
 import com.liuvil.versati.api.data.EntriesResponse
 import com.liuvil.versati.api.data.Entry
 import com.liuvil.versati.api.data.Feed
@@ -15,6 +16,10 @@ interface MinifluxApi {
         direction: SortDirection? = null,
         limit: Int? = null
     ): EntriesResponse
+
+    suspend fun getEnclosure(
+        id: Int
+    ): Enclosure
 
     suspend fun getEntries(
         direction: SortDirection? = null,

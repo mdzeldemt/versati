@@ -1,6 +1,7 @@
 package com.liuvil.versati.api
 
 import com.liuvil.versati.api.data.Category
+import com.liuvil.versati.api.data.Enclosure
 import com.liuvil.versati.api.data.EntriesResponse
 import com.liuvil.versati.api.data.Entry
 import com.liuvil.versati.api.data.Feed
@@ -20,6 +21,11 @@ interface MinifluxRetrofitApi: MinifluxApi {
         @Query("direction") direction: SortDirection?,
         @Query("limit") limit: Int?
     ): EntriesResponse
+
+    @GET("/v1/enclosures/{id}")
+    override suspend fun getEnclosure(
+        @Path("id") id: Int
+    ): Enclosure
 
     @GET("/v1/entries")
     override suspend fun getEntries(
