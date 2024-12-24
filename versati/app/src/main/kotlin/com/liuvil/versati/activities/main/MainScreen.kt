@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,7 +24,7 @@ fun MainScreen(
 ) {
     val viewModel = bindViewModel<MainViewModel>()
     val status by viewModel.status.collectAsState()
-    val items by viewModel.items.collectAsState()
+    val entries by viewModel.entries.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadEntries()
@@ -45,7 +46,7 @@ fun MainScreen(
             Status.IDLE -> {
                 item {
                     EntryListView(
-                        items,
+                        entries,
                         onEntryTileTapped = {
                             onEntryOpenRequest(it)
                         }

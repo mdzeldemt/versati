@@ -1,8 +1,5 @@
 package com.liuvil.versati.activities.main
 
-import com.liuvil.versati.activities.main.entry_list.Enclosure
-import com.liuvil.versati.activities.main.entry_list.Entry
-import com.liuvil.versati.activities.main.entry_list.EntryContent
 import com.liuvil.versati.api.MinifluxApi
 import com.liuvil.versati.api.data.SortDirection
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
@@ -11,7 +8,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jsoup.Jsoup
 import java.net.URL
+import java.time.OffsetDateTime
 import javax.inject.Inject
+
+data class Entry(
+    val id: Int,
+    val title: String,
+    val feedTitle: String,
+    val publishedAt: OffsetDateTime,
+    val content: EntryContent,
+    val enclosures: List<Enclosure>
+)
+
+data class EntryContent(
+    val text: String,
+    val imageURLs: List<URL>
+)
+
+data class Enclosure(
+    val url: URL
+)
 
 enum class Status {
     UNINITIALIZED,
@@ -25,15 +41,15 @@ class MainViewModel @Inject constructor(
 ): BaseViewModel<Unit>() {
 
     private val _status = MutableStateFlow(Status.UNINITIALIZED)
-    private val _items = MutableStateFlow<List<Entry>>(emptyList())
+    private val _entries = MutableStateFlow<List<Entry>>(emptyList())
 
     val status: StateFlow<Status> = _status
-    val items: StateFlow<List<Entry>> = _items
+    val entries: StateFlow<List<Entry>> = _entries
 
     suspend fun loadEntries() {
         _status.value = Status.LOADING
 
-        _items.value = minifluxApi.getEntries(
+        _entries.value = minifluxApi.getEntries(
             direction = SortDirection.DESCENDING,
             limit = 10
         ).entries.map { entry ->

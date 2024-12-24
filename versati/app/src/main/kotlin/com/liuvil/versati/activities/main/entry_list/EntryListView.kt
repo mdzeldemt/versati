@@ -10,28 +10,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.liuvil.versati.activities.main.Entry
 import com.liuvil.versati.activities.main.EntryTile
-import java.net.URL
 import java.time.Duration
 import java.time.OffsetDateTime
-
-data class Entry(
-    val id: Int,
-    val title: String,
-    val feedTitle: String,
-    val publishedAt: OffsetDateTime,
-    val content: EntryContent,
-    val enclosures: List<Enclosure>
-)
-
-data class EntryContent(
-    val text: String,
-    val imageURLs: List<URL>
-)
-
-data class Enclosure(
-    val url: URL
-)
 
 @Composable
 fun EntryListView(
