@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.liuvil.versati.framework.android.openURLExternally
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import org.jsoup.Jsoup
 
@@ -68,6 +69,8 @@ fun EntryView(
                         .filter { !attributeNames.contains(it) }
                         .forEach { element.removeAttr(it) }
                 }
+        val openURL: () -> Unit = remember {
+            { openURLExternally(Uri.parse(it.url.toString()), context) }
         }
 
         replacementRules.forEach { (tagName, replacementRules) ->
@@ -82,7 +85,11 @@ fun EntryView(
         Column(Modifier.verticalScroll(rememberScrollState())) {
             Text(
                 it.title,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable(
+                    onClick = openURL,
+                    indication = null,
+                    interactionSource = null
             )
 
             AndroidView(
@@ -93,6 +100,9 @@ fun EntryView(
                     }
                 }
             )
+            Button(onClick = openURL) {
+                Text("Open in web browser")
+            }
         }
     } ?: CircularProgressIndicator()
 }
