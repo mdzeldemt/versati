@@ -33,15 +33,23 @@ data class Enclosure(
     val url: URL
 )
 
+enum class Status {
+    UNINITIALIZED,
+    LOADING,
+    IDLE
+}
+
 @HiltViewModel
 class EntryViewModel @Inject constructor(
     private val minifluxApi: MinifluxApi
 ): BaseViewModel<Int>() {
 
+    private val _status = MutableStateFlow(Status.UNINITIALIZED)
     private var _entryId: Int? = null
     private val _entry = MutableStateFlow<Entry?>(null)
     private val _enclosure = MutableStateFlow<Enclosure?>(null)
 
+    val status: StateFlow<Status> = _status
     val entry: StateFlow<Entry?> = _entry
     val enclosure: StateFlow<Enclosure?> = _enclosure
 
@@ -50,11 +58,15 @@ class EntryViewModel @Inject constructor(
     }
 
     suspend fun loadAll() {
+        _status.value = Status.LOADING
+
         loadEntry()
 
         _entry.value?.enclosureId?.let {
             loadEnclosure(id = it)
         }
+
+        _status.value = Status.IDLE
     }
 
     private suspend fun loadEntry() {

@@ -1,9 +1,9 @@
 package com.liuvil.versati.activities.main.entry
 
 import android.net.Uri
-import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
@@ -30,6 +30,7 @@ fun EntryView(
     id: Int
 ) {
     val viewModel = bindViewModel<Int, EntryViewModel>(id)
+    val status by viewModel.status.collectAsState()
     val entry by viewModel.entry.collectAsState()
     val enclosure by viewModel.enclosure.collectAsState()
 
@@ -37,48 +38,58 @@ fun EntryView(
         viewModel.loadAll()
     }
 
-    entry?.let {
-        val context = LocalContext.current
-        val openURL: () -> Unit = remember {
-            { openURLExternally(Uri.parse(it.url.toString()), context) }
-        }
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-            Text(
-                it.title,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable(
-                    onClick = openURL,
-                    indication = null,
-                    interactionSource = null
-                )
-            )
-
-            enclosure?.let { enclosure ->
-                AsyncImage(
-                    model = enclosure.url.toString(),
-                    contentDescription = null
-                )
+    when (status) {
+        Status.UNINITIALIZED, Status.LOADING ->
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                CircularProgressIndicator()
             }
 
-            AndroidView(
-                factory = { context ->
-                    WebView(context).apply {
-                        clipToOutline = true
+        Status.IDLE -> entry?.let {
+            val context = LocalContext.current
+            val openURL: () -> Unit = remember {
+                { openURLExternally(Uri.parse(it.url.toString()), context) }
+            }
 
-                        loadData(it.content.html(), "text/html", "UTF-8")
-                    }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    it.title,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable(
+                        onClick = openURL,
+                        indication = null,
+                        interactionSource = null
+                    )
+                )
+
+                enclosure?.let { enclosure ->
+                    AsyncImage(
+                        model = enclosure.url.toString(),
+                        contentDescription = null
+                    )
                 }
-            )
 
-            Button(onClick = openURL) {
-                Text("Open in web browser")
+                AndroidView(
+                    factory = { context ->
+                        WebView(context).apply {
+                            clipToOutline = true
+
+                            loadData(it.content.html(), "text/html", "UTF-8")
+                        }
+                    }
+                )
+
+                Button(onClick = openURL) {
+                    Text("Open in web browser")
+                }
             }
         }
-    } ?: CircularProgressIndicator()
+    }
 }
