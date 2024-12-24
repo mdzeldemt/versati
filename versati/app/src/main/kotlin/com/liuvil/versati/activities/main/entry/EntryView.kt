@@ -36,14 +36,12 @@ fun EntryView(
     }
 
     entry?.let {
-
         val context = LocalContext.current
         val openURL: () -> Unit = remember {
             { openURLExternally(Uri.parse(it.url.toString()), context) }
         }
 
         Column(
-            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
