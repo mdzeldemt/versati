@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.ksp)
     id("com.google.dagger.hilt.android")
     alias(libs.plugins.compose.compiler)
+
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
 android {
@@ -53,6 +55,7 @@ dependencies {
     implementation(libs.androidx.preference)
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.splashscreen)
+    implementation(libs.kotlinx.serialization.json)
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))

@@ -12,9 +12,9 @@ fun NavigationRoot() {
 
     NavHost(
         navController = navController,
-        startDestination = "/"
+        startDestination = NavigationDestination.Main
     ) {
-        composable("/") {
+        composable<NavigationDestination.Main> {
             MainScreen()
         }
     }
