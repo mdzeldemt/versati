@@ -58,7 +58,7 @@ fun EntryView(
                 )
             )
 
-            it.enclosures.first().let { enclosure ->
+            it.enclosures.firstOrNull()?.let { enclosure ->
                 AsyncImage(
                     model = enclosure.url.toString(),
                     contentDescription = null
