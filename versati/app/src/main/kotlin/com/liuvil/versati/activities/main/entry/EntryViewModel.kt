@@ -25,6 +25,11 @@ private val rewriteRules = listOf(
 data class Entry(
     val title: String,
     val content: Document,
+    val url: URL,
+    val enclosures: List<Enclosure>
+)
+
+data class Enclosure(
     val url: URL
 )
 
@@ -44,16 +49,20 @@ class EntryViewModel @Inject constructor(
 
     suspend fun loadEntry() {
         _entryId?.let { entryId ->
-            _entry.value = minifluxApi.getEntry(entryId).let {
-                val content = Jsoup.parse(it.content)
+            _entry.value = minifluxApi.getEntry(entryId).let { entry ->
+                val content = Jsoup.parse(entry.content)
                 rewriteRules.forEach { rule ->
                     rule.apply(content)
                 }
 
                 Entry(
-                    title = it.title,
+                    title = entry.title,
                     content = content,
-                    url = it.url
+                    url = entry.url,
+                    enclosures = entry.enclosures
+                        .map { enclosure ->
+                            Enclosure(url = enclosure.url)
+                        }
                 )
             }
         }

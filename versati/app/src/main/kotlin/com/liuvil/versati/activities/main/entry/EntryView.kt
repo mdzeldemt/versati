@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
+import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.android.openURLExternally
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 
@@ -56,6 +57,13 @@ fun EntryView(
                     interactionSource = null
                 )
             )
+
+            it.enclosures.first().let { enclosure ->
+                AsyncImage(
+                    model = enclosure.url.toString(),
+                    contentDescription = null
+                )
+            }
 
             AndroidView(
                 factory = { context ->
