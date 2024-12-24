@@ -56,6 +56,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.splashscreen)
     implementation(libs.kotlinx.serialization.json)
+    
+    // Crash logs
+    implementation(libs.acra.core)
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))

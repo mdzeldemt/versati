@@ -1,5 +1,6 @@
 [versions]
 accompanist = "0.34.0"
+acraCore = "5.11.0"
 activity = "1.9.3"
 androidGradle = "8.7.2"
 androidXCore = "1.15.0"
@@ -37,6 +38,7 @@ retrofit = "2.9.0"
 
 [libraries]
 accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanist" }
+acra-core = { module = "ch.acra:acra-core", version.ref = "acraCore" }
 android-gradle = { module = "com.android.tools.build:gradle", version.ref = "androidGradle" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity" }
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
