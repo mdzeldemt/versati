@@ -52,6 +52,7 @@ fun MainScreen(
                 drawerState.close()
                 viewModel.select(it)
                 viewModel.loadEntries()
+                scrollState.scrollToItem(0)
             }
         }
     }
