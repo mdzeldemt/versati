@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.android.openURLExternally
+import com.liuvil.versati.framework.viewmodel.State
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 
 @Composable
@@ -33,16 +34,18 @@ fun EntryView(
     id: Int
 ) {
     val viewModel = bindViewModel<Int, EntryViewModel>(id)
-    val status by viewModel.status.collectAsState()
+    val state by viewModel.state.collectAsState()
     val entry by viewModel.entry.collectAsState()
     val enclosure by viewModel.enclosure.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.loadAll()
+        viewModel.performLoading {
+            viewModel.loadAll()
+        }
     }
 
-    when (status) {
-        Status.UNINITIALIZED, Status.LOADING ->
+    when (state) {
+        State.UNINITIALIZED, State.LOADING ->
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize(),
@@ -50,7 +53,7 @@ fun EntryView(
                 CircularProgressIndicator()
             }
 
-        Status.IDLE -> entry?.let {
+        State.IDLE -> entry?.let {
             val context = LocalContext.current
             val openURL: () -> Unit = remember {
                 { openURLExternally(Uri.parse(it.url.toString()), context) }

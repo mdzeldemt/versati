@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.entry_list.EntryListView
+import com.liuvil.versati.framework.viewmodel.State
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import kotlinx.coroutines.launch
 
@@ -27,7 +28,7 @@ fun MainScreen(
     onEntryOpenRequest: (Int) -> Unit
 ) {
     val viewModel = bindViewModel<MainViewModel>()
-    val status by viewModel.status.collectAsState()
+    val state by viewModel.state.collectAsState()
     val feedTree by viewModel.feedTree.collectAsState()
     val entries by viewModel.entries.collectAsState()
 
@@ -37,14 +38,18 @@ fun MainScreen(
 
     val updateSelection: suspend (Selection) -> Unit = remember {
         {
-            drawerState.close()
-            viewModel.select(it)
-            viewModel.loadEntries()
+            viewModel.performLoading {
+                drawerState.close()
+                viewModel.select(it)
+                viewModel.loadEntries()
+            }
         }
     }
 
     LaunchedEffect(Unit) {
-        viewModel.loadAll()
+        viewModel.performLoading {
+            viewModel.loadAll()
+        }
     }
 
     Drawer(
@@ -67,12 +72,12 @@ fun MainScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             when (status) {
-                Status.UNINITIALIZED, Status.LOADING ->
+                State.UNINITIALIZED, State.LOADING ->
                     item {
                         CircularProgressIndicator()
                     }
 
-                Status.IDLE -> {
+                State.IDLE -> {
                     item {
                         EntryListView(
                             entries,

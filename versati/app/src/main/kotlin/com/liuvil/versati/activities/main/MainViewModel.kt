@@ -1,8 +1,9 @@
 package com.liuvil.versati.activities.main
 
 import com.liuvil.versati.api.MinifluxApi
+import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.api.data.SortDirection
-import com.liuvil.versati.framework.viewmodel.BaseViewModel
+import com.liuvil.versati.framework.viewmodel.BaseStatefulViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,12 +45,6 @@ data class Enclosure(
     val url: URL
 )
 
-enum class Status {
-    UNINITIALIZED,
-    LOADING,
-    IDLE
-}
-
 sealed class Selection {
     data class Category(val id: Int): Selection()
     data class Feed(val id: Int): Selection()
@@ -58,27 +53,21 @@ sealed class Selection {
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val minifluxApi: MinifluxApi
-): BaseViewModel<Unit>() {
+): BaseStatefulViewModel<Unit>() {
 
-    private val _status = MutableStateFlow(Status.UNINITIALIZED)
     private val _feedTree = MutableStateFlow(FeedTree(listOf()))
     private val _entries = MutableStateFlow<List<Entry>>(emptyList())
 
     private val _selection = MutableStateFlow<Selection?>(null)
 
-    val status: StateFlow<Status> = _status
     val feedTree: StateFlow<FeedTree> = _feedTree
     val entries: StateFlow<List<Entry>> = _entries
 
     val selection: StateFlow<Selection?> = _selection
 
     suspend fun loadAll() {
-        _status.value = Status.LOADING
-
         loadFeedTree()
         loadEntries()
-
-        _status.value = Status.IDLE
     }
 
     private suspend fun loadFeedTree() {
@@ -103,16 +92,12 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun loadEntries() {
-        _status.value = Status.LOADING
-
         _selection.value?.let {
             when (it) {
                 is Selection.Category -> loadEntriesFromCategory(it.id)
                 is Selection.Feed -> loadEntriesFromFeed(it.id)
             }
         } ?: loadMainEntries()
-
-        _status.value = Status.IDLE
     }
 
     suspend fun select(selection: Selection) {
@@ -121,6 +106,7 @@ class MainViewModel @Inject constructor(
 
     private suspend fun loadMainEntries() {
         _entries.value = minifluxApi.getEntries(
+            status = EntryStatus.UNREAD,
             direction = SortDirection.DESCENDING,
             limit = 10
         ).entries.map { entry ->
