@@ -1,5 +1,10 @@
 package com.liuvil.versati.activities.main
 
+import com.liuvil.versati.activities.main.drawer.Category
+import com.liuvil.versati.activities.main.drawer.Feed
+import com.liuvil.versati.activities.main.drawer.SourceTree
+import com.liuvil.versati.activities.main.entry_list.Entry
+import com.liuvil.versati.activities.main.entry_list.buildFromAPIModel
 import com.liuvil.versati.api.MinifluxApi
 import com.liuvil.versati.api.data.EntriesUpdateRequest
 import com.liuvil.versati.api.data.EntryStatus
@@ -8,48 +13,12 @@ import com.liuvil.versati.framework.viewmodel.BaseStatefulViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import org.jsoup.Jsoup
-import java.net.URL
-import java.time.OffsetDateTime
 import javax.inject.Inject
 
-data class FeedTree(
-    val categoryNodes: List<CategoryNode>
-)
-
-data class CategoryNode(
-    val id: Int,
-    val title: String,
-    val feedNodes: List<FeedNode>
-)
-
-data class FeedNode(
-    val id: Int,
-    val title: String
-)
-
-data class Entry(
-    val id: Int,
-    val title: String,
-    val feedTitle: String,
-    val publishedAt: OffsetDateTime,
-    val content: EntryContent,
-    val enclosures: List<Enclosure>
-)
-
-data class EntryContent(
-    val text: String,
-    val imageURLs: List<URL>
-)
-
-data class Enclosure(
-    val url: URL
-)
-
-sealed class Selection {
-    data object AllEntries: Selection()
-    data class Category(val id: Int): Selection()
-    data class Feed(val id: Int): Selection()
+sealed interface SourceSelection {
+    data object AllEntries: SourceSelection
+    data class Category(val id: Int): SourceSelection
+    data class Feed(val id: Int): SourceSelection
 }
 
 @HiltViewModel
@@ -57,33 +26,33 @@ class MainViewModel @Inject constructor(
     private val minifluxApi: MinifluxApi
 ): BaseStatefulViewModel<Unit>() {
 
-    private val _feedTree = MutableStateFlow(FeedTree(listOf()))
+    private val _sourceTree = MutableStateFlow(SourceTree(listOf()))
     private val _entries = MutableStateFlow<List<Entry>>(emptyList())
 
-    private val _selection = MutableStateFlow<Selection>(Selection.AllEntries)
+    private val _selectedSource = MutableStateFlow<SourceSelection>(SourceSelection.AllEntries)
 
-    val feedTree: StateFlow<FeedTree> = _feedTree
+    val sourceTree: StateFlow<SourceTree> = _sourceTree
     val entries: StateFlow<List<Entry>> = _entries
 
-    val selection: StateFlow<Selection> = _selection
+    val selectedSource: StateFlow<SourceSelection> = _selectedSource
 
     suspend fun loadAll() {
-        loadFeedTree()
+        loadSourceTree()
         loadEntries()
     }
 
-    private suspend fun loadFeedTree() {
+    private suspend fun loadSourceTree() {
         val categories = minifluxApi.getCategories()
         val feedsByCategoryId = minifluxApi.getFeeds().groupBy { it.category.id }
 
-        _feedTree.value = FeedTree(
+        _sourceTree.value = SourceTree(
             categories.map { category ->
-                CategoryNode(
+                Category(
                     id = category.id,
                     title = category.title,
-                    feedNodes = feedsByCategoryId.getOrDefault(category.id, listOf())
+                    feeds = feedsByCategoryId.getOrDefault(category.id, listOf())
                         .map { feed ->
-                            FeedNode(
+                            Feed(
                                 id = feed.id,
                                 title = feed.title
                             )
@@ -94,11 +63,11 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun loadEntries() {
-        _selection.value.let {
+        _selectedSource.value.let {
             when (it) {
-                is Selection.AllEntries -> loadAllEntries()
-                is Selection.Category -> loadEntriesFromCategory(it.id)
-                is Selection.Feed -> loadEntriesFromFeed(it.id)
+                is SourceSelection.AllEntries -> loadAllEntries()
+                is SourceSelection.Category -> loadEntriesFromCategory(it.id)
+                is SourceSelection.Feed -> loadEntriesFromFeed(it.id)
             }
         }
     }
@@ -112,8 +81,8 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    fun select(selection: Selection) {
-        _selection.value = selection
+    fun selectSource(source: SourceSelection) {
+        _selectedSource.value = source
     }
 
     private suspend fun loadAllEntries() {
@@ -145,27 +114,4 @@ class MainViewModel @Inject constructor(
             buildFromAPIModel(entry)
         }
     }
-}
-
-private fun buildFromAPIModel(entry: com.liuvil.versati.api.data.Entry): Entry =
-    Entry(
-        id = entry.id,
-        title = entry.title,
-        feedTitle = entry.feed.title,
-        publishedAt = entry.publishedAt,
-        content = parseEntryContent(entry.content),
-        enclosures = entry.enclosures.map { enclosure ->
-            Enclosure(enclosure.url)
-        }
-    )
-
-// TODO: Move to separate package
-private fun parseEntryContent(entryContent: String): EntryContent {
-    val document = Jsoup.parse(entryContent)
-    return EntryContent(
-        text = document.text(),
-        imageURLs = document.getElementsByTag("img")
-            .mapNotNull { it.attribute("src") }
-            .map { URL(it.value) }
-    )
 }

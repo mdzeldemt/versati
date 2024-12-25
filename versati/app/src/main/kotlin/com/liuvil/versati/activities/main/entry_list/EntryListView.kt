@@ -10,10 +10,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.activities.main.Entry
 import com.liuvil.versati.activities.main.EntryTile
+import org.jsoup.Jsoup
+import java.net.URL
 import java.time.Duration
 import java.time.OffsetDateTime
+
+data class Entry(
+    val id: Int,
+    val title: String,
+    val feedTitle: String,
+    val publishedAt: OffsetDateTime,
+    val content: EntryContent,
+    val enclosures: List<Enclosure>
+)
+
+data class EntryContent(
+    val text: String,
+    val imageURLs: List<URL>
+)
+
+data class Enclosure(
+    val url: URL
+)
 
 @Composable
 fun EntryListView(
@@ -42,4 +61,27 @@ fun EntryListView(
             }
         }
     }
+}
+
+fun buildFromAPIModel(entry: com.liuvil.versati.api.data.Entry): Entry =
+    Entry(
+        id = entry.id,
+        title = entry.title,
+        feedTitle = entry.feed.title,
+        publishedAt = entry.publishedAt,
+        content = parseEntryContent(entry.content),
+        enclosures = entry.enclosures.map { enclosure ->
+            Enclosure(enclosure.url)
+        }
+    )
+
+// TODO: Move to separate package
+fun parseEntryContent(entryContent: String): EntryContent {
+    val document = Jsoup.parse(entryContent)
+    return EntryContent(
+        text = document.text(),
+        imageURLs = document.getElementsByTag("img")
+            .mapNotNull { it.attribute("src") }
+            .map { URL(it.value) }
+    )
 }

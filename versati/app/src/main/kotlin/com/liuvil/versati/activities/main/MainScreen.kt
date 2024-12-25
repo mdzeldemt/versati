@@ -22,6 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.liuvil.versati.activities.main.drawer.Drawer
+import com.liuvil.versati.activities.main.drawer.DrawerNode
 import com.liuvil.versati.activities.main.entry_list.EntryListView
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
@@ -36,8 +38,8 @@ fun MainScreen(
 ) {
     val viewModel = bindViewModel<MainViewModel>()
     val state by viewModel.state.collectAsState()
-    val selection by viewModel.selection.collectAsState()
-    val feedTree by viewModel.feedTree.collectAsState()
+    val selectedSource by viewModel.selectedSource.collectAsState()
+    val sourceTree by viewModel.sourceTree.collectAsState()
     val entries by viewModel.entries.collectAsState()
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -45,6 +47,17 @@ fun MainScreen(
     var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
+
+    val updateSourceSelection: suspend (SourceSelection) -> Unit = remember {
+        {
+            drawerState.close()
+            viewModel.selectSource(it)
+            viewModel.performLoading {
+                viewModel.loadEntries()
+            }
+            scrollState.scrollToItem(0)
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (state == State.UNINITIALIZED) {
@@ -55,19 +68,29 @@ fun MainScreen(
     }
 
     Drawer(
-        feedTree = feedTree,
+        sourceTree = sourceTree,
         drawerState = drawerState,
-        selection = selection,
-        onSelectionChanged = {
-           coroutineScope.launch {
-               drawerState.close()
-               viewModel.select(it)
-               viewModel.performLoading {
-                   viewModel.loadEntries()
-               }
-               scrollState.scrollToItem(0)
-           }
-        }
+        selectedNode = selectedSource.let {
+            when (it) {
+                is SourceSelection.AllEntries -> DrawerNode.AllEntries
+                is SourceSelection.Category -> DrawerNode.Category(it.id)
+                is SourceSelection.Feed -> DrawerNode.Feed(it.id)
+            }
+        },
+        onNodeClicked = {
+            coroutineScope.launch {
+                drawerState.close()
+
+                when (it) {
+                    is DrawerNode.AllEntries -> updateSourceSelection(SourceSelection.AllEntries)
+                    is DrawerNode.Category -> updateSourceSelection(SourceSelection.Category(it.id))
+                    is DrawerNode.Feed -> updateSourceSelection(SourceSelection.Feed(it.id))
+                    else -> {
+                        // TODO: Implement remaining callbacks
+                    }
+                }
+            }
+        },
     ) {
         PullToRefreshBox(
             isRefreshing = arrayOf(State.UNINITIALIZED, State.LOADING).contains(state),
@@ -93,7 +116,7 @@ fun MainScreen(
                     ) {
                         item {
                             EntryListView(
-                                entries,
+                                entries = entries,
                                 onEntryTileTapped = {
                                     onEntryOpenRequest(it)
                                 }
