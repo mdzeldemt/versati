@@ -1,7 +1,6 @@
 package com.liuvil.versati.activities.main
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,6 +36,7 @@ fun MainScreen(
 ) {
     val viewModel = bindViewModel<MainViewModel>()
     val state by viewModel.state.collectAsState()
+    val selection by viewModel.selection.collectAsState()
     val feedTree by viewModel.feedTree.collectAsState()
     val entries by viewModel.entries.collectAsState()
 
@@ -45,17 +45,6 @@ fun MainScreen(
     var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
-
-    val updateSelection: suspend (Selection) -> Unit = remember {
-        {
-            viewModel.performLoading {
-                drawerState.close()
-                viewModel.select(it)
-                viewModel.loadEntries()
-                scrollState.scrollToItem(0)
-            }
-        }
-    }
 
     LaunchedEffect(Unit) {
         if (state == State.UNINITIALIZED) {
@@ -68,15 +57,16 @@ fun MainScreen(
     Drawer(
         feedTree = feedTree,
         drawerState = drawerState,
-        onCategoryNodeClicked = {
+        selection = selection,
+        onSelectionChanged = {
            coroutineScope.launch {
-               updateSelection(Selection.Category(id = it))
+               drawerState.close()
+               viewModel.select(it)
+               viewModel.performLoading {
+                   viewModel.loadEntries()
+               }
+               scrollState.scrollToItem(0)
            }
-        },
-        onFeedNodeClicked = {
-            coroutineScope.launch {
-                updateSelection(Selection.Feed(id = it))
-            }
         }
     ) {
         PullToRefreshBox(

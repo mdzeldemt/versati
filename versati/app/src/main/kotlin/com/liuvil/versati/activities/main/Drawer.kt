@@ -17,11 +17,11 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun Drawer(
     feedTree: FeedTree,
+    selection: Selection,
     padding: Dp = 8.dp,
     feedStartPadding: Dp = 12.dp,
     drawerState: DrawerState,
-    onCategoryNodeClicked: (Int) -> Unit,
-    onFeedNodeClicked: (Int) -> Unit,
+    onSelectionChanged: (Selection) -> Unit,
     content: @Composable () -> Unit
 ) {
     ModalNavigationDrawer(
@@ -36,9 +36,22 @@ fun Drawer(
                     feedTree.categoryNodes.forEach { categoryNode ->
                         item {
                             NavigationDrawerItem(
+                                label = { Text("All entries") },
+                                selected = selection == Selection.AllEntries,
+                                onClick = {
+                                    onSelectionChanged(Selection.AllEntries)
+                                }
+                            )
+                        }
+
+                        item {
+                            NavigationDrawerItem(
                                 label = { Text(categoryNode.title) },
-                                selected = false,
-                                onClick = { onCategoryNodeClicked(categoryNode.id) }
+                                selected = selection is Selection.Category &&
+                                        selection.id == categoryNode.id,
+                                onClick = {
+                                    onSelectionChanged(Selection.Category(categoryNode.id))
+                                }
                             )
                         }
 
@@ -49,8 +62,11 @@ fun Drawer(
                                 categoryNode.feedNodes.forEach { feedNode ->
                                     NavigationDrawerItem(
                                         label = { Text(feedNode.title) },
-                                        selected = false,
-                                        onClick = { onFeedNodeClicked(feedNode.id) }
+                                        selected = selection is Selection.Feed &&
+                                                selection.id == feedNode.id,
+                                        onClick = {
+                                            onSelectionChanged(Selection.Feed(feedNode.id))
+                                        }
                                     )
                                 }
                             }

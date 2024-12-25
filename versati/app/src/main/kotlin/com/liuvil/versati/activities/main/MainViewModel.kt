@@ -47,6 +47,7 @@ data class Enclosure(
 )
 
 sealed class Selection {
+    data object AllEntries: Selection()
     data class Category(val id: Int): Selection()
     data class Feed(val id: Int): Selection()
 }
@@ -59,12 +60,12 @@ class MainViewModel @Inject constructor(
     private val _feedTree = MutableStateFlow(FeedTree(listOf()))
     private val _entries = MutableStateFlow<List<Entry>>(emptyList())
 
-    private val _selection = MutableStateFlow<Selection?>(null)
+    private val _selection = MutableStateFlow<Selection>(Selection.AllEntries)
 
     val feedTree: StateFlow<FeedTree> = _feedTree
     val entries: StateFlow<List<Entry>> = _entries
 
-    val selection: StateFlow<Selection?> = _selection
+    val selection: StateFlow<Selection> = _selection
 
     suspend fun loadAll() {
         loadFeedTree()
@@ -93,12 +94,13 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun loadEntries() {
-        _selection.value?.let {
+        _selection.value.let {
             when (it) {
+                is Selection.AllEntries -> loadAllEntries()
                 is Selection.Category -> loadEntriesFromCategory(it.id)
                 is Selection.Feed -> loadEntriesFromFeed(it.id)
             }
-        } ?: loadMainEntries()
+        }
     }
 
     suspend fun markPageAsRead() {
@@ -114,7 +116,7 @@ class MainViewModel @Inject constructor(
         _selection.value = selection
     }
 
-    private suspend fun loadMainEntries() {
+    private suspend fun loadAllEntries() {
         _entries.value = minifluxApi.getEntries(
             status = EntryStatus.UNREAD,
             direction = SortDirection.DESCENDING,
