@@ -1,6 +1,7 @@
 package com.liuvil.versati.activities.main
 
 import com.liuvil.versati.api.MinifluxApi
+import com.liuvil.versati.api.data.EntriesUpdateRequest
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.api.data.SortDirection
 import com.liuvil.versati.framework.viewmodel.BaseStatefulViewModel
@@ -100,7 +101,16 @@ class MainViewModel @Inject constructor(
         } ?: loadMainEntries()
     }
 
-    suspend fun select(selection: Selection) {
+    suspend fun markPageAsRead() {
+        minifluxApi.updateEntries(
+            EntriesUpdateRequest(
+                entryIds = _entries.value.map { it.id },
+                status = EntryStatus.READ
+            )
+        )
+    }
+
+    fun select(selection: Selection) {
         _selection.value = selection
     }
 

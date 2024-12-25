@@ -2,11 +2,15 @@ package com.liuvil.versati.api
 
 import com.liuvil.versati.api.data.Category
 import com.liuvil.versati.api.data.Enclosure
-import com.liuvil.versati.api.data.EntriesResponse
+import com.liuvil.versati.api.data.EntriesGetResponse
+import com.liuvil.versati.api.data.EntriesUpdateRequest
 import com.liuvil.versati.api.data.Entry
+import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.api.data.Feed
 import com.liuvil.versati.api.data.SortDirection
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -20,7 +24,7 @@ interface MinifluxRetrofitApi: MinifluxApi {
         @Path("categoryId") categoryId: Int,
         @Query("direction") direction: SortDirection?,
         @Query("limit") limit: Int?
-    ): EntriesResponse
+    ): EntriesGetResponse
 
     @GET("/v1/enclosures/{id}")
     override suspend fun getEnclosure(
@@ -29,9 +33,10 @@ interface MinifluxRetrofitApi: MinifluxApi {
 
     @GET("/v1/entries")
     override suspend fun getEntries(
+        @Query("status") status: EntryStatus,
         @Query("direction") direction: SortDirection?,
         @Query("limit") limit: Int?
-    ): EntriesResponse
+    ): EntriesGetResponse
 
     @GET("/v1/entries/{id}")
     override suspend fun getEntry(@Path("id") id: Int): Entry
@@ -41,9 +46,14 @@ interface MinifluxRetrofitApi: MinifluxApi {
         @Path("feedId") feedId: Int,
         @Query("direction") direction: SortDirection?,
         @Query("limit") limit: Int?
-    ): EntriesResponse
+    ): EntriesGetResponse
 
     @GET("/v1/feeds")
     override suspend fun getFeeds(): List<Feed>
+
+    @PUT("/v1/entries")
+    override suspend fun updateEntries(
+        @Body request: EntriesUpdateRequest
+    )
 
 }

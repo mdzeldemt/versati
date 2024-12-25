@@ -1,6 +1,7 @@
 package com.liuvil.versati.activities.main
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,34 +67,53 @@ fun MainScreen(
             }
         }
     ) {
-        LazyColumn (
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            when (status) {
-                State.UNINITIALIZED, State.LOADING ->
-                    item {
-                        CircularProgressIndicator()
-                    }
+        when (status) {
+            State.UNINITIALIZED, State.LOADING ->
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    CircularProgressIndicator()
+                }
 
-                State.IDLE -> {
-                    item {
-                        EntryListView(
-                            entries,
-                            onEntryTileTapped = {
-                                onEntryOpenRequest(it)
-                            }
-                        )
-                    }
-
-                    item {
-                        Button(
-                            onClick = {},
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Text("Mark this page as read")
+            State.IDLE -> {
+                if (entries.isNotEmpty()) {
+                    LazyColumn (
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        item {
+                            EntryListView(
+                                entries,
+                                onEntryTileTapped = {
+                                    onEntryOpenRequest(it)
+                                }
+                            )
                         }
+
+                        item {
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        viewModel.performLoading {
+                                            viewModel.markPageAsRead()
+                                            viewModel.loadEntries()
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Text("Mark this page as read")
+                            }
+                        }
+                    }
+                } else {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Text("No entries found.")
                     }
                 }
             }

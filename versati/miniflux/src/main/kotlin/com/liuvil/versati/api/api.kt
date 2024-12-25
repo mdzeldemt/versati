@@ -2,8 +2,10 @@ package com.liuvil.versati.api
 
 import com.liuvil.versati.api.data.Category
 import com.liuvil.versati.api.data.Enclosure
-import com.liuvil.versati.api.data.EntriesResponse
+import com.liuvil.versati.api.data.EntriesGetResponse
+import com.liuvil.versati.api.data.EntriesUpdateRequest
 import com.liuvil.versati.api.data.Entry
+import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.api.data.Feed
 import com.liuvil.versati.api.data.SortDirection
 
@@ -15,16 +17,17 @@ interface MinifluxApi {
         categoryId: Int,
         direction: SortDirection? = null,
         limit: Int? = null
-    ): EntriesResponse
+    ): EntriesGetResponse
 
     suspend fun getEnclosure(
         id: Int
     ): Enclosure
 
     suspend fun getEntries(
+        status: EntryStatus,
         direction: SortDirection? = null,
         limit: Int? = null
-    ): EntriesResponse
+    ): EntriesGetResponse
 
     suspend fun getEntry(
         id: Int
@@ -34,8 +37,12 @@ interface MinifluxApi {
         feedId: Int,
         direction: SortDirection? = null,
         limit: Int? = null
-    ): EntriesResponse
+    ): EntriesGetResponse
 
     suspend fun getFeeds(): List<Feed>
+
+    suspend fun updateEntries(
+        request: EntriesUpdateRequest
+    )
 
 }
