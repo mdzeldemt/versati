@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,6 +40,7 @@ fun MainScreen(
     val entries by viewModel.entries.collectAsState()
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scrollState = rememberLazyListState()
     var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
@@ -87,6 +89,7 @@ fun MainScreen(
         ) {
             if (entries.isNotEmpty()) {
                 LazyColumn (
+                    state = scrollState,
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxSize()
@@ -122,6 +125,7 @@ fun MainScreen(
                                     viewModel.markPageAsRead()
                                     viewModel.loadEntries()
                                 }
+                                scrollState.scrollToItem(0)
                             }
                         },
                         onRespond = { showMarkAsReadConfirmationDialog = false }
