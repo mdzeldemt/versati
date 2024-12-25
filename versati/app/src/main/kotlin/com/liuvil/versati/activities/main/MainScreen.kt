@@ -6,9 +6,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +28,7 @@ import com.liuvil.versati.framework.viewmodel.State
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     onEntryOpenRequest: (Int) -> Unit
@@ -71,66 +73,62 @@ fun MainScreen(
             }
         }
     ) {
-        when (status) {
-            State.UNINITIALIZED, State.LOADING ->
-                Box(
-                    contentAlignment = Alignment.Center,
+        PullToRefreshBox(
+            isRefreshing = arrayOf(State.UNINITIALIZED, State.LOADING).contains(state),
+            onRefresh = {
+                coroutineScope.launch {
+                    viewModel.performLoading {
+                        viewModel.loadAll()
+                    }
+                }
+            },
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            if (entries.isNotEmpty()) {
+                LazyColumn (
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    CircularProgressIndicator()
-                }
-
-            State.IDLE -> {
-                if (entries.isNotEmpty()) {
-                    LazyColumn (
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        item {
-                            EntryListView(
-                                entries,
-                                onEntryTileTapped = {
-                                    onEntryOpenRequest(it)
-                                }
-                            )
-                        }
-
-                        item {
-                            Button(
-                                onClick = { showMarkAsReadConfirmationDialog = true },
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text("Mark this page as read")
+                    item {
+                        EntryListView(
+                            entries,
+                            onEntryTileTapped = {
+                                onEntryOpenRequest(it)
                             }
-                        }
-                    }
-
-                    if (showMarkAsReadConfirmationDialog) {
-                        ConfirmationDialog(
-                            title = "Mark page as read",
-                            text = "Are you sure you want to mark this page as read?",
-                            confirmText = "Mark as read",
-                            dismissText = "Cancel",
-                            onConfirm = {
-                                coroutineScope.launch {
-                                    viewModel.performLoading {
-                                        viewModel.markPageAsRead()
-                                        viewModel.loadEntries()
-                                    }
-                                }
-                            },
-                            onRespond = { showMarkAsReadConfirmationDialog = false }
                         )
                     }
-                } else {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Text("No entries found.")
+
+                    item {
+                        Button(
+                            onClick = { showMarkAsReadConfirmationDialog = true },
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text("Mark this page as read")
+                        }
                     }
                 }
+
+                if (showMarkAsReadConfirmationDialog) {
+                    ConfirmationDialog(
+                        title = "Mark page as read",
+                        text = "Are you sure you want to mark this page as read?",
+                        confirmText = "Mark as read",
+                        dismissText = "Cancel",
+                        onConfirm = {
+                            coroutineScope.launch {
+                                viewModel.performLoading {
+                                    viewModel.markPageAsRead()
+                                    viewModel.loadEntries()
+                                }
+                            }
+                        },
+                        onRespond = { showMarkAsReadConfirmationDialog = false }
+                    )
+                }
+            } else if (state == State.IDLE) {
+                Text("No entries found.")
             }
         }
     }
