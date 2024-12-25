@@ -57,8 +57,10 @@ fun MainScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.performLoading {
-            viewModel.loadAll()
+        if (state == State.UNINITIALIZED) {
+            viewModel.performLoading {
+                viewModel.loadAll()
+            }
         }
     }
 
