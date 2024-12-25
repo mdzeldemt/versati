@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.entry_list.EntryListView
+import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.framework.viewmodel.State
 import com.liuvil.versati.framework.viewmodel.bindViewModel
@@ -88,27 +89,31 @@ fun MainScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             if (entries.isNotEmpty()) {
-                LazyColumn (
-                    state = scrollState,
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxSize()
+                BlockingBox(
+                    isBlocking = arrayOf(State.UNINITIALIZED, State.LOADING).contains(state)
                 ) {
-                    item {
-                        EntryListView(
-                            entries,
-                            onEntryTileTapped = {
-                                onEntryOpenRequest(it)
-                            }
-                        )
-                    }
+                    LazyColumn (
+                        state = scrollState,
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        item {
+                            EntryListView(
+                                entries,
+                                onEntryTileTapped = {
+                                    onEntryOpenRequest(it)
+                                }
+                            )
+                        }
 
-                    item {
-                        Button(
-                            onClick = { showMarkAsReadConfirmationDialog = true },
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Text("Mark this page as read")
+                        item {
+                            Button(
+                                onClick = { showMarkAsReadConfirmationDialog = true },
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Text("Mark this page as read")
+                            }
                         }
                     }
                 }
