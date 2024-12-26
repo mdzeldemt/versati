@@ -14,7 +14,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,8 +37,8 @@ fun EntryView(
     val status by statusScope.status
 
     val viewModel = bindViewModel<Int, EntryViewModel>(id)
-    val entry by viewModel.entry.collectAsState()
-    val enclosure by viewModel.enclosure.collectAsState()
+    val entry by viewModel.entry
+    val enclosure by viewModel.enclosure
 
     LaunchedEffect(Unit) {
         statusScope.launchLoading {

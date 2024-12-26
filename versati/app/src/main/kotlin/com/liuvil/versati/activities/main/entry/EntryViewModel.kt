@@ -1,13 +1,13 @@
 package com.liuvil.versati.activities.main.entry
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import com.liuvil.versati.api.MinifluxApi
 import com.liuvil.versati.framework.html.AttributeRewriteRule
 import com.liuvil.versati.framework.html.AttributeWhitelistRule
 import com.liuvil.versati.framework.html.ElementWhitelistRule
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.net.URL
@@ -39,11 +39,11 @@ class EntryViewModel @Inject constructor(
 ): BaseViewModel<Int>() {
 
     private var _entryId: Int? = null
-    private val _entry = MutableStateFlow<Entry?>(null)
-    private val _enclosure = MutableStateFlow<Enclosure?>(null)
+    private val _entry = mutableStateOf<Entry?>(null)
+    private val _enclosure = mutableStateOf<Enclosure?>(null)
 
-    val entry: StateFlow<Entry?> = _entry
-    val enclosure: StateFlow<Enclosure?> = _enclosure
+    val entry: State<Entry?> = _entry
+    val enclosure: State<Enclosure?> = _enclosure
 
     override suspend fun initialize(initData: Int) {
         _entryId = initData
