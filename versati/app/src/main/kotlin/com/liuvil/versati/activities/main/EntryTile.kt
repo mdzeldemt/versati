@@ -1,5 +1,6 @@
 package com.liuvil.versati.activities.main
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -9,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -27,8 +29,9 @@ fun EntryTile(
     timeSincePublished: Duration,
     content: String,
     imageUrl: URL? = null,
+    isRead: Boolean,
     imagePadding: Dp = 8.dp,
-    imageCornerRadius: Dp = 4.dp
+    imageCornerRadius: Dp = 4.dp,
 ) {
     val text = @Composable {
         Text(title, fontWeight = FontWeight.Bold, maxLines = 3, overflow = TextOverflow.Ellipsis)
@@ -43,23 +46,27 @@ fun EntryTile(
         }
     }
 
-    imageUrl?.let {
-        WrapperLayout(
-            pivotSize = 100.dp,
-            pivotContent = {
-                AsyncImage(
-                    model = it.toString(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .aspectRatio(1.2f)
-                        .padding(start = imagePadding, bottom = imagePadding)
-                        .clip(RoundedCornerShape(imageCornerRadius))
-                )
-            },
-            wrapperContent = { text() }
-        )
-    } ?: Column(content = { text() })
+    Box(
+        if (isRead) Modifier.alpha(0.5f) else Modifier
+    ) {
+        imageUrl?.let {
+            WrapperLayout(
+                pivotSize = 100.dp,
+                pivotContent = {
+                    AsyncImage(
+                        model = it.toString(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .aspectRatio(1.2f)
+                            .padding(start = imagePadding, bottom = imagePadding)
+                            .clip(RoundedCornerShape(imageCornerRadius))
+                    )
+                },
+                wrapperContent = { text() }
+            )
+        } ?: Column(content = { text() })
+    }
 }
 
 private fun toHumanReadable(

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.EntryTile
+import com.liuvil.versati.api.data.EntryStatus
 import org.jsoup.Jsoup
 import java.net.URL
 import java.time.Duration
@@ -22,7 +23,8 @@ data class Entry(
     val feedTitle: String,
     val publishedAt: OffsetDateTime,
     val content: EntryContent,
-    val enclosures: List<Enclosure>
+    val enclosures: List<Enclosure>,
+    val isRead: Boolean
 )
 
 data class EntryContent(
@@ -56,7 +58,8 @@ fun EntryListView(
                     feedTitle = it.feedTitle,
                     timeSincePublished = Duration.between(it.publishedAt, OffsetDateTime.now()),
                     content = it.content.text,
-                    imageUrl = it.enclosures.firstOrNull()?.url ?: it.content.imageURLs.firstOrNull()
+                    imageUrl = it.enclosures.firstOrNull()?.url ?: it.content.imageURLs.firstOrNull(),
+                    isRead = it.isRead
                 )
             }
         }
@@ -72,7 +75,8 @@ fun buildFromAPIModel(entry: com.liuvil.versati.api.data.Entry): Entry =
         content = parseEntryContent(entry.content),
         enclosures = entry.enclosures.map { enclosure ->
             Enclosure(enclosure.url)
-        }
+        },
+        isRead = entry.status == EntryStatus.READ
     )
 
 // TODO: Move to separate package
