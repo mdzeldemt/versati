@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.drawer.Drawer
 import com.liuvil.versati.activities.main.drawer.DrawerNode
-import com.liuvil.versati.activities.main.entry_list.EntryListView
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.framework.view.Status
@@ -49,7 +48,7 @@ fun MainScreen(
     val viewModel = bindViewModel<MainViewModel>()
     var selectedSource by viewModel.selectedSource
     val sourceTree by viewModel.sourceTree
-    val entries by viewModel.entries
+    val feedViewContent by viewModel.feedViewContent
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scrollState = rememberLazyListState()
@@ -119,10 +118,10 @@ fun MainScreen(
             contentAlignment = Alignment.Center,
             modifier = Modifier.fillMaxSize()
         ) {
-            if (entries.isNotEmpty()) {
-                BlockingBox(
-                    isBlocking = isRefreshing
-                ) {
+            BlockingBox(
+                isBlocking = isRefreshing
+            ) {
+                if (status == Status.IDLE) {
                     LazyColumn (
                         state = scrollState,
                         verticalArrangement = Arrangement.Center,
@@ -130,11 +129,9 @@ fun MainScreen(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         item {
-                            EntryListView(
-                                entries = entries,
-                                onEntryTileTapped = {
-                                    onEntryOpenRequest(it)
-                                }
+                            FeedView(
+                                content = feedViewContent,
+                                onEntryTileClicked = onEntryOpenRequest
                             )
                         }
 
@@ -148,27 +145,25 @@ fun MainScreen(
                         }
                     }
                 }
+            }
 
-                if (showMarkAsReadConfirmationDialog) {
-                    ConfirmationDialog(
-                        title = "Mark page as read",
-                        text = "Are you sure you want to mark this page as read?",
-                        confirmText = "Mark as read",
-                        dismissText = "Cancel",
-                        onConfirm = {
-                            coroutineScope.launch {
-                                statusScope.launchLoading {
-                                    viewModel.markPageAsRead()
-                                    viewModel.reloadEntries()
-                                }
-                                scrollState.scrollToItem(0)
+            if (showMarkAsReadConfirmationDialog) {
+                ConfirmationDialog(
+                    title = "Mark page as read",
+                    text = "Are you sure you want to mark this page as read?",
+                    confirmText = "Mark as read",
+                    dismissText = "Cancel",
+                    onConfirm = {
+                        coroutineScope.launch {
+                            statusScope.launchLoading {
+                                viewModel.markPageAsRead()
+                                viewModel.reloadEntries()
                             }
-                        },
-                        onRespond = { showMarkAsReadConfirmationDialog = false }
-                    )
-                }
-            } else if (status == Status.IDLE) {
-                Text("No entries found.")
+                            scrollState.scrollToItem(0)
+                        }
+                    },
+                    onRespond = { showMarkAsReadConfirmationDialog = false }
+                )
             }
         }
     }

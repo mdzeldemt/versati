@@ -39,7 +39,7 @@ fun EntryListView(
     entries: List<Entry>,
     entryPadding: Dp = 10.dp,
     contentSpacing: Dp = 8.dp,
-    onEntryTileTapped: (Int) -> Unit
+    onEntryTileClicked: (Int) -> Unit
 ) {
     Column (
         verticalArrangement = Arrangement.spacedBy(contentSpacing),
@@ -48,7 +48,7 @@ fun EntryListView(
         entries.forEach {
             Box(
                 Modifier
-                    .clickable { onEntryTileTapped(it.id) }
+                    .clickable { onEntryTileClicked(it.id) }
                     .padding(entryPadding)
             ) {
                 EntryTile(
