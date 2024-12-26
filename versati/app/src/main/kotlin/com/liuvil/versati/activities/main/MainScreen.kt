@@ -13,6 +13,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,6 +54,10 @@ fun MainScreen(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scrollState = rememberLazyListState()
     var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
+
+    val isRefreshing by remember {
+        derivedStateOf { arrayOf(Status.UNINITIALIZED, Status.LOADING).contains(status) }
+    }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -103,7 +108,7 @@ fun MainScreen(
         },
     ) {
         PullToRefreshBox(
-            isRefreshing = arrayOf(Status.UNINITIALIZED, Status.LOADING).contains(status),
+            isRefreshing = isRefreshing,
             onRefresh = {
                 coroutineScope.launch {
                     statusScope.launchLoading {
@@ -116,7 +121,7 @@ fun MainScreen(
         ) {
             if (entries.isNotEmpty()) {
                 BlockingBox(
-                    isBlocking = arrayOf(Status.UNINITIALIZED, Status.LOADING).contains(status)
+                    isBlocking = isRefreshing
                 ) {
                     LazyColumn (
                         state = scrollState,
