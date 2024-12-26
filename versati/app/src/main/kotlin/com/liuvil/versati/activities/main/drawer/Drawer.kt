@@ -39,6 +39,7 @@ sealed interface DrawerNode {
         val id: Int
     ): DrawerNode
 
+    data object RecentlyRead: DrawerNode
     data object Settings: DrawerNode
 }
 
@@ -94,6 +95,16 @@ fun Drawer(
                                 )
                             }
                         }
+                    }
+
+                    item {
+                        NavigationDrawerItem(
+                            label = { Text("Recently read") },
+                            selected = selectedNode == DrawerNode.RecentlyRead,
+                            onClick = {
+                                onNodeClicked(DrawerNode.RecentlyRead)
+                            }
+                        )
                     }
 
                     item {

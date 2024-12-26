@@ -104,6 +104,12 @@ class MainViewModel @Inject constructor(
                         direction = SortDirection.DESCENDING,
                         limit = 10
                     ).entries
+                is SourceSelection.RecentlyRead ->
+                    minifluxApi.getEntries(
+                        status = EntryStatus.READ,
+                        direction = SortDirection.DESCENDING,
+                        limit = 10
+                    ).entries
             }
         }
     }

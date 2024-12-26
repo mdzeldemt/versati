@@ -35,6 +35,7 @@ sealed interface SourceSelection {
     data object AllEntries: SourceSelection
     data class Category(val id: Int): SourceSelection
     data class Feed(val id: Int): SourceSelection
+    data object RecentlyRead: SourceSelection
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,6 +90,7 @@ fun MainScreen(
                 is SourceSelection.AllEntries -> DrawerNode.AllEntries
                 is SourceSelection.Category -> DrawerNode.Category(it.id)
                 is SourceSelection.Feed -> DrawerNode.Feed(it.id)
+                is SourceSelection.RecentlyRead -> DrawerNode.RecentlyRead
             }
         },
         onNodeClicked = {
@@ -99,6 +101,7 @@ fun MainScreen(
                     is DrawerNode.AllEntries -> updateSourceSelection(SourceSelection.AllEntries)
                     is DrawerNode.Category -> updateSourceSelection(SourceSelection.Category(it.id))
                     is DrawerNode.Feed -> updateSourceSelection(SourceSelection.Feed(it.id))
+                    is DrawerNode.RecentlyRead -> updateSourceSelection(SourceSelection.RecentlyRead)
                     else -> {
                         // TODO: Implement remaining callbacks
                     }
@@ -135,12 +138,14 @@ fun MainScreen(
                             )
                         }
 
-                        item {
-                            Button(
-                                onClick = { showMarkAsReadConfirmationDialog = true },
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text("Mark this page as read")
+                        if (selectedSource != SourceSelection.RecentlyRead) {
+                            item {
+                                Button(
+                                    onClick = { showMarkAsReadConfirmationDialog = true },
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
+                                    Text("Mark this page as read")
+                                }
                             }
                         }
                     }
