@@ -31,6 +31,12 @@ import com.liuvil.versati.framework.viewmodel.State
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import kotlinx.coroutines.launch
 
+sealed interface SourceSelection {
+    data object AllEntries: SourceSelection
+    data class Category(val id: Int): SourceSelection
+    data class Feed(val id: Int): SourceSelection
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
@@ -38,9 +44,9 @@ fun MainScreen(
 ) {
     val viewModel = bindViewModel<MainViewModel>()
     val state by viewModel.state.collectAsState()
-    val selectedSource by viewModel.selectedSource.collectAsState()
-    val sourceTree by viewModel.sourceTree.collectAsState()
-    val entries by viewModel.entries.collectAsState()
+    var selectedSource by viewModel.selectedSource
+    val sourceTree by viewModel.sourceTree
+    val entries by viewModel.entries
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scrollState = rememberLazyListState()
@@ -51,9 +57,9 @@ fun MainScreen(
     val updateSourceSelection: suspend (SourceSelection) -> Unit = remember {
         {
             drawerState.close()
-            viewModel.selectSource(it)
+            selectedSource = it
             viewModel.performLoading {
-                viewModel.loadEntries()
+                viewModel.reloadEntries()
             }
             scrollState.scrollToItem(0)
         }
@@ -62,7 +68,9 @@ fun MainScreen(
     LaunchedEffect(Unit) {
         if (state == State.UNINITIALIZED) {
             viewModel.performLoading {
-                viewModel.loadAll()
+                viewModel.reloadCategories()
+                viewModel.reloadFeeds()
+                viewModel.reloadEntries()
             }
         }
     }
@@ -97,7 +105,7 @@ fun MainScreen(
             onRefresh = {
                 coroutineScope.launch {
                     viewModel.performLoading {
-                        viewModel.loadAll()
+                        viewModel.reloadEntries()
                     }
                 }
             },
@@ -144,7 +152,7 @@ fun MainScreen(
                             coroutineScope.launch {
                                 viewModel.performLoading {
                                     viewModel.markPageAsRead()
-                                    viewModel.loadEntries()
+                                    viewModel.reloadEntries()
                                 }
                                 scrollState.scrollToItem(0)
                             }
