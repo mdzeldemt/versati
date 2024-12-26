@@ -29,7 +29,8 @@ data class Feed(
 )
 
 sealed interface DrawerNode {
-    data object AllEntries: DrawerNode
+    data object AllUnread: DrawerNode
+    data object AllRead: DrawerNode
 
     data class Category(
         val id: Int
@@ -39,7 +40,6 @@ sealed interface DrawerNode {
         val id: Int
     ): DrawerNode
 
-    data object RecentlyRead: DrawerNode
     data object Settings: DrawerNode
 }
 
@@ -64,10 +64,10 @@ fun Drawer(
                 ) {
                     item {
                         NavigationDrawerItem(
-                            label = { Text("All entries") },
-                            selected = (selectedNode == DrawerNode.AllEntries),
+                            label = { Text("All unread") },
+                            selected = (selectedNode == DrawerNode.AllUnread),
                             onClick = {
-                                onNodeClicked(DrawerNode.AllEntries)
+                                onNodeClicked(DrawerNode.AllUnread)
                             }
                         )
                     }
@@ -99,10 +99,10 @@ fun Drawer(
 
                     item {
                         NavigationDrawerItem(
-                            label = { Text("Recently read") },
-                            selected = selectedNode == DrawerNode.RecentlyRead,
+                            label = { Text("All read") },
+                            selected = selectedNode == DrawerNode.AllRead,
                             onClick = {
-                                onNodeClicked(DrawerNode.RecentlyRead)
+                                onNodeClicked(DrawerNode.AllRead)
                             }
                         )
                     }

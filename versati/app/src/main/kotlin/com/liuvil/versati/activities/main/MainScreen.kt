@@ -32,10 +32,10 @@ import com.liuvil.versati.framework.viewmodel.bindViewModel
 import kotlinx.coroutines.launch
 
 sealed interface SourceSelection {
-    data object AllEntries: SourceSelection
+    data object AllUnread: SourceSelection
+    data object AllRead: SourceSelection
     data class Category(val id: Int): SourceSelection
     data class Feed(val id: Int): SourceSelection
-    data object RecentlyRead: SourceSelection
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,10 +87,10 @@ fun MainScreen(
         drawerState = drawerState,
         selectedNode = selectedSource.let {
             when (it) {
-                is SourceSelection.AllEntries -> DrawerNode.AllEntries
+                is SourceSelection.AllUnread -> DrawerNode.AllUnread
                 is SourceSelection.Category -> DrawerNode.Category(it.id)
                 is SourceSelection.Feed -> DrawerNode.Feed(it.id)
-                is SourceSelection.RecentlyRead -> DrawerNode.RecentlyRead
+                is SourceSelection.AllRead -> DrawerNode.AllRead
             }
         },
         onNodeClicked = {
@@ -98,10 +98,10 @@ fun MainScreen(
                 drawerState.close()
 
                 when (it) {
-                    is DrawerNode.AllEntries -> updateSourceSelection(SourceSelection.AllEntries)
+                    is DrawerNode.AllUnread -> updateSourceSelection(SourceSelection.AllUnread)
                     is DrawerNode.Category -> updateSourceSelection(SourceSelection.Category(it.id))
                     is DrawerNode.Feed -> updateSourceSelection(SourceSelection.Feed(it.id))
-                    is DrawerNode.RecentlyRead -> updateSourceSelection(SourceSelection.RecentlyRead)
+                    is DrawerNode.AllRead -> updateSourceSelection(SourceSelection.AllRead)
                     else -> {
                         // TODO: Implement remaining callbacks
                     }
@@ -138,7 +138,7 @@ fun MainScreen(
                             )
                         }
 
-                        if (selectedSource != SourceSelection.RecentlyRead) {
+                        if (selectedSource != SourceSelection.AllRead) {
                             item {
                                 Button(
                                     onClick = { showMarkAsReadConfirmationDialog = true },
