@@ -13,14 +13,14 @@ import com.liuvil.versati.api.MinifluxApi
 import com.liuvil.versati.api.data.EntriesUpdateRequest
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.api.data.SortDirection
-import com.liuvil.versati.framework.viewmodel.BaseStatefulViewModel
+import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val minifluxApi: MinifluxApi
-): BaseStatefulViewModel<Unit>() {
+): BaseViewModel<Unit>() {
 
     private val _categories = mutableStateOf(emptyList<com.liuvil.versati.api.data.Category>())
     private val _feeds = mutableStateOf(emptyList<com.liuvil.versati.api.data.Feed>())

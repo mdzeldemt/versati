@@ -13,7 +13,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,7 +26,8 @@ import com.liuvil.versati.activities.main.drawer.DrawerNode
 import com.liuvil.versati.activities.main.entry_list.EntryListView
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
-import com.liuvil.versati.framework.viewmodel.State
+import com.liuvil.versati.framework.view.Status
+import com.liuvil.versati.framework.view.rememberViewStatusScope
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import kotlinx.coroutines.launch
 
@@ -42,8 +42,10 @@ sealed interface SourceSelection {
 fun MainScreen(
     onEntryOpenRequest: (Int) -> Unit
 ) {
+    val statusScope = rememberViewStatusScope()
+    val status by statusScope.status
+
     val viewModel = bindViewModel<MainViewModel>()
-    val state by viewModel.state.collectAsState()
     var selectedSource by viewModel.selectedSource
     val sourceTree by viewModel.sourceTree
     val entries by viewModel.entries
@@ -58,7 +60,7 @@ fun MainScreen(
         {
             drawerState.close()
             selectedSource = it
-            viewModel.performLoading {
+            statusScope.launchLoading {
                 viewModel.reloadEntries()
             }
             scrollState.scrollToItem(0)
@@ -66,8 +68,8 @@ fun MainScreen(
     }
 
     LaunchedEffect(Unit) {
-        if (state == State.UNINITIALIZED) {
-            viewModel.performLoading {
+        if (status == Status.UNINITIALIZED) {
+            statusScope.launchLoading {
                 viewModel.reloadCategories()
                 viewModel.reloadFeeds()
                 viewModel.reloadEntries()
@@ -101,10 +103,10 @@ fun MainScreen(
         },
     ) {
         PullToRefreshBox(
-            isRefreshing = arrayOf(State.UNINITIALIZED, State.LOADING).contains(state),
+            isRefreshing = arrayOf(Status.UNINITIALIZED, Status.LOADING).contains(status),
             onRefresh = {
                 coroutineScope.launch {
-                    viewModel.performLoading {
+                    statusScope.launchLoading {
                         viewModel.reloadEntries()
                     }
                 }
@@ -114,7 +116,7 @@ fun MainScreen(
         ) {
             if (entries.isNotEmpty()) {
                 BlockingBox(
-                    isBlocking = arrayOf(State.UNINITIALIZED, State.LOADING).contains(state)
+                    isBlocking = arrayOf(Status.UNINITIALIZED, Status.LOADING).contains(status)
                 ) {
                     LazyColumn (
                         state = scrollState,
@@ -150,7 +152,7 @@ fun MainScreen(
                         dismissText = "Cancel",
                         onConfirm = {
                             coroutineScope.launch {
-                                viewModel.performLoading {
+                                statusScope.launchLoading {
                                     viewModel.markPageAsRead()
                                     viewModel.reloadEntries()
                                 }
@@ -160,7 +162,7 @@ fun MainScreen(
                         onRespond = { showMarkAsReadConfirmationDialog = false }
                     )
                 }
-            } else if (state == State.IDLE) {
+            } else if (status == Status.IDLE) {
                 Text("No entries found.")
             }
         }

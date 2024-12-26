@@ -4,7 +4,7 @@ import com.liuvil.versati.api.MinifluxApi
 import com.liuvil.versati.framework.html.AttributeRewriteRule
 import com.liuvil.versati.framework.html.AttributeWhitelistRule
 import com.liuvil.versati.framework.html.ElementWhitelistRule
-import com.liuvil.versati.framework.viewmodel.BaseStatefulViewModel
+import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +36,7 @@ data class Enclosure(
 @HiltViewModel
 class EntryViewModel @Inject constructor(
     private val minifluxApi: MinifluxApi
-): BaseStatefulViewModel<Int>() {
+): BaseViewModel<Int>() {
 
     private var _entryId: Int? = null
     private val _entry = MutableStateFlow<Entry?>(null)
