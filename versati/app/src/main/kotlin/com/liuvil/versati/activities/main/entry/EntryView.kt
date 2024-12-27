@@ -3,6 +3,7 @@ package com.liuvil.versati.activities.main.entry
 import android.net.Uri
 import android.webkit.WebView
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,9 +26,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.android.openURLExternally
+import com.liuvil.versati.framework.date.formatHumanReadableLong
 import com.liuvil.versati.framework.view.Status
 import com.liuvil.versati.framework.view.rememberViewStatusScope
 import com.liuvil.versati.framework.viewmodel.bindViewModel
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun EntryView(
@@ -67,16 +72,25 @@ fun EntryView(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
             ) {
-                Text(
-                    it.title,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable(
-                        onClick = openURL,
-                        indication = null,
-                        interactionSource = null
-                    ).padding(8.dp)
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    Text(
+                        it.title,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable(
+                            onClick = openURL,
+                            indication = null,
+                            interactionSource = null
+                        )
+                    )
+
+                    Text(
+                        getEntryDetailsText(it.feedTitle, it.author, it.publishedAt)
+                    )
+                }
 
                 enclosure?.let { enclosure ->
                     AsyncImage(
@@ -103,3 +117,15 @@ fun EntryView(
         }
     }
 }
+
+private fun getEntryDetailsText(
+    feedTitle: String,
+    author: String?,
+    publishedAt: OffsetDateTime
+): String =
+    listOfNotNull(
+        feedTitle,
+        author?.let { "by $it" },
+        publishedAt.atZoneSameInstant(ZoneId.systemDefault())
+            .formatHumanReadableLong()
+    ).joinToString(separator = " / ")

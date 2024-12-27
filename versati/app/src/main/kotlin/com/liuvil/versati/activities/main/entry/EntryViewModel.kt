@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.net.URL
+import java.time.OffsetDateTime
 import javax.inject.Inject
 
 // TODO: Load from user settings
@@ -26,6 +27,9 @@ data class Entry(
     val title: String,
     val content: Document,
     val url: URL,
+    val feedTitle: String,
+    val author: String?,
+    val publishedAt: OffsetDateTime,
     val enclosureId: Int?
 )
 
@@ -69,6 +73,11 @@ class EntryViewModel @Inject constructor(
                     title = entry.title,
                     content = content,
                     url = entry.url,
+                    feedTitle = entry.feed.title,
+                    author = entry.author.let {
+                        it.ifEmpty { null }
+                    },
+                    publishedAt = entry.publishedAt,
                     enclosureId = entry.enclosures.firstOrNull()?.id
                 )
             }
