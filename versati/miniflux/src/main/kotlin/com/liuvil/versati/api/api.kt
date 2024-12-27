@@ -15,6 +15,7 @@ interface MinifluxApi {
 
     suspend fun getCategoryEntries(
         categoryId: Int,
+        status: EntryStatus? = null,
         direction: SortDirection? = null,
         limit: Int? = null
     ): EntriesGetResponse
@@ -24,7 +25,7 @@ interface MinifluxApi {
     ): Enclosure
 
     suspend fun getEntries(
-        status: EntryStatus,
+        status: EntryStatus? = null,
         direction: SortDirection? = null,
         limit: Int? = null
     ): EntriesGetResponse
@@ -35,6 +36,7 @@ interface MinifluxApi {
 
     suspend fun getFeedEntries(
         feedId: Int,
+        status: EntryStatus? = null,
         direction: SortDirection? = null,
         limit: Int? = null
     ): EntriesGetResponse

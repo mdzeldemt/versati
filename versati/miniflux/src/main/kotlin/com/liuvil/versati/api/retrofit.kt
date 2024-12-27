@@ -22,6 +22,7 @@ interface MinifluxRetrofitApi: MinifluxApi {
     @GET("/v1/categories/{categoryId}/entries")
     override suspend fun getCategoryEntries(
         @Path("categoryId") categoryId: Int,
+        @Query("status") status: EntryStatus?,
         @Query("direction") direction: SortDirection?,
         @Query("limit") limit: Int?
     ): EntriesGetResponse
@@ -33,7 +34,7 @@ interface MinifluxRetrofitApi: MinifluxApi {
 
     @GET("/v1/entries")
     override suspend fun getEntries(
-        @Query("status") status: EntryStatus,
+        @Query("status") status: EntryStatus?,
         @Query("direction") direction: SortDirection?,
         @Query("limit") limit: Int?
     ): EntriesGetResponse
@@ -44,6 +45,7 @@ interface MinifluxRetrofitApi: MinifluxApi {
     @GET("/v1/feeds/{feedId}/entries")
     override suspend fun getFeedEntries(
         @Path("feedId") feedId: Int,
+        @Query("status") status: EntryStatus?,
         @Query("direction") direction: SortDirection?,
         @Query("limit") limit: Int?
     ): EntriesGetResponse

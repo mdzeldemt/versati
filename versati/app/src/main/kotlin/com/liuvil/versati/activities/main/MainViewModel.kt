@@ -95,12 +95,14 @@ class MainViewModel @Inject constructor(
                 is SourceSelection.Category ->
                     minifluxApi.getCategoryEntries(
                         categoryId = it.id,
+                        status = EntryStatus.UNREAD,
                         direction = SortDirection.DESCENDING,
                         limit = 10
                     ).entries
                 is SourceSelection.Feed ->
                     minifluxApi.getFeedEntries(
                         feedId = it.id,
+                        status = EntryStatus.UNREAD,
                         direction = SortDirection.DESCENDING,
                         limit = 10
                     ).entries
