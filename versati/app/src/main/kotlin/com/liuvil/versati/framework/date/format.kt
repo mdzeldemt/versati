@@ -5,8 +5,8 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-private const val LONG_DATE_PATTERN = "MMM MM, y"
-private const val LONG_DATE_TIME_PATTERN = "MMM MM, y 'at' H:m a"
+private const val LONG_DATE_PATTERN = "MMM d, y"
+private const val LONG_DATE_TIME_PATTERN = "MMM d, y 'at' H:m a"
 
 fun LocalDate.formatHumanReadableLong(): String =
     DateTimeFormatter.ofPattern(LONG_DATE_PATTERN).format(this)
