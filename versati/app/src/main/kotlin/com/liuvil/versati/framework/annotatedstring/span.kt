@@ -1,5 +1,6 @@
 package com.liuvil.versati.framework.annotatedstring
 
+import android.graphics.Typeface
 import android.text.Spanned
 import android.text.style.StyleSpan
 import android.text.style.URLSpan
@@ -8,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 
@@ -23,9 +25,17 @@ fun extractSpanStyleAnnotations(
             when (span) {
                 is StyleSpan -> {
                     val fontWeight =
-                        if (span.style == android.graphics.Typeface.BOLD) FontWeight.Bold else FontWeight.Normal
+                        if (arrayOf(Typeface.BOLD, Typeface.BOLD_ITALIC).contains(span.style))
+                            FontWeight.Bold
+                        else
+                            FontWeight.Normal
+                    val fontStyle =
+                        if (arrayOf(Typeface.ITALIC, Typeface.BOLD_ITALIC).contains(span.style))
+                            FontStyle.Italic
+                        else
+                            FontStyle.Normal
                     AnnotatedString.Range(
-                        SpanStyle(fontWeight = fontWeight),
+                        SpanStyle(fontWeight = fontWeight, fontStyle = fontStyle),
                         start = annotationStart,
                         end = annotationEnd
                     )
