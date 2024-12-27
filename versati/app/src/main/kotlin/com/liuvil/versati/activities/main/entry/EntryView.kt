@@ -1,7 +1,7 @@
 package com.liuvil.versati.activities.main.entry
 
 import android.net.Uri
-import android.webkit.WebView
+import android.text.Html
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,16 +23,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.android.openURLExternally
 import com.liuvil.versati.framework.date.formatHumanReadableLong
+import com.liuvil.versati.framework.entry.content.parseContentItems
 import com.liuvil.versati.framework.view.Status
 import com.liuvil.versati.framework.view.rememberViewStatusScope
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import java.time.OffsetDateTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun EntryView(
@@ -100,14 +99,8 @@ fun EntryView(
                     )
                 }
 
-                AndroidView(
-                    factory = { context ->
-                        WebView(context).apply {
-                            clipToOutline = true
-
-                            loadData(it.content.html(), "text/html", "UTF-8")
-                        }
-                    }
+                EntryContentView(
+                    parseContentItems(it.content.html())
                 )
 
                 Button(onClick = openURL) {
