@@ -127,5 +127,6 @@ private fun getEntryDetailsText(
         feedTitle,
         author?.let { "by $it" },
         publishedAt.atZoneSameInstant(ZoneId.systemDefault())
+            .toOffsetDateTime()
             .formatHumanReadableLong()
     ).joinToString(separator = " / ")

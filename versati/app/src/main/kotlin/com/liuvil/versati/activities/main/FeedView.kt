@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.entry_list.Entry
 import com.liuvil.versati.activities.main.entry_list.EntryListView
+import com.liuvil.versati.framework.date.formatHumanReadable
 import java.time.LocalDate
 
 data class FeedViewContent(
@@ -40,7 +41,7 @@ fun FeedView(
         content.entryGroups.forEach { entryGroup ->
             Text(
                 text = when (entryGroup) {
-                    is EntryGroup.Timed -> entryGroup.date.toString()
+                    is EntryGroup.Timed -> entryGroup.date.formatHumanReadable()
                     is EntryGroup.Categorized -> entryGroup.categoryTitle
                 },
                 fontWeight = FontWeight.Bold,
