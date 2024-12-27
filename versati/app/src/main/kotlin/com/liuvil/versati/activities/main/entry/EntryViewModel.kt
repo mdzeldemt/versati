@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 // TODO: Load from user settings
 private val rewriteRules = listOf(
-    ElementWhitelistRule(listOf("html", "body", "p", "span", "a", "img")),
+    ElementWhitelistRule(listOf("html", "body", "h1", "h2", "p", "span", "strong", "a", "img")),
     AttributeWhitelistRule("html, body, p, span", emptySet()),
     AttributeWhitelistRule("a", setOf("href")),
     AttributeWhitelistRule("img", setOf("src")),
