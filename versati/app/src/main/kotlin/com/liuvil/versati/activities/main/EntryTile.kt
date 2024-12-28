@@ -76,7 +76,9 @@ private fun toHumanReadable(
         "${duration.toMinutes()}min"
     } else if (duration < Duration.ofHours(24)) {
         "${duration.toHours()}h"
-    } else {
+    } else if (duration < Duration.ofDays(365)) {
         "${duration.toDays()}d"
+    } else {
+        "${duration.toDays() / 365}y"
     }
 }
