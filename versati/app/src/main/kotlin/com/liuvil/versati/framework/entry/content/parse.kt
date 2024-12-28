@@ -16,7 +16,7 @@ fun parseContentItems(
     val currentParagraph = IntRangeBuilder()
     spanned.forEachIndexed { index, char ->
         if (char == '\n' || index == spanned.lastIndex) {
-            if (index == spanned.lastIndex) {
+            if (index == spanned.lastIndex && char != '\n') {
                 currentParagraph.extendTo(index)
             }
 
