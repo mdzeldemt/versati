@@ -6,6 +6,7 @@ import com.liuvil.versati.api.MinifluxApi
 import com.liuvil.versati.framework.html.AttributeRewriteRule
 import com.liuvil.versati.framework.html.AttributeWhitelistRule
 import com.liuvil.versati.framework.html.ElementWhitelistRule
+import com.liuvil.versati.framework.html.RewriteRule
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.jsoup.Jsoup
@@ -15,12 +16,12 @@ import java.time.OffsetDateTime
 import javax.inject.Inject
 
 // TODO: Load from user settings
-private val rewriteRules = listOf(
-    ElementWhitelistRule(listOf("html", "body", "h1", "h2", "p", "span", "strong", "em", "a", "img")),
-    AttributeWhitelistRule("html, body, p, span", emptySet()),
-    AttributeWhitelistRule("a", setOf("href")),
-    AttributeWhitelistRule("img", setOf("src")),
-    AttributeRewriteRule("img", "style", "max-width: 100%;")
+private val rewriteRules = listOf<RewriteRule>(
+//    ElementWhitelistRule(listOf("html", "body", "h1", "h2", "p", "span", "strong", "em", "a", "img")),
+//    AttributeWhitelistRule("html, body, p, span", emptySet()),
+//    AttributeWhitelistRule("a", setOf("href")),
+//    AttributeWhitelistRule("img", setOf("src")),
+//    AttributeRewriteRule("img", "style", "max-width: 100%;")
 )
 
 data class Entry(

@@ -32,8 +32,8 @@ import com.liuvil.versati.framework.viewmodel.bindViewModel
 import kotlinx.coroutines.launch
 
 sealed interface SourceSelection {
-    data object AllUnread: SourceSelection
-    data object AllRead: SourceSelection
+    data object Unread: SourceSelection
+    data object Read: SourceSelection
     data class Category(val id: Int): SourceSelection
     data class Feed(val id: Int): SourceSelection
 }
@@ -87,10 +87,10 @@ fun MainScreen(
         drawerState = drawerState,
         selectedNode = selectedSource.let {
             when (it) {
-                is SourceSelection.AllUnread -> DrawerNode.AllUnread
+                is SourceSelection.Unread -> DrawerNode.Unread
                 is SourceSelection.Category -> DrawerNode.Category(it.id)
                 is SourceSelection.Feed -> DrawerNode.Feed(it.id)
-                is SourceSelection.AllRead -> DrawerNode.AllRead
+                is SourceSelection.Read -> DrawerNode.Read
             }
         },
         onNodeClicked = {
@@ -98,10 +98,10 @@ fun MainScreen(
                 drawerState.close()
 
                 when (it) {
-                    is DrawerNode.AllUnread -> updateSourceSelection(SourceSelection.AllUnread)
+                    is DrawerNode.Unread -> updateSourceSelection(SourceSelection.Unread)
                     is DrawerNode.Category -> updateSourceSelection(SourceSelection.Category(it.id))
                     is DrawerNode.Feed -> updateSourceSelection(SourceSelection.Feed(it.id))
-                    is DrawerNode.AllRead -> updateSourceSelection(SourceSelection.AllRead)
+                    is DrawerNode.Read -> updateSourceSelection(SourceSelection.Read)
                     else -> {
                         // TODO: Implement remaining callbacks
                     }
@@ -138,7 +138,7 @@ fun MainScreen(
                             )
                         }
 
-                        if (selectedSource != SourceSelection.AllRead) {
+                        if (selectedSource != SourceSelection.Read) {
                             item {
                                 Button(
                                     onClick = { showMarkAsReadConfirmationDialog = true },

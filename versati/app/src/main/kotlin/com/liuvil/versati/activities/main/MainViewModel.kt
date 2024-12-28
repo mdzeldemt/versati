@@ -26,7 +26,7 @@ class MainViewModel @Inject constructor(
     private val _feeds = mutableStateOf(emptyList<com.liuvil.versati.api.data.Feed>())
     private val _entries = mutableStateOf(emptyList<com.liuvil.versati.api.data.Entry>())
 
-    val selectedSource: MutableState<SourceSelection> = mutableStateOf(SourceSelection.AllUnread)
+    val selectedSource: MutableState<SourceSelection> = mutableStateOf(SourceSelection.Unread)
 
     val sourceTree: State<SourceTree> = derivedStateOf {
         val feedsByCategoryId = _feeds.value.groupBy { it.category.id }
@@ -86,7 +86,7 @@ class MainViewModel @Inject constructor(
     suspend fun reloadEntries() {
         _entries.value = selectedSource.value.let {
             when (it) {
-                is SourceSelection.AllUnread ->
+                is SourceSelection.Unread ->
                     minifluxApi.getEntries(
                         status = EntryStatus.UNREAD,
                         direction = SortDirection.DESCENDING,
@@ -106,7 +106,7 @@ class MainViewModel @Inject constructor(
                         direction = SortDirection.DESCENDING,
                         limit = 10
                     ).entries
-                is SourceSelection.AllRead ->
+                is SourceSelection.Read ->
                     minifluxApi.getEntries(
                         status = EntryStatus.READ,
                         direction = SortDirection.DESCENDING,
