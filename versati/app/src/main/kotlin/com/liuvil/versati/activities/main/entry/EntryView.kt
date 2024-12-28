@@ -66,30 +66,27 @@ fun EntryView(
             }
 
             Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
+                    .padding(8.dp)
             ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(8.dp)
-                ) {
-                    Text(
-                        it.title,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable(
-                            onClick = openURL,
-                            indication = null,
-                            interactionSource = null
-                        )
+                Text(
+                    it.title,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable(
+                        onClick = openURL,
+                        indication = null,
+                        interactionSource = null
                     )
+                )
 
-                    Text(
-                        getEntryDetailsText(it.feedTitle, it.author, it.publishedAt)
-                    )
-                }
+                Text(
+                    getEntryDetailsText(it.feedTitle, it.author, it.publishedAt)
+                )
 
                 enclosure?.let { enclosure ->
                     AsyncImage(
