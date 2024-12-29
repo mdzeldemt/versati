@@ -3,30 +3,15 @@ package com.liuvil.versati.activities.main.entry
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.liuvil.versati.api.MinifluxApi
-import com.liuvil.versati.framework.html.AttributeRewriteRule
-import com.liuvil.versati.framework.html.AttributeWhitelistRule
-import com.liuvil.versati.framework.html.ElementWhitelistRule
-import com.liuvil.versati.framework.html.RewriteRule
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import java.net.URL
 import java.time.OffsetDateTime
 import javax.inject.Inject
 
-// TODO: Load from user settings
-private val rewriteRules = listOf<RewriteRule>(
-//    ElementWhitelistRule(listOf("html", "body", "h1", "h2", "p", "span", "strong", "em", "a", "img")),
-//    AttributeWhitelistRule("html, body, p, span", emptySet()),
-//    AttributeWhitelistRule("a", setOf("href")),
-//    AttributeWhitelistRule("img", setOf("src")),
-//    AttributeRewriteRule("img", "style", "max-width: 100%;")
-)
-
 data class Entry(
     val title: String,
-    val content: Document,
+    val content: String,
     val url: URL,
     val feedTitle: String,
     val author: String?,
@@ -65,14 +50,9 @@ class EntryViewModel @Inject constructor(
     private suspend fun loadEntry() {
         _entryId?.let { entryId ->
             _entry.value = minifluxApi.getEntry(entryId).let { entry ->
-                val content = Jsoup.parse(entry.content)
-                rewriteRules.forEach { rule ->
-                    rule.apply(content)
-                }
-
                 Entry(
                     title = entry.title,
-                    content = content,
+                    content = entry.content,
                     url = entry.url,
                     feedTitle = entry.feed.title,
                     author = entry.author.let {

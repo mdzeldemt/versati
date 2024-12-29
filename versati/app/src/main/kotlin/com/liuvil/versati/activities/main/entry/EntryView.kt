@@ -1,7 +1,6 @@
 package com.liuvil.versati.activities.main.entry
 
 import android.net.Uri
-import android.text.Html
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,7 +26,6 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.android.openURLExternally
 import com.liuvil.versati.framework.date.formatHumanReadableLong
-import com.liuvil.versati.framework.entry.content.parseContentItems
 import com.liuvil.versati.framework.view.Status
 import com.liuvil.versati.framework.view.rememberViewStatusScope
 import com.liuvil.versati.framework.viewmodel.bindViewModel
@@ -100,9 +98,7 @@ fun EntryView(
                     )
                 }
 
-                EntryContentView(
-                    parseContentItems(it.content.html())
-                )
+                EntryContentView(it.content, DEFAULT_STYLE)
 
                 Button(onClick = openURL) {
                     Text("Open in web browser")
@@ -111,6 +107,19 @@ fun EntryView(
         }
     }
 }
+
+// TODO: Save as a default in an asset file and make configurable
+private const val DEFAULT_STYLE = """
+    body {
+        margin: 0;
+        padding 0;
+        font-size: 12pt !important;
+    }
+
+    img {
+        max-width: 100%;
+    }
+"""
 
 private fun getEntryDetailsText(
     feedTitle: String,
