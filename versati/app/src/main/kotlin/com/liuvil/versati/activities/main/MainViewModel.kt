@@ -68,6 +68,18 @@ class MainViewModel @Inject constructor(
                             direction = SortDirection.DESCENDING,
                             limit = 10
                         ).entries
+                    is SourceSelection.Read ->
+                        minifluxApi.getEntries(
+                            status = EntryStatus.READ,
+                            direction = SortDirection.DESCENDING,
+                            limit = 10
+                        ).entries
+                    is SourceSelection.Starred ->
+                        minifluxApi.getEntries(
+                            starred = true,
+                            direction = SortDirection.DESCENDING,
+                            limit = 10
+                        ).entries
                     is SourceSelection.Category ->
                         minifluxApi.getCategoryEntries(
                             categoryId = it.id,
@@ -79,12 +91,6 @@ class MainViewModel @Inject constructor(
                         minifluxApi.getFeedEntries(
                             feedId = it.id,
                             status = EntryStatus.UNREAD,
-                            direction = SortDirection.DESCENDING,
-                            limit = 10
-                        ).entries
-                    is SourceSelection.Read ->
-                        minifluxApi.getEntries(
-                            status = EntryStatus.READ,
                             direction = SortDirection.DESCENDING,
                             limit = 10
                         ).entries

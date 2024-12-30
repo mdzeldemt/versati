@@ -37,6 +37,7 @@ import java.time.ZoneId
 sealed interface SourceSelection {
     data object Unread: SourceSelection
     data object Read: SourceSelection
+    data object Starred: SourceSelection
     data class Category(val id: Int): SourceSelection
     data class Feed(val id: Int): SourceSelection
 }
@@ -108,6 +109,17 @@ fun MainScreen(
                 ) {
                     coroutineScope.launch {
                         updateSourceSelection(SourceSelection.Unread)
+                    }
+                }
+            )
+
+            add(
+                DrawerItem(
+                    title = "Starred",
+                    selected = selectedSource == SourceSelection.Starred
+                ) {
+                    coroutineScope.launch {
+                        updateSourceSelection(SourceSelection.Starred)
                     }
                 }
             )

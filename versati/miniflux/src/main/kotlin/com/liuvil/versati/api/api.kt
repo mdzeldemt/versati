@@ -29,6 +29,7 @@ interface MinifluxApi {
     suspend fun getEntries(
         status: EntryStatus? = null,
         direction: SortDirection? = null,
+        starred: Boolean? = null,
         limit: Int? = null
     ): EntriesGetResponse
 

@@ -38,6 +38,7 @@ interface MinifluxRetrofitApi: MinifluxApi {
     override suspend fun getEntries(
         @Query("status") status: EntryStatus?,
         @Query("direction") direction: SortDirection?,
+        @Query("starred") starred: Boolean?,
         @Query("limit") limit: Int?
     ): EntriesGetResponse
 
