@@ -4,16 +4,18 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 
 sealed class LazyResult<T> {
-    inline fun ifNone(block: () -> Unit) {
+    inline fun <R> ifNone(block: () -> R): R? {
         if (this is None) {
-            block()
+            return block()
         }
+        return null
     }
 
-    inline fun ifSuccess(block: (T) -> Unit) {
+    inline fun <R> ifSuccess(block: (T) -> R): R? {
         if (this is Success) {
-            block(value)
+            return block(value)
         }
+        return null
     }
 }
 

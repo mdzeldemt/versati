@@ -18,12 +18,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 data class DrawerItem(
     val title: String,
     val icon: Icon? = null,
+    val badge: String? = null,
     val selected: Boolean = false,
     val onClick: () -> Unit
 ) {
@@ -53,7 +55,11 @@ fun Drawer(
                         item {
                             NavigationDrawerItem(
                                 label = {
-                                    Text(it.title)
+                                    Text(
+                                        it.title,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
                                 },
                                 icon = {
                                     it.icon?.let { icon ->
@@ -78,6 +84,11 @@ fun Drawer(
                                                 }
                                             }
                                         }
+                                    }
+                                },
+                                badge = {
+                                    it.badge?.let { badge ->
+                                        Text(badge)
                                     }
                                 },
                                 selected = it.selected,

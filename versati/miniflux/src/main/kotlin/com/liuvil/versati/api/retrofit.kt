@@ -7,6 +7,7 @@ import com.liuvil.versati.api.data.EntriesUpdateRequest
 import com.liuvil.versati.api.data.Entry
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.api.data.Feed
+import com.liuvil.versati.api.data.FeedCountersResponse
 import com.liuvil.versati.api.data.Icon
 import com.liuvil.versati.api.data.SortDirection
 import retrofit2.http.Body
@@ -42,6 +43,9 @@ interface MinifluxRetrofitApi: MinifluxApi {
 
     @GET("/v1/entries/{id}")
     override suspend fun getEntry(@Path("id") id: Int): Entry
+
+    @GET("/v1/feeds/counters")
+    override suspend fun getFeedCounters(): FeedCountersResponse
 
     @GET("/v1/feeds/{feedId}/entries")
     override suspend fun getFeedEntries(

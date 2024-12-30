@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.liuvil.versati.api.MinifluxApi
 import com.liuvil.versati.api.data.EntriesUpdateRequest
 import com.liuvil.versati.api.data.EntryStatus
+import com.liuvil.versati.api.data.FeedCountersResponse
 import com.liuvil.versati.api.data.SortDirection
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.None
@@ -23,12 +24,14 @@ class MainViewModel @Inject constructor(
     private val _categories = mutableStateOf<LazyResult<List<com.liuvil.versati.api.data.Category>>>(None())
     private val _feeds = mutableStateOf<LazyResult<List<com.liuvil.versati.api.data.Feed>>>(None())
     private val _feedIconsById = mutableStateMapOf<Int, LazyResult<com.liuvil.versati.api.data.Icon>>()
+    private val _feedCounters = mutableStateOf<LazyResult<FeedCountersResponse>>(None())
     private val _entries = mutableStateOf<LazyResult<List<com.liuvil.versati.api.data.Entry>>>(None())
 
     val selectedSource: MutableState<SourceSelection> = mutableStateOf(SourceSelection.Unread)
     val categories: State<LazyResult<List<com.liuvil.versati.api.data.Category>>> = _categories
     val feeds: State<LazyResult<List<com.liuvil.versati.api.data.Feed>>> = _feeds
     val feedIconsById: Map<Int, LazyResult<com.liuvil.versati.api.data.Icon>> = _feedIconsById
+    val feedCounters: State<LazyResult<FeedCountersResponse>> = _feedCounters
     val entries: State<LazyResult<List<com.liuvil.versati.api.data.Entry>>> = _entries
 
     suspend fun reloadCategories() {
@@ -46,6 +49,12 @@ class MainViewModel @Inject constructor(
     suspend fun reloadFeedIcon(id: Int) {
         lazyLoad(_feedIconsById, id) {
             minifluxApi.getFeedIcon(id)
+        }
+    }
+
+    suspend fun reloadFeedCounters() {
+        lazyLoad(_feedCounters) {
+            minifluxApi.getFeedCounters()
         }
     }
 

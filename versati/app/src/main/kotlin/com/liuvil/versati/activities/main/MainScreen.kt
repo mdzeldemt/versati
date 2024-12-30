@@ -51,6 +51,7 @@ fun MainScreen(
     val categories by viewModel.categories
     val feeds by viewModel.feeds
     val feedIconsById = viewModel.feedIconsById
+    val feedCounters by viewModel.feedCounters
     val entries by viewModel.entries
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -79,11 +80,13 @@ fun MainScreen(
         feeds.ifNone {
             viewModel.reloadFeeds()
 
-            feeds.ifSuccess {
-                it.forEach {
-                    viewModel.reloadFeedIcon(it.icon.iconId)
+            feeds.ifSuccess { feeds ->
+                feeds.forEach { feed ->
+                    viewModel.reloadFeedIcon(feed.icon.iconId)
                 }
             }
+
+            viewModel.reloadFeedCounters()
         }
 
         entries.ifNone {
@@ -93,9 +96,14 @@ fun MainScreen(
 
     Drawer(
         items = buildList {
+            val totalUnreadCount = feedCounters.ifSuccess { feedCounters ->
+                feedCounters.unreads.values.sum()
+            }
+
             add(
                 DrawerItem(
                     title = "Unread",
+                    badge = totalUnreadCount?.let { "$it" },
                     selected = selectedSource == SourceSelection.Unread
                 ) {
                     coroutineScope.launch {
@@ -109,9 +117,17 @@ fun MainScreen(
                     val feedsByCategoryId = feeds.groupBy { it.category.id }
 
                     categories.forEach { category ->
+                        val categoryUnreadCount = feedCounters.ifSuccess { feedCounters ->
+                            feedsByCategoryId.getOrDefault(category.id, emptyList())
+                                .sumOf { feed ->
+                                    feedCounters.unreads.getOrDefault(feed.id, 0)
+                                }
+                        }
+
                         add(
                             DrawerItem(
                                 title = category.title,
+                                badge = categoryUnreadCount?.let { "$it" },
                                 selected = selectedSource == SourceSelection.Category(category.id)
                             ) {
                                 coroutineScope.launch {
@@ -121,6 +137,10 @@ fun MainScreen(
                         )
 
                         feedsByCategoryId.getOrDefault(category.id, emptyList()).forEach { feed ->
+                            val feedUnreadCount = feedCounters.ifSuccess { feedCounters ->
+                                feedCounters.unreads[feed.id]
+                            }
+
                             add(
                                 DrawerItem(
                                     title = feed.title,
@@ -133,6 +153,7 @@ fun MainScreen(
                                             else -> null
                                         }
                                     },
+                                    badge = feedUnreadCount?.let { "$it" },
                                     selected = selectedSource == SourceSelection.Feed(feed.id)
                                 ) {
                                     coroutineScope.launch {
@@ -145,12 +166,18 @@ fun MainScreen(
                 }
             }
 
+            val totalReadCount = feedCounters.ifSuccess { feedCounters ->
+                feedCounters.reads.values.sum()
+            }
             add(
                 DrawerItem(
                     title = "Read",
+                    badge = totalReadCount?.let { "$it" },
                     selected = selectedSource == SourceSelection.Read
                 ) {
-                    selectedSource = SourceSelection.Read
+                    coroutineScope.launch {
+                        updateSourceSelection(SourceSelection.Read)
+                    }
                 }
             )
 
