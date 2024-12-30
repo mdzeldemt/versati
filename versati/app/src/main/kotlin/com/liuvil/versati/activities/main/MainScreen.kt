@@ -23,13 +23,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.drawer.Drawer
-import com.liuvil.versati.activities.main.drawer.DrawerNode
+import com.liuvil.versati.activities.main.drawer.DrawerItem
+import com.liuvil.versati.activities.main.entry_list.buildFromAPIModel
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
-import com.liuvil.versati.framework.view.Status
-import com.liuvil.versati.framework.view.rememberViewStatusScope
+import com.liuvil.versati.framework.lazy.Loading
+import com.liuvil.versati.framework.lazy.None
+import com.liuvil.versati.framework.lazy.Success
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import kotlinx.coroutines.launch
+import java.time.ZoneId
 
 sealed interface SourceSelection {
     data object Unread: SourceSelection
@@ -43,20 +46,18 @@ sealed interface SourceSelection {
 fun MainScreen(
     onEntryOpenRequest: (Int) -> Unit
 ) {
-    val statusScope = rememberViewStatusScope()
-    val status by statusScope.status
-
     val viewModel = bindViewModel<MainViewModel>()
     var selectedSource by viewModel.selectedSource
-    val sourceTree by viewModel.sourceTree
-    val feedViewContent by viewModel.feedViewContent
+    val categories by viewModel.categories
+    val feeds by viewModel.feeds
+    val feedIconsById = viewModel.feedIconsById
+    val entries by viewModel.entries
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scrollState = rememberLazyListState()
     var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
-
     val isRefreshing by remember {
-        derivedStateOf { arrayOf(Status.UNINITIALIZED, Status.LOADING).contains(status) }
+        derivedStateOf { entries is None || entries is Loading }
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -65,57 +66,107 @@ fun MainScreen(
         {
             drawerState.close()
             selectedSource = it
-            statusScope.launchLoading {
-                viewModel.reloadEntries()
-            }
+            viewModel.reloadEntries()
             scrollState.scrollToItem(0)
         }
     }
 
     LaunchedEffect(Unit) {
-        if (status == Status.UNINITIALIZED) {
-            statusScope.launchLoading {
-                viewModel.reloadCategories()
-                viewModel.reloadFeeds()
-                viewModel.reloadEntries()
+        categories.ifNone {
+            viewModel.reloadCategories()
+        }
+
+        feeds.ifNone {
+            viewModel.reloadFeeds()
+
+            feeds.ifSuccess {
+                it.forEach {
+                    viewModel.reloadFeedIcon(it.icon.iconId)
+                }
             }
+        }
+
+        entries.ifNone {
+            viewModel.reloadEntries()
         }
     }
 
     Drawer(
-        sourceTree = sourceTree,
-        drawerState = drawerState,
-        selectedNode = selectedSource.let {
-            when (it) {
-                is SourceSelection.Unread -> DrawerNode.Unread
-                is SourceSelection.Category -> DrawerNode.Category(it.id)
-                is SourceSelection.Feed -> DrawerNode.Feed(it.id)
-                is SourceSelection.Read -> DrawerNode.Read
-            }
-        },
-        onNodeClicked = {
-            coroutineScope.launch {
-                drawerState.close()
+        items = buildList {
+            add(
+                DrawerItem(
+                    title = "Unread",
+                    selected = selectedSource == SourceSelection.Unread
+                ) {
+                    coroutineScope.launch {
+                        updateSourceSelection(SourceSelection.Unread)
+                    }
+                }
+            )
 
-                when (it) {
-                    is DrawerNode.Unread -> updateSourceSelection(SourceSelection.Unread)
-                    is DrawerNode.Category -> updateSourceSelection(SourceSelection.Category(it.id))
-                    is DrawerNode.Feed -> updateSourceSelection(SourceSelection.Feed(it.id))
-                    is DrawerNode.Read -> updateSourceSelection(SourceSelection.Read)
-                    else -> {
-                        // TODO: Implement remaining callbacks
+            categories.ifSuccess { categories ->
+                feeds.ifSuccess { feeds ->
+                    val feedsByCategoryId = feeds.groupBy { it.category.id }
+
+                    categories.forEach { category ->
+                        add(
+                            DrawerItem(
+                                title = category.title,
+                                selected = selectedSource == SourceSelection.Category(category.id)
+                            ) {
+                                coroutineScope.launch {
+                                    updateSourceSelection(SourceSelection.Category(category.id))
+                                }
+                            }
+                        )
+
+                        feedsByCategoryId.getOrDefault(category.id, emptyList()).forEach { feed ->
+                            add(
+                                DrawerItem(
+                                    title = feed.title,
+                                    icon = feedIconsById[feed.icon.iconId]?.let { icon ->
+                                        when (icon) {
+                                            is Loading -> DrawerItem.Icon.Loading
+                                            is Success -> DrawerItem.Icon.Data(
+                                                bytes = icon.value.data
+                                            )
+                                            else -> null
+                                        }
+                                    },
+                                    selected = selectedSource == SourceSelection.Feed(feed.id)
+                                ) {
+                                    coroutineScope.launch {
+                                        updateSourceSelection(SourceSelection.Feed(feed.id))
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
+
+            add(
+                DrawerItem(
+                    title = "Read",
+                    selected = selectedSource == SourceSelection.Read
+                ) {
+                    selectedSource = SourceSelection.Read
+                }
+            )
+
+            add(
+                DrawerItem("Settings") {
+                    // TODO: Implement settings
+                }
+            )
         },
+        drawerState = drawerState
     ) {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = {
                 coroutineScope.launch {
-                    statusScope.launchLoading {
-                        viewModel.reloadEntries()
-                    }
+                    viewModel.reloadEntries()
                 }
             },
             contentAlignment = Alignment.Center,
@@ -124,7 +175,7 @@ fun MainScreen(
             BlockingBox(
                 isBlocking = isRefreshing
             ) {
-                if (status == Status.IDLE) {
+                entries.ifSuccess { entries ->
                     LazyColumn (
                         state = scrollState,
                         verticalArrangement = Arrangement.Center,
@@ -133,7 +184,22 @@ fun MainScreen(
                     ) {
                         item {
                             FeedView(
-                                content = feedViewContent,
+                                content = FeedViewContent(
+                                    entryGroups = entries
+                                        .groupBy {
+                                            it.publishedAt
+                                                .atZoneSameInstant(ZoneId.systemDefault())
+                                                .toLocalDate()
+                                        }
+                                        .map {
+                                            EntryGroup.Timed(
+                                                date = it.key,
+                                                entries = it.value.map { entry ->
+                                                    buildFromAPIModel(entry)
+                                                }
+                                            )
+                                        }
+                                ),
                                 onEntryTileClicked = onEntryOpenRequest
                             )
                         }
@@ -149,26 +215,26 @@ fun MainScreen(
                             }
                         }
                     }
-                }
-            }
 
-            if (showMarkAsReadConfirmationDialog) {
-                ConfirmationDialog(
-                    title = "Mark page as read",
-                    text = "Are you sure you want to mark this page as read?",
-                    confirmText = "Mark as read",
-                    dismissText = "Cancel",
-                    onConfirm = {
-                        coroutineScope.launch {
-                            statusScope.launchLoading {
-                                viewModel.markPageAsRead()
-                                viewModel.reloadEntries()
-                            }
-                            scrollState.scrollToItem(0)
-                        }
-                    },
-                    onRespond = { showMarkAsReadConfirmationDialog = false }
-                )
+                    if (showMarkAsReadConfirmationDialog) {
+                        ConfirmationDialog(
+                            title = "Mark page as read",
+                            text = "Are you sure you want to mark this page as read?",
+                            confirmText = "Mark as read",
+                            dismissText = "Cancel",
+                            onConfirm = {
+                                coroutineScope.launch {
+                                    viewModel.markAsRead(
+                                        entryIds = entries.map { it.id }
+                                    )
+                                    viewModel.reloadEntries()
+                                    scrollState.scrollToItem(0)
+                                }
+                            },
+                            onRespond = { showMarkAsReadConfirmationDialog = false }
+                        )
+                    }
+                }
             }
         }
     }

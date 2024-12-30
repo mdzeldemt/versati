@@ -7,6 +7,7 @@ import com.liuvil.versati.api.data.EntriesUpdateRequest
 import com.liuvil.versati.api.data.Entry
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.api.data.Feed
+import com.liuvil.versati.api.data.Icon
 import com.liuvil.versati.api.data.SortDirection
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -49,6 +50,16 @@ interface MinifluxRetrofitApi: MinifluxApi {
         @Query("direction") direction: SortDirection?,
         @Query("limit") limit: Int?
     ): EntriesGetResponse
+
+    @GET("/v1/icons/{id}")
+    override suspend fun getFeedIcon(
+        @Path("id") id: Int
+    ): Icon
+
+    @GET("/v1/feeds/{feedId}/icon")
+    override suspend fun getFeedIconByFeedId(
+        @Path("feedId") feedId: Int
+    ): Icon
 
     @GET("/v1/feeds")
     override suspend fun getFeeds(): List<Feed>

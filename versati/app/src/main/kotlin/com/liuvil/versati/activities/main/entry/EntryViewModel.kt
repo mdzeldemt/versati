@@ -3,6 +3,9 @@ package com.liuvil.versati.activities.main.entry
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.liuvil.versati.api.MinifluxApi
+import com.liuvil.versati.framework.lazy.LazyResult
+import com.liuvil.versati.framework.lazy.None
+import com.liuvil.versati.framework.lazy.lazyLoad
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.net.URL
@@ -29,27 +32,20 @@ class EntryViewModel @Inject constructor(
 ): BaseViewModel<Int>() {
 
     private var _entryId: Int? = null
-    private val _entry = mutableStateOf<Entry?>(null)
-    private val _enclosure = mutableStateOf<Enclosure?>(null)
+    private val _entry = mutableStateOf<LazyResult<Entry>>(None())
+    private val _enclosure = mutableStateOf<LazyResult<Enclosure>>(None())
 
-    val entry: State<Entry?> = _entry
-    val enclosure: State<Enclosure?> = _enclosure
+    val entry: State<LazyResult<Entry>> = _entry
+    val enclosure: State<LazyResult<Enclosure>> = _enclosure
 
     override suspend fun initialize(initData: Int) {
         _entryId = initData
     }
 
-    suspend fun loadAll() {
-        loadEntry()
-
-        _entry.value?.enclosureId?.let {
-            loadEnclosure(id = it)
-        }
-    }
-
-    private suspend fun loadEntry() {
+    suspend fun loadEntry() {
         _entryId?.let { entryId ->
-            _entry.value = minifluxApi.getEntry(entryId).let { entry ->
+            lazyLoad(_entry) {
+                val entry = minifluxApi.getEntry(entryId)
                 Entry(
                     title = entry.title,
                     content = entry.content,
@@ -65,8 +61,10 @@ class EntryViewModel @Inject constructor(
         }
     }
 
-    private suspend fun loadEnclosure(id: Int) {
-        _enclosure.value = Enclosure(url = minifluxApi.getEnclosure(id).url)
+    suspend fun loadEnclosure(id: Int) {
+        lazyLoad(_enclosure) {
+            Enclosure(url = minifluxApi.getEnclosure(id).url)
+        }
     }
 
 }

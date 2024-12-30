@@ -7,6 +7,7 @@ import com.liuvil.versati.api.data.EntriesUpdateRequest
 import com.liuvil.versati.api.data.Entry
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.api.data.Feed
+import com.liuvil.versati.api.data.Icon
 import com.liuvil.versati.api.data.SortDirection
 
 interface MinifluxApi {
@@ -40,6 +41,14 @@ interface MinifluxApi {
         direction: SortDirection? = null,
         limit: Int? = null
     ): EntriesGetResponse
+
+    suspend fun getFeedIcon(
+        id: Int
+    ): Icon
+
+    suspend fun getFeedIconByFeedId(
+        feedId: Int
+    ): Icon
 
     suspend fun getFeeds(): List<Feed>
 

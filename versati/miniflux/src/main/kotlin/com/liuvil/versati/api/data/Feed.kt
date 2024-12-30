@@ -14,4 +14,9 @@ data class Feed(
     val nextCheckAt: OffsetDateTime,
     val category: Category,
     val icon: Icon
-)
+) {
+    data class Icon(
+        val feedId: Int,
+        val iconId: Int
+    )
+}

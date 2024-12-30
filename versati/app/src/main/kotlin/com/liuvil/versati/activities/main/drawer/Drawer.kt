@@ -1,7 +1,14 @@
 package com.liuvil.versati.activities.main.drawer
 
+import android.graphics.BitmapFactory
+import android.util.Base64
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -10,47 +17,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-data class SourceTree(
-    val categories: List<Category>
-)
-
-data class Category(
-    val id: Int,
+data class DrawerItem(
     val title: String,
-    val feeds: List<Feed>
-)
-
-data class Feed(
-    val id: Int,
-    val title: String
-)
-
-sealed interface DrawerNode {
-    data object Unread: DrawerNode
-    data object Read: DrawerNode
-
-    data class Category(
-        val id: Int
-    ): DrawerNode
-
-    data class Feed(
-        val id: Int
-    ): DrawerNode
-
-    data object Settings: DrawerNode
+    val icon: Icon? = null,
+    val selected: Boolean = false,
+    val onClick: () -> Unit
+) {
+    sealed interface Icon {
+        data object Loading: Icon
+        data class Data(val bytes: String): Icon
+    }
 }
 
 @Composable
 fun Drawer(
-    sourceTree: SourceTree,
-    selectedNode: DrawerNode?,
+    items: List<DrawerItem>,
     padding: Dp = 8.dp,
-    indentation: Dp = 12.dp,
     drawerState: DrawerState,
-    onNodeClicked: (DrawerNode) -> Unit,
     content: @Composable () -> Unit
 ) {
     ModalNavigationDrawer(
@@ -62,59 +49,41 @@ fun Drawer(
                 LazyColumn (
                     modifier = Modifier.padding(padding)
                 ) {
-                    item {
-                        NavigationDrawerItem(
-                            label = { Text("Unread") },
-                            selected = (selectedNode == DrawerNode.Unread),
-                            onClick = {
-                                onNodeClicked(DrawerNode.Unread)
-                            }
-                        )
-                    }
-
-                    sourceTree.categories.forEach { category ->
+                    items.forEach {
                         item {
                             NavigationDrawerItem(
-                                label = { Text(category.title) },
-                                selected = selectedNode == DrawerNode.Category(category.id),
-                                onClick = {
-                                    onNodeClicked(DrawerNode.Category(category.id))
-                                }
+                                label = {
+                                    Text(it.title)
+                                },
+                                icon = {
+                                    it.icon?.let { icon ->
+                                        Box(Modifier.size(24.dp)) {
+                                            when (icon) {
+                                                is DrawerItem.Icon.Loading ->
+                                                    CircularProgressIndicator()
+                                                is DrawerItem.Icon.Data -> {
+                                                    val decodedBytes = Base64.decode(
+                                                        icon.bytes.substringAfter(","),
+                                                        Base64.DEFAULT
+                                                    )
+                                                    val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+
+                                                    if (bitmap != null) {
+                                                        Image(
+                                                            bitmap = bitmap.asImageBitmap(),
+                                                            contentDescription = null,
+                                                            modifier = Modifier.fillMaxSize()
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                selected = it.selected,
+                                onClick = it.onClick
                             )
                         }
-
-                        category.feeds.forEach { feed ->
-                            item {
-                                NavigationDrawerItem(
-                                    label = { Text(feed.title) },
-                                    selected = selectedNode == DrawerNode.Feed(feed.id),
-                                    onClick = {
-                                        onNodeClicked(DrawerNode.Feed(feed.id))
-                                    },
-                                    modifier = Modifier.padding(start = indentation)
-                                )
-                            }
-                        }
-                    }
-
-                    item {
-                        NavigationDrawerItem(
-                            label = { Text("Read") },
-                            selected = selectedNode == DrawerNode.Read,
-                            onClick = {
-                                onNodeClicked(DrawerNode.Read)
-                            }
-                        )
-                    }
-
-                    item {
-                        NavigationDrawerItem(
-                            label = { Text("Settings") },
-                            selected = selectedNode == DrawerNode.Settings,
-                            onClick = {
-                                onNodeClicked(DrawerNode.Settings)
-                            }
-                        )
                     }
                 }
             }
