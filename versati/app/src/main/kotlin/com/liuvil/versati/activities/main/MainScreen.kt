@@ -34,7 +34,6 @@ import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
-import com.liuvil.versati.framework.lazy.Success
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import kotlinx.coroutines.launch
 import java.time.ZoneId
@@ -168,12 +167,10 @@ fun MainScreen(
                                 DrawerItem(
                                     title = feed.title,
                                     icon = feedIconsById[feed.icon.iconId]?.let { icon ->
-                                        when (icon) {
-                                            is Loading -> DrawerItem.Icon.Loading
-                                            is Success -> DrawerItem.Icon.Data(
-                                                bytes = icon.value.data
+                                        icon.ifSuccess {
+                                            DrawerItem.Icon.Data(
+                                                bytes = it.data
                                             )
-                                            else -> null
                                         }
                                     },
                                     badge = feedUnreadCount?.let { "$it" },

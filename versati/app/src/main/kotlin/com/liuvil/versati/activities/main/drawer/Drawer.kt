@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
@@ -32,7 +31,6 @@ data class DrawerItem(
     val onClick: () -> Unit
 ) {
     sealed interface Icon {
-        data object Loading: Icon
         data class Data(val bytes: String): Icon
         data class Vector(val vector: ImageVector): Icon
     }
@@ -68,8 +66,6 @@ fun Drawer(
                                     it.icon?.let { icon ->
                                         Box(Modifier.size(20.dp)) {
                                             when (icon) {
-                                                is DrawerItem.Icon.Loading ->
-                                                    CircularProgressIndicator()
                                                 is DrawerItem.Icon.Data -> {
                                                     val decodedBytes = Base64.decode(
                                                         icon.bytes.substringAfter(","),
