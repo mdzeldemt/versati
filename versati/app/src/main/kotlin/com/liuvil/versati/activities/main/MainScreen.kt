@@ -217,7 +217,7 @@ fun MainScreen(
                 entries.ifSuccess { entries ->
                     LazyColumn (
                         state = scrollState,
-                        verticalArrangement = Arrangement.Center,
+                        verticalArrangement = Arrangement.Top,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxSize()
                     ) {
