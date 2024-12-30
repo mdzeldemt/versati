@@ -5,6 +5,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -104,6 +109,9 @@ fun MainScreen(
             add(
                 DrawerItem(
                     title = "Unread",
+                    icon = DrawerItem.Icon.Vector(
+                        vector = Icons.Outlined.Today
+                    ),
                     badge = totalUnreadCount?.let { "$it" },
                     selected = selectedSource == SourceSelection.Unread
                 ) {
@@ -116,6 +124,9 @@ fun MainScreen(
             add(
                 DrawerItem(
                     title = "Starred",
+                    icon = DrawerItem.Icon.Vector(
+                        vector = Icons.Outlined.StarOutline
+                    ),
                     selected = selectedSource == SourceSelection.Starred
                 ) {
                     coroutineScope.launch {
@@ -184,6 +195,9 @@ fun MainScreen(
             add(
                 DrawerItem(
                     title = "Read",
+                    icon = DrawerItem.Icon.Vector(
+                        vector = Icons.Outlined.Book
+                    ),
                     badge = totalReadCount?.let { "$it" },
                     selected = selectedSource == SourceSelection.Read
                 ) {
@@ -194,7 +208,12 @@ fun MainScreen(
             )
 
             add(
-                DrawerItem("Settings") {
+                DrawerItem(
+                    title = "Settings",
+                    icon = DrawerItem.Icon.Vector(
+                        vector = Icons.Outlined.Settings
+                    ),
+                ) {
                     // TODO: Implement settings
                 }
             )

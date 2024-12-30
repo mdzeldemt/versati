@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
@@ -18,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -32,6 +34,7 @@ data class DrawerItem(
     sealed interface Icon {
         data object Loading: Icon
         data class Data(val bytes: String): Icon
+        data class Vector(val vector: ImageVector): Icon
     }
 }
 
@@ -63,7 +66,7 @@ fun Drawer(
                                 },
                                 icon = {
                                     it.icon?.let { icon ->
-                                        Box(Modifier.size(24.dp)) {
+                                        Box(Modifier.size(20.dp)) {
                                             when (icon) {
                                                 is DrawerItem.Icon.Loading ->
                                                     CircularProgressIndicator()
@@ -72,7 +75,11 @@ fun Drawer(
                                                         icon.bytes.substringAfter(","),
                                                         Base64.DEFAULT
                                                     )
-                                                    val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                                                    val bitmap = BitmapFactory.decodeByteArray(
+                                                        decodedBytes,
+                                                        0,
+                                                        decodedBytes.size
+                                                    )
 
                                                     if (bitmap != null) {
                                                         Image(
@@ -82,6 +89,11 @@ fun Drawer(
                                                         )
                                                     }
                                                 }
+                                                is DrawerItem.Icon.Vector ->
+                                                    Icon(
+                                                        icon.vector,
+                                                        contentDescription = null
+                                                    )
                                             }
                                         }
                                     }
