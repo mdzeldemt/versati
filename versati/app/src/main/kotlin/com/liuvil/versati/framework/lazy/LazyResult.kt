@@ -17,6 +17,25 @@ sealed class LazyResult<T> {
         }
         return null
     }
+
+    fun <U> map(
+        success: (T) -> U
+    ): LazyResult<U> =
+        map(
+            success = success,
+            failure = { it }
+        )
+
+    fun <U> map(
+        success: (T) -> U,
+        failure: (Exception) -> Exception = { it }
+    ): LazyResult<U> =
+        when (this) {
+            is None -> None()
+            is Loading -> Loading()
+            is Success -> Success(success(value))
+            is Failure -> Failure(failure(exception))
+        }
 }
 
 class None<T>: LazyResult<T>()

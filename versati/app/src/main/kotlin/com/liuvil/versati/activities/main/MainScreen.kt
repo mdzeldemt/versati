@@ -1,11 +1,13 @@
 package com.liuvil.versati.activities.main
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.StarOutline
@@ -64,6 +66,22 @@ fun MainScreen(
     var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
     val isRefreshing by remember {
         derivedStateOf { entries is None || entries is Loading }
+    }
+
+    val categoriesById by remember {
+        derivedStateOf {
+            categories.map { categories ->
+                categories.associateBy { it.id }
+            }
+        }
+    }
+
+    val feedsById by remember {
+        derivedStateOf {
+            feeds.map { feeds ->
+                feeds.associateBy { it.id }
+            }
+        }
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -217,77 +235,108 @@ fun MainScreen(
         },
         drawerState = drawerState
     ) {
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = {
-                coroutineScope.launch {
-                    viewModel.reloadEntries()
-                }
-            },
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            BlockingBox(
-                isBlocking = isRefreshing
-            ) {
-                entries.ifSuccess { entries ->
-                    LazyColumn (
-                        state = scrollState,
-                        verticalArrangement = Arrangement.Top,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        item {
-                            FeedView(
-                                content = FeedViewContent(
-                                    entryGroups = entries
-                                        .groupBy {
-                                            it.publishedAt
-                                                .atZoneSameInstant(ZoneId.systemDefault())
-                                                .toLocalDate()
-                                        }
-                                        .map {
-                                            EntryGroup.Timed(
-                                                date = it.key,
-                                                entries = it.value.map { entry ->
-                                                    buildFromAPIModel(entry)
-                                                }
-                                            )
-                                        }
-                                ),
-                                onEntryTileClicked = onEntryOpenRequest
+        Column {
+            selectedSource.let { selectedSource ->
+                Header(
+                    title = when (selectedSource) {
+                        SourceSelection.Unread -> "Unread"
+                        SourceSelection.Read -> "Read"
+                        SourceSelection.Starred -> "Starred"
+                        is SourceSelection.Category ->
+                            categoriesById.ifSuccess { categoriesById ->
+                                categoriesById[selectedSource.id]?.title
+                            }
+                        is SourceSelection.Feed ->
+                            feedsById.ifSuccess { feedsById ->
+                                feedsById[selectedSource.id]?.title
+                            }
+                    },
+                    buttons = buildList {
+                        entries.ifSuccess {
+                            add(
+                                HeaderButton(
+                                    icon = Icons.Filled.Check,
+                                    onClick = { showMarkAsReadConfirmationDialog = true }
+                                )
                             )
                         }
+                    }
+                )
+            }
 
-                        if (selectedSource != SourceSelection.Read) {
+
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = {
+                    coroutineScope.launch {
+                        viewModel.reloadEntries()
+                    }
+                },
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                BlockingBox(
+                    isBlocking = isRefreshing
+                ) {
+                    entries.ifSuccess { entries ->
+                        LazyColumn (
+                            state = scrollState,
+                            verticalArrangement = Arrangement.Top,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
                             item {
-                                Button(
-                                    onClick = { showMarkAsReadConfirmationDialog = true },
-                                    modifier = Modifier.padding(16.dp)
-                                ) {
-                                    Text("Mark this page as read")
+                                FeedView(
+                                    content = FeedViewContent(
+                                        entryGroups = entries
+                                            .groupBy {
+                                                it.publishedAt
+                                                    .atZoneSameInstant(ZoneId.systemDefault())
+                                                    .toLocalDate()
+                                            }
+                                            .map {
+                                                EntryGroup.Timed(
+                                                    date = it.key,
+                                                    entries = it.value.map { entry ->
+                                                        buildFromAPIModel(entry)
+                                                    }
+                                                )
+                                            }
+                                    ),
+                                    onEntryTileClicked = onEntryOpenRequest
+                                )
+                            }
+
+                            if (selectedSource != SourceSelection.Read) {
+                                item {
+                                    Button(
+                                        onClick = { showMarkAsReadConfirmationDialog = true },
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        Text("Mark this page as read")
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    if (showMarkAsReadConfirmationDialog) {
-                        ConfirmationDialog(
-                            title = "Mark page as read",
-                            text = "Are you sure you want to mark this page as read?",
-                            confirmText = "Mark as read",
-                            dismissText = "Cancel",
-                            onConfirm = {
-                                coroutineScope.launch {
-                                    viewModel.markAsRead(
-                                        entryIds = entries.map { it.id }
-                                    )
-                                    viewModel.reloadEntries()
-                                    scrollState.scrollToItem(0)
-                                }
-                            },
-                            onRespond = { showMarkAsReadConfirmationDialog = false }
-                        )
+                        if (showMarkAsReadConfirmationDialog) {
+                            ConfirmationDialog(
+                                title = "Mark page as read",
+                                text = "Are you sure you want to mark this page as read?",
+                                confirmText = "Mark as read",
+                                dismissText = "Cancel",
+                                onConfirm = {
+                                    coroutineScope.launch {
+                                        viewModel.markAsRead(
+                                            entryIds = entries.map { it.id }
+                                        )
+                                        viewModel.reloadEntries()
+                                        scrollState.scrollToItem(0)
+                                    }
+                                },
+                                onRespond = { showMarkAsReadConfirmationDialog = false }
+                            )
+                        }
                     }
                 }
             }
