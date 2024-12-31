@@ -31,33 +31,31 @@ sealed class EntryGroup(
     ): EntryGroup(entries)
 }
 
+
+
 @Composable
 fun FeedView(
     content: FeedViewContent,
     onEntryTileClicked: (Int) -> Unit,
     entryTitlePadding: Dp = 10.dp
 ) {
-    if (content.entryGroups.isNotEmpty()) {
-        content.entryGroups.forEach { entryGroup ->
-            Text(
-                text = when (entryGroup) {
-                    is EntryGroup.Timed -> entryGroup.date.formatHumanReadable()
-                    is EntryGroup.Categorized -> entryGroup.categoryTitle
-                },
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth().padding(
-                    start = entryTitlePadding,
-                    top = entryTitlePadding,
-                    end = entryTitlePadding
-                )
+    content.entryGroups.forEach { entryGroup ->
+        Text(
+            text = when (entryGroup) {
+                is EntryGroup.Timed -> entryGroup.date.formatHumanReadable()
+                is EntryGroup.Categorized -> entryGroup.categoryTitle
+            },
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth().padding(
+                start = entryTitlePadding,
+                top = entryTitlePadding,
+                end = entryTitlePadding
             )
+        )
 
-            EntryListView(
-                entries = entryGroup.entries,
-                onEntryTileClicked = onEntryTileClicked
-            )
-        }
-    } else {
-        Text("No entries found.")
+        EntryListView(
+            entries = entryGroup.entries,
+            onEntryTileClicked = onEntryTileClicked
+        )
     }
 }

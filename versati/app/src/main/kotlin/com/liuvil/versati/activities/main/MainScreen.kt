@@ -1,5 +1,6 @@
 package com.liuvil.versati.activities.main
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -36,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.drawer.Drawer
 import com.liuvil.versati.activities.main.drawer.DrawerItem
@@ -297,7 +301,6 @@ fun MainScreen(
                 )
             }
 
-
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
                 onRefresh = {
@@ -312,35 +315,35 @@ fun MainScreen(
                     isBlocking = isRefreshing
                 ) {
                     entriesResponse.ifSuccess { entriesResponse ->
-                        LazyColumn (
-                            state = scrollState,
-                            verticalArrangement = Arrangement.Top,
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            item {
-                                FeedView(
-                                    content = FeedViewContent(
-                                        entryGroups = entriesResponse.entries
-                                            .groupBy {
-                                                it.publishedAt
-                                                    .atZoneSameInstant(ZoneId.systemDefault())
-                                                    .toLocalDate()
-                                            }
-                                            .map {
-                                                EntryGroup.Timed(
-                                                    date = it.key,
-                                                    entries = it.value.map { entry ->
-                                                        buildFromAPIModel(entry)
-                                                    }
-                                                )
-                                            }
-                                    ),
-                                    onEntryTileClicked = onEntryOpenRequest
-                                )
-                            }
+                        if (entriesResponse.entries.isNotEmpty()) {
+                            LazyColumn (
+                                state = scrollState,
+                                verticalArrangement = Arrangement.Top,
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                item {
+                                    FeedView(
+                                        content = FeedViewContent(
+                                            entryGroups = entriesResponse.entries
+                                                .groupBy {
+                                                    it.publishedAt
+                                                        .atZoneSameInstant(ZoneId.systemDefault())
+                                                        .toLocalDate()
+                                                }
+                                                .map {
+                                                    EntryGroup.Timed(
+                                                        date = it.key,
+                                                        entries = it.value.map { entry ->
+                                                            buildFromAPIModel(entry)
+                                                        }
+                                                    )
+                                                }
+                                        ),
+                                        onEntryTileClicked = onEntryOpenRequest
+                                    )
+                                }
 
-                            if (entriesResponse.entries.isNotEmpty()) {
                                 item {
                                     Box(
                                         contentAlignment = Alignment.Center,
@@ -392,6 +395,15 @@ fun MainScreen(
                                         }
                                     }
                                 }
+                            }
+                        } else {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                Text("No entries found.")
                             }
                         }
 
