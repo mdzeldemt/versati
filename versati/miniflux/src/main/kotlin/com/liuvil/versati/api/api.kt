@@ -36,6 +36,7 @@ interface MinifluxApi {
         offset: Int? = null,
         beforeEntryId: Int? = null,
         afterEntryId: Int? = null,
+        globallyVisible: Boolean? = null,
         limit: Int? = null
     ): EntriesGetResponse
 

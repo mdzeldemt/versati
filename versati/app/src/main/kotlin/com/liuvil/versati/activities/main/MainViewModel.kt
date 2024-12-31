@@ -69,6 +69,7 @@ class MainViewModel @Inject constructor(
                             status = EntryStatus.UNREAD,
                             direction = SortDirection.DESCENDING,
                             offset = offset.intValue,
+                            globallyVisible = true,
                             limit = PAGE_ENTRY_COUNT
                         )
                     is SourceSelection.Read ->
