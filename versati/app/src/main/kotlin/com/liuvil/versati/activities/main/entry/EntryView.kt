@@ -28,6 +28,8 @@ import com.liuvil.versati.framework.android.openURLExternally
 import com.liuvil.versati.framework.date.formatHumanReadableLong
 import com.liuvil.versati.framework.lazy.Success
 import com.liuvil.versati.framework.viewmodel.bindViewModel
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import java.time.OffsetDateTime
 import java.time.ZoneId
 
@@ -43,10 +45,11 @@ fun EntryView(
         viewModel.loadEntry()
 
         entry.ifSuccess { entry ->
-            entry.enclosureId?.let { enclosureId ->
-                viewModel.loadEnclosure(id = enclosureId)
+            if (!Jsoup.parse(entry.content).containsImages()) {
+                entry.enclosureId?.let { enclosureId ->
+                    viewModel.loadEnclosure(id = enclosureId)
+                }
             }
-
         }
     }
 
@@ -126,6 +129,9 @@ private const val DEFAULT_STYLE = """
         max-width: 100%;
     }
 """
+
+private fun Document.containsImages(): Boolean =
+    select("img").isNotEmpty()
 
 private fun getEntryDetailsText(
     feedTitle: String,
