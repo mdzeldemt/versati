@@ -137,11 +137,6 @@ fun MainScreen(
     LaunchedEffect(Unit) {
         categories.ifNone {
             viewModel.reloadCategories()
-            categories.ifSuccess { categories ->
-                categories.forEach {
-                    expandedCategories[it.id] = true
-                }
-            }
         }
 
         feeds.ifNone {
