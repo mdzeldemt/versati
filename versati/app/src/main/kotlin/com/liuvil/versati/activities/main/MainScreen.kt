@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.drawer.Drawer
 import com.liuvil.versati.activities.main.drawer.DrawerItem
 import com.liuvil.versati.activities.main.entry_list.buildFromAPIModel
+import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.framework.lazy.Loading
@@ -97,6 +98,13 @@ fun MainScreen(
         }
     }
 
+    val areThereUnreadEntries by remember {
+        derivedStateOf {
+            entriesResponse.map {
+                it.entries.any { it.status == EntryStatus.UNREAD }
+            }
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
 
     val updateSourceSelection: suspend (SourceSelection) -> Unit = remember {
@@ -274,13 +282,15 @@ fun MainScreen(
                             }
                     },
                     buttons = buildList {
-                        entriesResponse.ifSuccess {
-                            add(
-                                HeaderButton(
-                                    icon = Icons.Filled.Check,
-                                    onClick = { showMarkAsReadConfirmationDialog = true }
+                        areThereUnreadEntries.ifSuccess { areThereUnreadEntries ->
+                            if (areThereUnreadEntries) {
+                                add(
+                                    HeaderButton(
+                                        icon = Icons.Filled.Check,
+                                        onClick = { showMarkAsReadConfirmationDialog = true }
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
                 )
@@ -369,12 +379,14 @@ fun MainScreen(
                                             }
                                         }
 
-                                        if (selectedSource != SourceSelection.Read) {
-                                            OutlinedButton(
-                                                onClick = { showMarkAsReadConfirmationDialog = true },
-                                                modifier = Modifier.padding(16.dp)
-                                            ) {
-                                                Text("Mark all as read")
+                                        areThereUnreadEntries.ifSuccess { areThereUnreadEntries ->
+                                            if (areThereUnreadEntries) {
+                                                OutlinedButton(
+                                                    onClick = { showMarkAsReadConfirmationDialog = true },
+                                                    modifier = Modifier.padding(16.dp)
+                                                ) {
+                                                    Text("Mark all as read")
+                                                }
                                             }
                                         }
                                     }
