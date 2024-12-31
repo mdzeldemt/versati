@@ -105,6 +105,7 @@ fun MainScreen(
             }
         }
     }
+
     val coroutineScope = rememberCoroutineScope()
 
     val updateSourceSelection: suspend (SourceSelection) -> Unit = remember {
@@ -208,7 +209,7 @@ fun MainScreen(
 
                         feedsByCategoryId.getOrDefault(category.id, emptyList()).forEach { feed ->
                             val feedUnreadCount = feedCounters.ifSuccess { feedCounters ->
-                                feedCounters.unreads[feed.id]
+                                feedCounters.unreads.getOrDefault(feed.id, 0)
                             }
 
                             add(
