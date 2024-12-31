@@ -19,6 +19,9 @@ interface MinifluxApi {
         categoryId: Int,
         status: EntryStatus? = null,
         direction: SortDirection? = null,
+        offset: Int? = null,
+        beforeEntryId: Int? = null,
+        afterEntryId: Int? = null,
         limit: Int? = null
     ): EntriesGetResponse
 
@@ -30,6 +33,9 @@ interface MinifluxApi {
         status: EntryStatus? = null,
         direction: SortDirection? = null,
         starred: Boolean? = null,
+        offset: Int? = null,
+        beforeEntryId: Int? = null,
+        afterEntryId: Int? = null,
         limit: Int? = null
     ): EntriesGetResponse
 
@@ -43,6 +49,9 @@ interface MinifluxApi {
         feedId: Int,
         status: EntryStatus? = null,
         direction: SortDirection? = null,
+        offset: Int? = null,
+        beforeEntryId: Int? = null,
+        afterEntryId: Int? = null,
         limit: Int? = null
     ): EntriesGetResponse
 

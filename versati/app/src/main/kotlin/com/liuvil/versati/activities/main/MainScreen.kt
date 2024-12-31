@@ -1,20 +1,28 @@
 package com.liuvil.versati.activities.main
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.outlined.Today
-import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
@@ -39,6 +47,10 @@ import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import kotlinx.coroutines.launch
 import java.time.ZoneId
+import kotlin.math.max
+
+// TODO: Make configurable
+const val PAGE_ENTRY_COUNT = 10
 
 sealed interface SourceSelection {
     data object Unread: SourceSelection
@@ -55,17 +67,18 @@ fun MainScreen(
 ) {
     val viewModel = bindViewModel<MainViewModel>()
     var selectedSource by viewModel.selectedSource
+    var offset by viewModel.offset
     val categories by viewModel.categories
     val feeds by viewModel.feeds
     val feedIconsById = viewModel.feedIconsById
     val feedCounters by viewModel.feedCounters
-    val entries by viewModel.entries
+    val entriesResponse by viewModel.entriesResponse
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scrollState = rememberLazyListState()
     var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
     val isRefreshing by remember {
-        derivedStateOf { entries is None || entries is Loading }
+        derivedStateOf { entriesResponse is None || entriesResponse is Loading }
     }
 
     val categoriesById by remember {
@@ -88,8 +101,17 @@ fun MainScreen(
 
     val updateSourceSelection: suspend (SourceSelection) -> Unit = remember {
         {
-            drawerState.close()
             selectedSource = it
+            offset = 0
+            drawerState.close()
+            viewModel.reloadEntries()
+            scrollState.scrollToItem(0)
+        }
+    }
+
+    val updateOffset: suspend (Int) -> Unit = remember {
+        {
+            offset = it
             viewModel.reloadEntries()
             scrollState.scrollToItem(0)
         }
@@ -112,7 +134,7 @@ fun MainScreen(
             viewModel.reloadFeedCounters()
         }
 
-        entries.ifNone {
+        entriesResponse.ifNone {
             viewModel.reloadEntries()
         }
     }
@@ -252,7 +274,7 @@ fun MainScreen(
                             }
                     },
                     buttons = buildList {
-                        entries.ifSuccess {
+                        entriesResponse.ifSuccess {
                             add(
                                 HeaderButton(
                                     icon = Icons.Filled.Check,
@@ -278,7 +300,7 @@ fun MainScreen(
                 BlockingBox(
                     isBlocking = isRefreshing
                 ) {
-                    entries.ifSuccess { entries ->
+                    entriesResponse.ifSuccess { entriesResponse ->
                         LazyColumn (
                             state = scrollState,
                             verticalArrangement = Arrangement.Top,
@@ -288,7 +310,7 @@ fun MainScreen(
                             item {
                                 FeedView(
                                     content = FeedViewContent(
-                                        entryGroups = entries
+                                        entryGroups = entriesResponse.entries
                                             .groupBy {
                                                 it.publishedAt
                                                     .atZoneSameInstant(ZoneId.systemDefault())
@@ -307,13 +329,54 @@ fun MainScreen(
                                 )
                             }
 
-                            if (selectedSource != SourceSelection.Read) {
+                            if (entriesResponse.entries.isNotEmpty()) {
                                 item {
-                                    Button(
-                                        onClick = { showMarkAsReadConfirmationDialog = true },
-                                        modifier = Modifier.padding(16.dp)
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Text("Mark this page as read")
+                                        Row {
+                                            if (offset > 0) {
+                                                IconButton(
+                                                    onClick = {
+                                                        coroutineScope.launch {
+                                                            updateOffset(max(offset - PAGE_ENTRY_COUNT, 0))
+                                                        }
+                                                    },
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                                        contentDescription = null
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(Modifier.weight(1f))
+
+                                            if (offset < entriesResponse.total - PAGE_ENTRY_COUNT) {
+                                                IconButton(
+                                                    onClick = {
+                                                        coroutineScope.launch {
+                                                            updateOffset(offset + PAGE_ENTRY_COUNT)
+                                                        }
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Default.ArrowForward,
+                                                        contentDescription = null
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        if (selectedSource != SourceSelection.Read) {
+                                            OutlinedButton(
+                                                onClick = { showMarkAsReadConfirmationDialog = true },
+                                                modifier = Modifier.padding(16.dp)
+                                            ) {
+                                                Text("Mark all as read")
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -328,7 +391,7 @@ fun MainScreen(
                                 onConfirm = {
                                     coroutineScope.launch {
                                         viewModel.markAsRead(
-                                            entryIds = entries.map { it.id }
+                                            entryIds = entriesResponse.entries.map { it.id }
                                         )
                                         viewModel.reloadEntries()
                                         scrollState.scrollToItem(0)

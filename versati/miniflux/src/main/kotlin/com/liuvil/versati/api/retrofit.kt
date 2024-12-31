@@ -26,6 +26,9 @@ interface MinifluxRetrofitApi: MinifluxApi {
         @Path("categoryId") categoryId: Int,
         @Query("status") status: EntryStatus?,
         @Query("direction") direction: SortDirection?,
+        @Query("offset") offset: Int?,
+        @Query("before_entry_id") beforeEntryId: Int?,
+        @Query("after_entry_id") afterEntryId: Int?,
         @Query("limit") limit: Int?
     ): EntriesGetResponse
 
@@ -39,6 +42,9 @@ interface MinifluxRetrofitApi: MinifluxApi {
         @Query("status") status: EntryStatus?,
         @Query("direction") direction: SortDirection?,
         @Query("starred") starred: Boolean?,
+        @Query("offset") offset: Int?,
+        @Query("before_entry_id") beforeEntryId: Int?,
+        @Query("after_entry_id") afterEntryId: Int?,
         @Query("limit") limit: Int?
     ): EntriesGetResponse
 
@@ -53,6 +59,9 @@ interface MinifluxRetrofitApi: MinifluxApi {
         @Path("feedId") feedId: Int,
         @Query("status") status: EntryStatus?,
         @Query("direction") direction: SortDirection?,
+        @Query("offset") offset: Int?,
+        @Query("before_entry_id") beforeEntryId: Int?,
+        @Query("after_entry_id") afterEntryId: Int?,
         @Query("limit") limit: Int?
     ): EntriesGetResponse
 
