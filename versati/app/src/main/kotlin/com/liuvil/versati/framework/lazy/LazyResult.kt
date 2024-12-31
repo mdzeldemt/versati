@@ -19,22 +19,19 @@ sealed class LazyResult<T> {
     }
 
     fun <U> map(
-        success: (T) -> U
-    ): LazyResult<U> =
-        map(
-            success = success,
-            failure = { it }
-        )
-
-    fun <U> map(
-        success: (T) -> U,
-        failure: (Exception) -> Exception = { it }
+        block: (T) -> U
     ): LazyResult<U> =
         when (this) {
             is None -> None()
             is Loading -> Loading()
-            is Success -> Success(success(value))
-            is Failure -> Failure(failure(exception))
+            is Success ->
+                try {
+                    Success(block(value))
+                } catch (exception: Exception) {
+                    Failure(exception)
+                }
+            is Failure ->
+                Failure(exception)
         }
 }
 
