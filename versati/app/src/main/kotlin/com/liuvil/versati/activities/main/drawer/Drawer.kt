@@ -1,40 +1,27 @@
 package com.liuvil.versati.activities.main.drawer
 
-import android.graphics.BitmapFactory
-import android.util.Base64
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DrawerState
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-data class DrawerItem(
-    val title: String,
-    val icon: Icon? = null,
-    val badge: String? = null,
-    val selected: Boolean = false,
-    val onClick: () -> Unit
-) {
-    sealed interface Icon {
-        data class Data(val bytes: String): Icon
-        data class Vector(val vector: ImageVector): Icon
-    }
-}
+data class ExpandableDrawerItem(
+    override val title: String,
+    override val badge: String? = null,
+    override val selected: Boolean = false,
+    val expanded: Boolean,
+    val children: List<DrawerItem>,
+    val onToggle: () -> Unit,
+    override val onClick: () -> Unit,
+): DrawerItem(title, badge, selected, onClick)
 
 @Composable
 fun Drawer(
@@ -49,60 +36,13 @@ fun Drawer(
             ModalDrawerSheet(
                 drawerShape = RectangleShape
             ) {
-                LazyColumn (
-                    modifier = Modifier.padding(padding)
+                Column (
+                    modifier = Modifier
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState())
                 ) {
                     items.forEach {
-                        item {
-                            NavigationDrawerItem(
-                                label = {
-                                    Text(
-                                        it.title,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                },
-                                icon = {
-                                    it.icon?.let { icon ->
-                                        Box(Modifier.size(20.dp)) {
-                                            when (icon) {
-                                                is DrawerItem.Icon.Data -> {
-                                                    val decodedBytes = Base64.decode(
-                                                        icon.bytes.substringAfter(","),
-                                                        Base64.DEFAULT
-                                                    )
-                                                    val bitmap = BitmapFactory.decodeByteArray(
-                                                        decodedBytes,
-                                                        0,
-                                                        decodedBytes.size
-                                                    )
-
-                                                    if (bitmap != null) {
-                                                        Image(
-                                                            bitmap = bitmap.asImageBitmap(),
-                                                            contentDescription = null,
-                                                            modifier = Modifier.fillMaxSize()
-                                                        )
-                                                    }
-                                                }
-                                                is DrawerItem.Icon.Vector ->
-                                                    Icon(
-                                                        icon.vector,
-                                                        contentDescription = null
-                                                    )
-                                            }
-                                        }
-                                    }
-                                },
-                                badge = {
-                                    it.badge?.let { badge ->
-                                        Text(badge)
-                                    }
-                                },
-                                selected = it.selected,
-                                onClick = it.onClick
-                            )
-                        }
+                        DrawerItem(it)
                     }
                 }
             }

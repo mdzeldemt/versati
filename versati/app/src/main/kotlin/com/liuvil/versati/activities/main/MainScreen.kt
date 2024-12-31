@@ -1,6 +1,5 @@
 package com.liuvil.versati.activities.main
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,16 +32,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.drawer.Drawer
-import com.liuvil.versati.activities.main.drawer.DrawerItem
+import com.liuvil.versati.activities.main.drawer.ExpandableDrawerItem
+import com.liuvil.versati.activities.main.drawer.FlatDrawerItem
 import com.liuvil.versati.activities.main.entry_list.buildFromAPIModel
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.components.BlockingBox
@@ -79,13 +79,6 @@ fun MainScreen(
     val feedCounters by viewModel.feedCounters
     val entriesResponse by viewModel.entriesResponse
 
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scrollState = rememberLazyListState()
-    var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
-    val isRefreshing by remember {
-        derivedStateOf { entriesResponse is None || entriesResponse is Loading }
-    }
-
     val categoriesById by remember {
         derivedStateOf {
             categories.map { categories ->
@@ -108,6 +101,17 @@ fun MainScreen(
                 it.entries.any { it.status == EntryStatus.UNREAD }
             }
         }
+    }
+
+    // Drawer
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val expandedCategories = remember { mutableStateMapOf<Int, Boolean>() }
+
+    // Feed View
+    val scrollState = rememberLazyListState()
+    var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
+    val isRefreshing by remember {
+        derivedStateOf { entriesResponse is None || entriesResponse is Loading }
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -133,6 +137,11 @@ fun MainScreen(
     LaunchedEffect(Unit) {
         categories.ifNone {
             viewModel.reloadCategories()
+            categories.ifSuccess { categories ->
+                categories.forEach {
+                    expandedCategories[it.id] = true
+                }
+            }
         }
 
         feeds.ifNone {
@@ -159,9 +168,9 @@ fun MainScreen(
             }
 
             add(
-                DrawerItem(
+                FlatDrawerItem(
                     title = "Unread",
-                    icon = DrawerItem.Icon.Vector(
+                    icon = FlatDrawerItem.Icon.Vector(
                         vector = Icons.Outlined.Today
                     ),
                     badge = totalUnreadCount?.let { "$it" },
@@ -174,9 +183,9 @@ fun MainScreen(
             )
 
             add(
-                DrawerItem(
+                FlatDrawerItem(
                     title = "Starred",
-                    icon = DrawerItem.Icon.Vector(
+                    icon = FlatDrawerItem.Icon.Vector(
                         vector = Icons.Outlined.StarOutline
                     ),
                     selected = selectedSource == SourceSelection.Starred
@@ -200,41 +209,50 @@ fun MainScreen(
                         }
 
                         add(
-                            DrawerItem(
+                            ExpandableDrawerItem(
                                 title = category.title,
                                 badge = categoryUnreadCount?.let { "$it" },
-                                selected = selectedSource == SourceSelection.Category(category.id)
+                                selected = selectedSource == SourceSelection.Category(category.id),
+                                expanded = expandedCategories.getOrDefault(category.id, false),
+                                children = buildList {
+                                    feedsByCategoryId.getOrDefault(category.id, emptyList()).forEach { feed ->
+                                        val feedUnreadCount = feedCounters.ifSuccess { feedCounters ->
+                                            feedCounters.unreads.getOrDefault(feed.id, 0)
+                                        }
+
+                                        add(
+                                            FlatDrawerItem(
+                                                title = feed.title,
+                                                icon = feedIconsById[feed.icon.iconId]?.let { icon ->
+                                                    icon.ifSuccess {
+                                                        FlatDrawerItem.Icon.Data(
+                                                            bytes = it.data
+                                                        )
+                                                    }
+                                                },
+                                                badge = feedUnreadCount?.let { "$it" },
+                                                selected = selectedSource == SourceSelection.Feed(feed.id)
+                                            ) {
+                                                coroutineScope.launch {
+                                                    updateSourceSelection(SourceSelection.Feed(feed.id))
+                                                }
+                                            }
+                                        )
+                                    }
+                                },
+                                onToggle = {
+                                    if (expandedCategories.getOrDefault(category.id, false)) {
+                                        expandedCategories.remove(category.id)
+                                    } else {
+                                        expandedCategories[category.id] = true
+                                    }
+                                }
                             ) {
                                 coroutineScope.launch {
                                     updateSourceSelection(SourceSelection.Category(category.id))
                                 }
                             }
                         )
-
-                        feedsByCategoryId.getOrDefault(category.id, emptyList()).forEach { feed ->
-                            val feedUnreadCount = feedCounters.ifSuccess { feedCounters ->
-                                feedCounters.unreads.getOrDefault(feed.id, 0)
-                            }
-
-                            add(
-                                DrawerItem(
-                                    title = feed.title,
-                                    icon = feedIconsById[feed.icon.iconId]?.let { icon ->
-                                        icon.ifSuccess {
-                                            DrawerItem.Icon.Data(
-                                                bytes = it.data
-                                            )
-                                        }
-                                    },
-                                    badge = feedUnreadCount?.let { "$it" },
-                                    selected = selectedSource == SourceSelection.Feed(feed.id)
-                                ) {
-                                    coroutineScope.launch {
-                                        updateSourceSelection(SourceSelection.Feed(feed.id))
-                                    }
-                                }
-                            )
-                        }
                     }
                 }
             }
@@ -243,9 +261,9 @@ fun MainScreen(
                 feedCounters.reads.values.sum()
             }
             add(
-                DrawerItem(
+                FlatDrawerItem(
                     title = "Read",
-                    icon = DrawerItem.Icon.Vector(
+                    icon = FlatDrawerItem.Icon.Vector(
                         vector = Icons.Outlined.Book
                     ),
                     badge = totalReadCount?.let { "$it" },
@@ -258,9 +276,9 @@ fun MainScreen(
             )
 
             add(
-                DrawerItem(
+                FlatDrawerItem(
                     title = "Settings",
-                    icon = DrawerItem.Icon.Vector(
+                    icon = FlatDrawerItem.Icon.Vector(
                         vector = Icons.Outlined.Settings
                     ),
                 ) {
