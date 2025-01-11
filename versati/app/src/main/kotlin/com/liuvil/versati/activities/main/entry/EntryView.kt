@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.android.openURLExternally
 import com.liuvil.versati.framework.date.formatHumanReadableLong
-import com.liuvil.versati.framework.lazy.Success
+import com.liuvil.versati.framework.preferences.entry.content.css.DEFAULT_ENTRY_CONTENT_STYLESHEET
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -54,81 +54,67 @@ fun EntryView(
     }
 
     entry.let {
-        when (it) {
-            is Success -> {
-                val context = LocalContext.current
-                val openURL: () -> Unit = remember {
-                    { openURLExternally(Uri.parse(it.value.url.toString()), context) }
-                }
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        it.value.title,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                onClick = openURL,
-                                indication = null,
-                                interactionSource = null
-                            )
-                    )
-
-                    Text(
-                        getEntryDetailsText(
-                            it.value.feedTitle,
-                            it.value.author,
-                            it.value.publishedAt
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    enclosure.ifSuccess { enclosure ->
-                        AsyncImage(
-                            model = enclosure.url.toString(),
-                            contentDescription = null,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                    }
-
-                    EntryContentView(it.value.content, DEFAULT_STYLE)
-
-                    Button(onClick = openURL) {
-                        Text("Open in web browser")
-                    }
-                }
+        it.ifSuccess { entry ->
+            val context = LocalContext.current
+            val openURL: () -> Unit = remember {
+                { openURLExternally(Uri.parse(entry.url.toString()), context) }
             }
 
-            else -> Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize(),
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(8.dp)
             ) {
-                CircularProgressIndicator()
+                Text(
+                    entry.title,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            onClick = openURL,
+                            indication = null,
+                            interactionSource = null
+                        )
+                )
+
+                Text(
+                    getEntryDetailsText(
+                        entry.feedTitle,
+                        entry.author,
+                        entry.publishedAt
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                enclosure.ifSuccess { enclosure ->
+                    AsyncImage(
+                        model = enclosure.url.toString(),
+                        contentDescription = null,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                }
+
+                EntryContentView(
+                    entry.content,
+                    DEFAULT_ENTRY_CONTENT_STYLESHEET
+                )
+
+                Button(onClick = openURL) {
+                    Text("Open in web browser")
+                }
             }
+        } ?: Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            CircularProgressIndicator()
         }
     }
 }
-
-// TODO: Save as a default in an asset file and make configurable
-private const val DEFAULT_STYLE = """
-    body {
-        margin: 0;
-        padding 0;
-        font-size: 12pt !important;
-    }
-
-    img {
-        max-width: 100%;
-    }
-"""
 
 private fun Document.containsImages(): Boolean =
     select("img").isNotEmpty()
