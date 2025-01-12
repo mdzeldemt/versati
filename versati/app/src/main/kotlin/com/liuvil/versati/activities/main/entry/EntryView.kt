@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,7 +17,12 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +47,7 @@ import org.jsoup.nodes.Document
 import java.time.OffsetDateTime
 import java.time.ZoneId
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntryView(
     id: Int,
@@ -65,34 +72,41 @@ fun EntryView(
         }
     }
 
-    Column {
-        Header(
-            startButtons = listOf(
-                HeaderButton(
-                    icon = Icons.AutoMirrored.Default.ArrowBack,
-                    onClick = onDismiss
-                )
-            ),
-            endButtons = buildList {
-                starred.ifSuccess { starred ->
-                    add(
-                        HeaderButton(
-                            icon =
-                            if (starred)
-                                Icons.Filled.Star
-                            else
-                                Icons.Outlined.StarOutline,
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {},
+                navigationIcon = {
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            contentDescription = null
+                        )
+                    }
+                },
+                actions = {
+                    starred.ifSuccess { starred ->
+                        IconButton(
                             onClick = {
                                 coroutineScope.launch {
                                     viewModel.toggleStarred()
                                 }
                             }
-                        )
-                    )
+                        ) {
+                            Icon(
+                                imageVector =
+                                if (starred)
+                                    Icons.Filled.Star
+                                else
+                                    Icons.Outlined.StarOutline,
+                                contentDescription = null
+                            )
+                        }
+                    }
                 }
-            }
-        )
-
+            )
+        }
+    ) { padding ->
         entry.ifSuccess {
             val context = LocalContext.current
             val openURL: () -> Unit = remember {
@@ -105,7 +119,7 @@ fun EntryView(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(8.dp)
+                    .padding(padding)
             ) {
                 Text(
                     it.title,

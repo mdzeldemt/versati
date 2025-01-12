@@ -1,8 +1,8 @@
 package com.liuvil.versati.activities.main
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,7 +27,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -52,8 +54,6 @@ import com.liuvil.versati.activities.main.search.SearchDialog
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
-import com.liuvil.versati.components.Header
-import com.liuvil.versati.components.HeaderButton
 import com.liuvil.versati.framework.date.formatHumanReadable
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
@@ -116,7 +116,7 @@ fun FeedView(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val expandedCategories = remember { mutableStateMapOf<Int, Boolean>() }
 
-    // Feed View
+    // Entry List View
     val scrollState = rememberLazyListState()
     var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
     var showSearchDialog by remember { mutableStateOf(false) }
@@ -308,43 +308,56 @@ fun FeedView(
         },
         drawerState = drawerState
     ) {
-        Column {
-            source.let { source ->
-                Header(
-                    title = when (source) {
-                        Source.Unread -> "Unread"
-                        Source.Read -> "Read"
-                        Source.Starred -> "Starred"
-                        is Source.Category ->
-                            categoriesById.ifSuccess { categoriesById ->
-                                categoriesById[source.id]?.title
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        val title = source.let { source ->
+                            when (source) {
+                                Source.Unread -> "Unread"
+                                Source.Read -> "Read"
+                                Source.Starred -> "Starred"
+                                is Source.Category ->
+                                    categoriesById.ifSuccess { categoriesById ->
+                                        categoriesById[source.id]?.title
+                                    }
+                                is Source.Feed ->
+                                    feedsById.ifSuccess { feedsById ->
+                                        feedsById[source.id]?.title
+                                    }
+                                is Source.Search -> "Search '${source.term}'"
                             }
-                        is Source.Feed ->
-                            feedsById.ifSuccess { feedsById ->
-                                feedsById[source.id]?.title
-                            }
-                        is Source.Search -> "Search '${source.term}'"
+                        }
+                        title?.let {
+                            Text(it)
+                        }
                     },
-                    endButtons = buildList {
+                    actions = {
                         areThereUnreadEntries.ifSuccess { areThereUnreadEntries ->
                             if (areThereUnreadEntries) {
-                                add(
-                                    HeaderButton(
-                                        icon = Icons.Filled.Check,
-                                        onClick = { showMarkAsReadConfirmationDialog = true }
+                                IconButton(
+                                    onClick = { showMarkAsReadConfirmationDialog = true }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = null
                                     )
-                                )
+                                }
                             }
                         }
                     },
-                    onClick = {
-                        if (source is Source.Search) {
-                            showSearchDialog = true
-                        }
-                    }
+                    modifier = Modifier.clickable(
+                        onClick = {
+                            if (source is Source.Search) {
+                                showSearchDialog = true
+                            }
+                        },
+                        indication = null,
+                        interactionSource = null
+                    )
                 )
             }
-
+        ) { padding ->
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
                 onRefresh = {
@@ -353,7 +366,9 @@ fun FeedView(
                     }
                 },
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
             ) {
                 BlockingBox(
                     isBlocking = isRefreshing
