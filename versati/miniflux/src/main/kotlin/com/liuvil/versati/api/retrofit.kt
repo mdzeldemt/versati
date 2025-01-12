@@ -80,6 +80,11 @@ interface MinifluxRetrofitApi: MinifluxApi {
     @GET("/v1/feeds")
     override suspend fun getFeeds(): List<Feed>
 
+    @PUT("/v1/entries/{id}/bookmark")
+    override suspend fun toggleEntryBookmark(
+        @Path("id") id: Int
+    )
+
     @PUT("/v1/entries")
     override suspend fun updateEntries(
         @Body request: EntriesUpdateRequest

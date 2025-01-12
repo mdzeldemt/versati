@@ -49,6 +49,8 @@ import com.liuvil.versati.activities.main.search.SearchDialog
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
+import com.liuvil.versati.components.Header
+import com.liuvil.versati.components.HeaderButton
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.viewmodel.bindViewModel
@@ -319,7 +321,7 @@ fun MainScreen(
                             }
                         is SourceSelection.Search -> "Search '${selectedSource.term}'"
                     },
-                    buttons = buildList {
+                    endButtons = buildList {
                         areThereUnreadEntries.ifSuccess { areThereUnreadEntries ->
                             if (areThereUnreadEntries) {
                                 add(

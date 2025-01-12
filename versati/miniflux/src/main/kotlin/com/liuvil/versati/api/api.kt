@@ -67,6 +67,10 @@ interface MinifluxApi {
 
     suspend fun getFeeds(): List<Feed>
 
+    suspend fun toggleEntryBookmark(
+        id: Int
+    )
+
     suspend fun updateEntries(
         request: EntriesUpdateRequest
     )

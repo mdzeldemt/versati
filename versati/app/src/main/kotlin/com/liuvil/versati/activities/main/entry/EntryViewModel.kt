@@ -3,8 +3,11 @@ package com.liuvil.versati.activities.main.entry
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.liuvil.versati.api.MinifluxApi
+import com.liuvil.versati.framework.lazy.Failure
 import com.liuvil.versati.framework.lazy.LazyResult
+import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
+import com.liuvil.versati.framework.lazy.Success
 import com.liuvil.versati.framework.lazy.lazyLoad
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,9 +37,11 @@ class EntryViewModel @Inject constructor(
     private var _entryId: Int? = null
     private val _entry = mutableStateOf<LazyResult<Entry>>(None())
     private val _enclosure = mutableStateOf<LazyResult<Enclosure>>(None())
+    private val _starred = mutableStateOf<LazyResult<Boolean>>(None())
 
     val entry: State<LazyResult<Entry>> = _entry
     val enclosure: State<LazyResult<Enclosure>> = _enclosure
+    val starred: State<LazyResult<Boolean>> = _starred
 
     override suspend fun initialize(initData: Int) {
         _entryId = initData
@@ -44,8 +49,18 @@ class EntryViewModel @Inject constructor(
 
     suspend fun loadEntry() {
         _entryId?.let { entryId ->
-            lazyLoad(_entry) {
-                val entry = minifluxApi.getEntry(entryId)
+            _entry.value = Loading()
+            _starred.value = Loading()
+
+            val entry = try {
+                minifluxApi.getEntry(entryId)
+            } catch (exception: Exception) {
+                _entry.value = Failure(exception)
+                _starred.value = Failure(exception)
+                return
+            }
+
+            _entry.value = Success(
                 Entry(
                     title = entry.title,
                     content = entry.content,
@@ -57,7 +72,8 @@ class EntryViewModel @Inject constructor(
                     publishedAt = entry.publishedAt,
                     enclosureId = entry.enclosures.firstOrNull()?.id
                 )
-            }
+            )
+            _starred.value = Success(entry.starred)
         }
     }
 
@@ -67,4 +83,20 @@ class EntryViewModel @Inject constructor(
         }
     }
 
+    suspend fun toggleStarred() {
+        _entryId?.let { entryId ->
+            _starred.value.ifSuccess { starred ->
+                _starred.value = Loading()
+
+                try {
+                    minifluxApi.toggleEntryBookmark(entryId)
+                } catch (exception: Exception) {
+                    _starred.value = Failure(exception)
+                    return
+                }
+
+                _starred.value = Success(!starred)
+            }
+        }
+    }
 }

@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main
+package com.liuvil.versati.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -26,9 +26,10 @@ data class HeaderButton(
 
 @Composable
 fun Header(
-    title: String?,
-    buttons: List<HeaderButton>,
-    onClick: () -> Unit
+    title: String? = null,
+    startButtons: List<HeaderButton> = emptyList(),
+    endButtons: List<HeaderButton> = emptyList(),
+    onClick: () -> Unit = {}
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -46,18 +47,14 @@ fun Header(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxSize()
         ) {
+            startButtons.map {
+                HeaderButton(it)
+            }
+
             Spacer(modifier = Modifier.weight(1f))
 
-            buttons.map { button ->
-                IconButton(
-                    onClick = button.onClick,
-                    modifier = Modifier.aspectRatio(1f)
-                ) {
-                    Icon(
-                        imageVector = button.icon,
-                        contentDescription = null
-                    )
-                }
+            endButtons.map {
+                HeaderButton(it)
             }
         }
 
@@ -67,5 +64,18 @@ fun Header(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+@Composable
+private fun HeaderButton(button: HeaderButton) {
+    IconButton(
+        onClick = button.onClick,
+        modifier = Modifier.aspectRatio(1f)
+    ) {
+        Icon(
+            imageVector = button.icon,
+            contentDescription = null
+        )
     }
 }
