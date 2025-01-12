@@ -18,7 +18,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(
+class FeedViewModel @Inject constructor(
     private val minifluxApi: MinifluxApi
 ): BaseViewModel<Unit>() {
 

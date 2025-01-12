@@ -1,11 +1,11 @@
-package com.liuvil.versati.navigation
+package com.liuvil.versati.activities.main.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.liuvil.versati.activities.main.MainScreen
+import com.liuvil.versati.activities.main.FeedView
 import com.liuvil.versati.activities.main.entry.EntryView
 
 @Composable
@@ -17,7 +17,7 @@ fun NavigationRoot() {
         startDestination = NavigationDestination.Main
     ) {
         composable<NavigationDestination.Main> {
-            MainScreen(
+            FeedView(
                 onEntryOpenRequest = {
                     navController.navigate(NavigationDestination.Entry(id = it))
                 }
@@ -25,8 +25,12 @@ fun NavigationRoot() {
         }
 
         composable<NavigationDestination.Entry> {
-            val destination = it.toRoute<NavigationDestination.Entry>()
-            EntryView(destination.id)
+            EntryView(
+                id = it.toRoute<NavigationDestination.Entry>().id,
+                onDismiss = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

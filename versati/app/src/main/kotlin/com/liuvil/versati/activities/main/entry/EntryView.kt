@@ -43,7 +43,8 @@ import java.time.ZoneId
 
 @Composable
 fun EntryView(
-    id: Int
+    id: Int,
+    onDismiss: () -> Unit
 ) {
     val viewModel = bindViewModel<Int, EntryViewModel>(id)
     val entry by viewModel.entry
@@ -69,9 +70,7 @@ fun EntryView(
             startButtons = listOf(
                 HeaderButton(
                     icon = Icons.AutoMirrored.Default.ArrowBack,
-                    onClick = {
-                        // TODO: Implement
-                    }
+                    onClick = onDismiss
                 )
             ),
             endButtons = buildList {

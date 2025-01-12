@@ -1,4 +1,4 @@
-package com.liuvil.versati.navigation
+package com.liuvil.versati.activities.main.navigation
 
 import kotlinx.serialization.Serializable
 
