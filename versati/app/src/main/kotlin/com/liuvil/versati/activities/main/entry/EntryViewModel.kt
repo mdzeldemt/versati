@@ -3,6 +3,7 @@ package com.liuvil.versati.activities.main.entry
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.liuvil.versati.api.MinifluxApi
+import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.framework.lazy.Failure
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.Loading
@@ -21,7 +22,9 @@ data class Entry(
     val url: URL,
     val feedTitle: String,
     val author: String?,
+    val createdAt: OffsetDateTime,
     val publishedAt: OffsetDateTime,
+    val read: Boolean,
     val enclosureId: Int?
 )
 
@@ -69,7 +72,9 @@ class EntryViewModel @Inject constructor(
                     author = entry.author.let {
                         it.ifEmpty { null }
                     },
+                    createdAt = entry.createdAt,
                     publishedAt = entry.publishedAt,
+                    read = entry.status == EntryStatus.READ,
                     enclosureId = entry.enclosures.firstOrNull()?.id
                 )
             )
