@@ -33,10 +33,6 @@ data class EntryContent(
     val imageURLs: List<URL>
 )
 
-data class Enclosure(
-    val url: URL
-)
-
 @Composable
 fun EntryListView(
     entries: List<Entry>,
