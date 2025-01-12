@@ -2,6 +2,7 @@ package com.liuvil.versati.activities.main
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -45,12 +46,15 @@ fun FeedView(
                 is EntryGroup.Timed -> entryGroup.date.formatHumanReadable()
                 is EntryGroup.Categorized -> entryGroup.categoryTitle
             },
+            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.fillMaxWidth().padding(
-                start = entryTitlePadding,
-                top = entryTitlePadding,
-                end = entryTitlePadding
-            )
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = entryTitlePadding,
+                    top = entryTitlePadding,
+                    end = entryTitlePadding
+                )
         )
 
         EntryListView(
