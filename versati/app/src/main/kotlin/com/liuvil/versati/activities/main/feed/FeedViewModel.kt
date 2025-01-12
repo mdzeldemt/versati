@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main
+package com.liuvil.versati.activities.main.feed
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf

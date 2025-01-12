@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.search
+package com.liuvil.versati.activities.main.feed.search
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text

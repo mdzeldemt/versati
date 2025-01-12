@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main
+package com.liuvil.versati.activities.main.feed
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,12 +45,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.activities.main.drawer.Drawer
-import com.liuvil.versati.activities.main.drawer.ExpandableDrawerItem
-import com.liuvil.versati.activities.main.drawer.FlatDrawerItem
-import com.liuvil.versati.activities.main.entry_list.EntryListView
-import com.liuvil.versati.activities.main.entry_list.buildFromAPIModel
-import com.liuvil.versati.activities.main.search.SearchDialog
+import com.liuvil.versati.activities.main.feed.drawer.Drawer
+import com.liuvil.versati.activities.main.feed.drawer.ExpandableDrawerItem
+import com.liuvil.versati.activities.main.feed.drawer.FlatDrawerItem
+import com.liuvil.versati.activities.main.feed.entry_list.EntryListView
+import com.liuvil.versati.activities.main.feed.entry_list.buildFromAPIModel
+import com.liuvil.versati.activities.main.feed.search.SearchDialog
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog

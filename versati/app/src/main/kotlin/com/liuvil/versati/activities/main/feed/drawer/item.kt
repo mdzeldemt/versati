@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.drawer
+package com.liuvil.versati.activities.main.feed.drawer
 
 import android.graphics.BitmapFactory
 import android.util.Base64

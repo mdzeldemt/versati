@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.entry_list
+package com.liuvil.versati.activities.main.feed.entry_list
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.activities.main.EntryTile
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.framework.mimetype.isImageMimeType
 import org.jsoup.Jsoup

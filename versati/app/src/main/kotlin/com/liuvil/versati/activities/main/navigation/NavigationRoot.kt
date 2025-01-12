@@ -5,7 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.liuvil.versati.activities.main.FeedView
+import com.liuvil.versati.activities.main.feed.FeedView
 import com.liuvil.versati.activities.main.entry.EntryView
 
 @Composable
