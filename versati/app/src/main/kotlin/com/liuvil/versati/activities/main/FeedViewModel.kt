@@ -28,7 +28,7 @@ class FeedViewModel @Inject constructor(
     private val _feedCounters = mutableStateOf<LazyResult<FeedCountersResponse>>(None())
     private val _entriesResponse = mutableStateOf<LazyResult<EntriesGetResponse>>(None())
 
-    val selectedSource = mutableStateOf<SourceSelection>(SourceSelection.Unread)
+    val source = mutableStateOf<Source>(Source.Unread)
     val offset = mutableIntStateOf(0)
     val categories: State<LazyResult<List<com.liuvil.versati.api.data.Category>>> = _categories
     val feeds: State<LazyResult<List<com.liuvil.versati.api.data.Feed>>> = _feeds
@@ -62,9 +62,9 @@ class FeedViewModel @Inject constructor(
 
     suspend fun reloadEntries() {
         lazyLoad(_entriesResponse) {
-            selectedSource.value.let {
+            source.value.let {
                 when (it) {
-                    is SourceSelection.Unread ->
+                    is Source.Unread ->
                         minifluxApi.getEntries(
                             status = EntryStatus.UNREAD,
                             direction = SortDirection.DESCENDING,
@@ -72,21 +72,21 @@ class FeedViewModel @Inject constructor(
                             globallyVisible = true,
                             limit = PAGE_ENTRY_COUNT
                         )
-                    is SourceSelection.Read ->
+                    is Source.Read ->
                         minifluxApi.getEntries(
                             status = EntryStatus.READ,
                             direction = SortDirection.DESCENDING,
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
-                    is SourceSelection.Starred ->
+                    is Source.Starred ->
                         minifluxApi.getEntries(
                             starred = true,
                             direction = SortDirection.DESCENDING,
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
-                    is SourceSelection.Category ->
+                    is Source.Category ->
                         minifluxApi.getCategoryEntries(
                             categoryId = it.id,
                             status = EntryStatus.UNREAD,
@@ -94,7 +94,7 @@ class FeedViewModel @Inject constructor(
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
-                    is SourceSelection.Feed ->
+                    is Source.Feed ->
                         minifluxApi.getFeedEntries(
                             feedId = it.id,
                             status = EntryStatus.UNREAD,
@@ -102,7 +102,7 @@ class FeedViewModel @Inject constructor(
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
-                    is SourceSelection.Search ->
+                    is Source.Search ->
                         minifluxApi.getEntries(
                             status = EntryStatus.UNREAD,
                             direction = SortDirection.DESCENDING,

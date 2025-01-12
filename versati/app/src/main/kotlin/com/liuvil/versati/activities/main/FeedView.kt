@@ -65,13 +65,13 @@ import kotlin.math.max
 // TODO: Make configurable
 const val PAGE_ENTRY_COUNT = 10
 
-sealed interface SourceSelection {
-    data object Unread: SourceSelection
-    data object Read: SourceSelection
-    data object Starred: SourceSelection
-    data class Category(val id: Int): SourceSelection
-    data class Feed(val id: Int): SourceSelection
-    data class Search(val term: String): SourceSelection
+sealed interface Source {
+    data object Unread: Source
+    data object Read: Source
+    data object Starred: Source
+    data class Category(val id: Int): Source
+    data class Feed(val id: Int): Source
+    data class Search(val term: String): Source
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,7 +80,7 @@ fun FeedView(
     onEntryOpenRequest: (Int) -> Unit
 ) {
     val viewModel = bindViewModel<FeedViewModel>()
-    var selectedSource by viewModel.selectedSource
+    var source by viewModel.source
     var offset by viewModel.offset
     val categories by viewModel.categories
     val feeds by viewModel.feeds
@@ -126,9 +126,9 @@ fun FeedView(
 
     val coroutineScope = rememberCoroutineScope()
 
-    val updateSourceSelection: suspend (SourceSelection) -> Unit = remember {
+    val updateSourceSelection: suspend (Source) -> Unit = remember {
         {
-            selectedSource = it
+            source = it
             offset = 0
             drawerState.close()
             viewModel.reloadEntries()
@@ -179,10 +179,10 @@ fun FeedView(
                         vector = Icons.Outlined.Today
                     ),
                     badge = totalUnreadCount?.let { "$it" },
-                    selected = selectedSource == SourceSelection.Unread
+                    selected = source == Source.Unread
                 ) {
                     coroutineScope.launch {
-                        updateSourceSelection(SourceSelection.Unread)
+                        updateSourceSelection(Source.Unread)
                     }
                 }
             )
@@ -193,10 +193,10 @@ fun FeedView(
                     icon = FlatDrawerItem.Icon.Vector(
                         vector = Icons.Outlined.StarOutline
                     ),
-                    selected = selectedSource == SourceSelection.Starred
+                    selected = source == Source.Starred
                 ) {
                     coroutineScope.launch {
-                        updateSourceSelection(SourceSelection.Starred)
+                        updateSourceSelection(Source.Starred)
                     }
                 }
             )
@@ -217,7 +217,7 @@ fun FeedView(
                             ExpandableDrawerItem(
                                 title = category.title,
                                 badge = categoryUnreadCount?.let { "$it" },
-                                selected = selectedSource == SourceSelection.Category(category.id),
+                                selected = source == Source.Category(category.id),
                                 expanded = expandedCategories.getOrDefault(category.id, false),
                                 children = buildList {
                                     feedsByCategoryId.getOrDefault(category.id, emptyList()).forEach { feed ->
@@ -236,10 +236,10 @@ fun FeedView(
                                                     }
                                                 },
                                                 badge = feedUnreadCount?.let { "$it" },
-                                                selected = selectedSource == SourceSelection.Feed(feed.id)
+                                                selected = source == Source.Feed(feed.id)
                                             ) {
                                                 coroutineScope.launch {
-                                                    updateSourceSelection(SourceSelection.Feed(feed.id))
+                                                    updateSourceSelection(Source.Feed(feed.id))
                                                 }
                                             }
                                         )
@@ -254,7 +254,7 @@ fun FeedView(
                                 }
                             ) {
                                 coroutineScope.launch {
-                                    updateSourceSelection(SourceSelection.Category(category.id))
+                                    updateSourceSelection(Source.Category(category.id))
                                 }
                             }
                         )
@@ -272,10 +272,10 @@ fun FeedView(
                         vector = Icons.Outlined.Book
                     ),
                     badge = totalReadCount?.let { "$it" },
-                    selected = selectedSource == SourceSelection.Read
+                    selected = source == Source.Read
                 ) {
                     coroutineScope.launch {
-                        updateSourceSelection(SourceSelection.Read)
+                        updateSourceSelection(Source.Read)
                     }
                 }
             )
@@ -286,7 +286,7 @@ fun FeedView(
                     icon = FlatDrawerItem.Icon.Vector(
                         vector = Icons.Outlined.Search
                     ),
-                    selected = selectedSource is SourceSelection.Search
+                    selected = source is Source.Search
                 ) {
                     coroutineScope.launch {
                         drawerState.close()
@@ -309,21 +309,21 @@ fun FeedView(
         drawerState = drawerState
     ) {
         Column {
-            selectedSource.let { selectedSource ->
+            source.let { source ->
                 Header(
-                    title = when (selectedSource) {
-                        SourceSelection.Unread -> "Unread"
-                        SourceSelection.Read -> "Read"
-                        SourceSelection.Starred -> "Starred"
-                        is SourceSelection.Category ->
+                    title = when (source) {
+                        Source.Unread -> "Unread"
+                        Source.Read -> "Read"
+                        Source.Starred -> "Starred"
+                        is Source.Category ->
                             categoriesById.ifSuccess { categoriesById ->
-                                categoriesById[selectedSource.id]?.title
+                                categoriesById[source.id]?.title
                             }
-                        is SourceSelection.Feed ->
+                        is Source.Feed ->
                             feedsById.ifSuccess { feedsById ->
-                                feedsById[selectedSource.id]?.title
+                                feedsById[source.id]?.title
                             }
-                        is SourceSelection.Search -> "Search '${selectedSource.term}'"
+                        is Source.Search -> "Search '${source.term}'"
                     },
                     endButtons = buildList {
                         areThereUnreadEntries.ifSuccess { areThereUnreadEntries ->
@@ -338,7 +338,7 @@ fun FeedView(
                         }
                     },
                     onClick = {
-                        if (selectedSource is SourceSelection.Search) {
+                        if (source is Source.Search) {
                             showSearchDialog = true
                         }
                     }
@@ -386,7 +386,7 @@ fun FeedView(
                                                         end = 10.dp
                                                     )
                                             )
-    
+
                                             EntryListView(
                                                 entries = entries.map { entry ->
                                                     buildFromAPIModel(entry)
@@ -481,12 +481,12 @@ fun FeedView(
 
                     if (showSearchDialog) {
                         SearchDialog(
-                            initialTerm = selectedSource.let {
-                                if (it is SourceSelection.Search) it.term else ""
+                            initialTerm = source.let {
+                                if (it is Source.Search) it.term else ""
                             },
                             onSubmit = { searchTerm ->
                                 coroutineScope.launch {
-                                    updateSourceSelection(SourceSelection.Search(term = searchTerm))
+                                    updateSourceSelection(Source.Search(term = searchTerm))
                                 }
                             },
                             onRespond = { showSearchDialog = false }
