@@ -7,8 +7,29 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun ConfirmationDialog(
-    title: String,
-    text: String,
+    titleText: String,
+    bodyText: String,
+    confirmText: String = "Yes",
+    dismissText: String = "No",
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit = {},
+    onRespond: () -> Unit = {}
+) {
+    ConfirmationDialog(
+        title = { Text(titleText) },
+        body = { Text(bodyText) },
+        confirmText = confirmText,
+        dismissText = dismissText,
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+        onRespond = onRespond
+    )
+}
+
+@Composable
+fun ConfirmationDialog(
+    title: @Composable () -> Unit,
+    body: @Composable () -> Unit,
     confirmText: String = "Yes",
     dismissText: String = "No",
     onConfirm: () -> Unit,
@@ -17,8 +38,8 @@ fun ConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(text) },
+        title = title,
+        text = body,
         confirmButton = {
             TextButton(onClick = {
                 onConfirm()

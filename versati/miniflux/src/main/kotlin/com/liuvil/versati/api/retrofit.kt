@@ -46,6 +46,7 @@ interface MinifluxRetrofitApi: MinifluxApi {
         @Query("before_entry_id") beforeEntryId: Int?,
         @Query("after_entry_id") afterEntryId: Int?,
         @Query("globally_visible") globallyVisible: Boolean?,
+        @Query("search") search: String?,
         @Query("limit") limit: Int?
     ): EntriesGetResponse
 

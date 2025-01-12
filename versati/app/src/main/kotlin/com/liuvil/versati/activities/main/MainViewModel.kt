@@ -102,6 +102,14 @@ class MainViewModel @Inject constructor(
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
+                    is SourceSelection.Search ->
+                        minifluxApi.getEntries(
+                            status = EntryStatus.UNREAD,
+                            direction = SortDirection.DESCENDING,
+                            offset = offset.intValue,
+                            search = it.term,
+                            limit = PAGE_ENTRY_COUNT
+                        )
                 }
             }
         }

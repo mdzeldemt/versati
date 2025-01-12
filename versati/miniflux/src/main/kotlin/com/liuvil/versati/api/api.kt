@@ -37,6 +37,7 @@ interface MinifluxApi {
         beforeEntryId: Int? = null,
         afterEntryId: Int? = null,
         globallyVisible: Boolean? = null,
+        search: String? = null,
         limit: Int? = null
     ): EntriesGetResponse
 

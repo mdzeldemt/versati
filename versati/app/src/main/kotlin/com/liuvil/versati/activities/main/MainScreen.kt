@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.outlined.Today
@@ -44,6 +45,7 @@ import com.liuvil.versati.activities.main.drawer.Drawer
 import com.liuvil.versati.activities.main.drawer.ExpandableDrawerItem
 import com.liuvil.versati.activities.main.drawer.FlatDrawerItem
 import com.liuvil.versati.activities.main.entry_list.buildFromAPIModel
+import com.liuvil.versati.activities.main.search.SearchDialog
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
@@ -63,6 +65,7 @@ sealed interface SourceSelection {
     data object Starred: SourceSelection
     data class Category(val id: Int): SourceSelection
     data class Feed(val id: Int): SourceSelection
+    data class Search(val term: String): SourceSelection
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -110,6 +113,7 @@ fun MainScreen(
     // Feed View
     val scrollState = rememberLazyListState()
     var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
+    var showSearchDialog by remember { mutableStateOf(false) }
     val isRefreshing by remember {
         derivedStateOf { entriesResponse is None || entriesResponse is Loading }
     }
@@ -272,6 +276,21 @@ fun MainScreen(
 
             add(
                 FlatDrawerItem(
+                    title = "Search",
+                    icon = FlatDrawerItem.Icon.Vector(
+                        vector = Icons.Outlined.Search
+                    ),
+                    selected = selectedSource is SourceSelection.Search
+                ) {
+                    coroutineScope.launch {
+                        drawerState.close()
+                        showSearchDialog = true
+                    }
+                }
+            )
+
+            add(
+                FlatDrawerItem(
                     title = "Settings",
                     icon = FlatDrawerItem.Icon.Vector(
                         vector = Icons.Outlined.Settings
@@ -298,6 +317,7 @@ fun MainScreen(
                             feedsById.ifSuccess { feedsById ->
                                 feedsById[selectedSource.id]?.title
                             }
+                        is SourceSelection.Search -> "Search '${selectedSource.term}'"
                     },
                     buttons = buildList {
                         areThereUnreadEntries.ifSuccess { areThereUnreadEntries ->
@@ -309,6 +329,11 @@ fun MainScreen(
                                     )
                                 )
                             }
+                        }
+                    },
+                    onClick = {
+                        if (selectedSource is SourceSelection.Search) {
+                            showSearchDialog = true
                         }
                     }
                 )
@@ -422,8 +447,8 @@ fun MainScreen(
 
                         if (showMarkAsReadConfirmationDialog) {
                             ConfirmationDialog(
-                                title = "Mark page as read",
-                                text = "Are you sure you want to mark this page as read?",
+                                titleText = "Mark page as read",
+                                bodyText = "Are you sure you want to mark this page as read?",
                                 confirmText = "Mark as read",
                                 dismissText = "Cancel",
                                 onConfirm = {
@@ -438,6 +463,20 @@ fun MainScreen(
                                 onRespond = { showMarkAsReadConfirmationDialog = false }
                             )
                         }
+                    }
+
+                    if (showSearchDialog) {
+                        SearchDialog(
+                            initialTerm = selectedSource.let {
+                                if (it is SourceSelection.Search) it.term else ""
+                            },
+                            onSubmit = { searchTerm ->
+                                coroutineScope.launch {
+                                    updateSourceSelection(SourceSelection.Search(term = searchTerm))
+                                }
+                            },
+                            onRespond = { showSearchDialog = false }
+                        )
                     }
                 }
             }
