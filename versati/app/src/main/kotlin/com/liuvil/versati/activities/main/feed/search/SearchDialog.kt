@@ -1,7 +1,8 @@
 package com.liuvil.versati.activities.main.feed.search
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -10,13 +11,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import com.liuvil.versati.components.ConfirmationDialog
 
 @Composable
 fun SearchDialog(
     initialTerm: String,
     onSubmit: (String) -> Unit,
-    onClose: () -> Unit = {},
     onRespond: () -> Unit
 ) {
     var term by remember {
@@ -28,24 +27,30 @@ fun SearchDialog(
         )
     }
 
-    ConfirmationDialog(
+    AlertDialog(
+        onDismissRequest = onRespond,
         title = { Text("Search for entries") },
-        body = {
-            Column {
-                Text("Enter a search term below.")
-
-                TextField(
-                    value = term,
-                    onValueChange = { term = it }
-                )
+        text = {
+            TextField(
+                value = term,
+                onValueChange = { term = it }
+            )
+        },
+        confirmButton = {
+            TextButton(
+                enabled = term.text.isNotEmpty(),
+                onClick = {
+                    onSubmit(term.text)
+                    onRespond()
+                }
+            ) {
+                Text("Search")
             }
         },
-        confirmText = "Search",
-        dismissText = "Close",
-        onConfirm = {
-            onSubmit(term.text)
-        },
-        onDismiss = onClose,
-        onRespond = onRespond
+        dismissButton = {
+            TextButton(onClick = { onRespond() }) {
+                Text("Close")
+            }
+        }
     )
 }
