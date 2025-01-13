@@ -4,7 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import com.liuvil.versati.api.MinifluxApi
+import com.liuvil.versati.api.MinifluxAPI
 import com.liuvil.versati.api.data.EntriesGetResponse
 import com.liuvil.versati.api.data.EntriesUpdateRequest
 import com.liuvil.versati.api.data.EntryStatus
@@ -19,7 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
-    private val minifluxApi: MinifluxApi
+    private val minifluxApi: MinifluxAPI
 ): BaseViewModel<Unit>() {
 
     private val _categories = mutableStateOf<LazyResult<List<com.liuvil.versati.api.data.Category>>>(None())

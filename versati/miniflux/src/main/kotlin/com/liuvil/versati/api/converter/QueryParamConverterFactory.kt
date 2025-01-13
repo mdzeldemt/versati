@@ -1,12 +1,11 @@
-package com.liuvil.versati.api.serialization
+package com.liuvil.versati.api.converter
 
 import com.google.gson.annotations.SerializedName
 import retrofit2.Converter
 import retrofit2.Retrofit
 import java.lang.reflect.Type
 
-class EnumConverterFactory : Converter.Factory() {
-
+internal class QueryParamConverterFactory: Converter.Factory() {
     override fun stringConverter(
         type: Type,
         annotations: Array<Annotation>,
@@ -24,5 +23,4 @@ class EnumConverterFactory : Converter.Factory() {
         } else {
             null
         }
-
 }

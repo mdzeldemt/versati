@@ -11,7 +11,7 @@ import com.liuvil.versati.api.data.FeedCountersResponse
 import com.liuvil.versati.api.data.Icon
 import com.liuvil.versati.api.data.SortDirection
 
-interface MinifluxApi {
+interface MinifluxAPI {
 
     suspend fun getCategories(): List<Category>
 

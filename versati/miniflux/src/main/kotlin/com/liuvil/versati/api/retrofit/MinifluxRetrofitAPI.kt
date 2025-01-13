@@ -1,5 +1,6 @@
-package com.liuvil.versati.api
+package com.liuvil.versati.api.retrofit
 
+import com.liuvil.versati.api.MinifluxAPI
 import com.liuvil.versati.api.data.Category
 import com.liuvil.versati.api.data.Enclosure
 import com.liuvil.versati.api.data.EntriesGetResponse
@@ -16,7 +17,7 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-interface MinifluxRetrofitApi: MinifluxApi {
+internal interface MinifluxRetrofitAPI: MinifluxAPI {
 
     @GET("/v1/categories")
     override suspend fun getCategories(): List<Category>

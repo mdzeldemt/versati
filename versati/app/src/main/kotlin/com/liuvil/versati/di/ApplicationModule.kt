@@ -1,14 +1,15 @@
 package com.liuvil.versati.di
 
-import com.liuvil.versati.api.MinifluxAuthenticationMethod
-import com.liuvil.versati.api.MinifluxBasicAuthentication
-import com.liuvil.versati.api.di.MinifluxAuthentication
-import com.liuvil.versati.api.di.MinifluxBaseURL
+import com.liuvil.versati.api.MinifluxAPI
+import com.liuvil.versati.api.MinifluxAPIFactory
+import com.liuvil.versati.api.interceptor.MinifluxAuthenticationInterceptor
+import com.liuvil.versati.api.interceptor.MinifluxAuthenticationMethod
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
 import java.net.URL
 
 @Module
@@ -16,13 +17,19 @@ import java.net.URL
 class ApplicationModule {
 
     @Provides
-    @MinifluxBaseURL
-    fun provideMinifluxBaseURL(): URL =
-        URL("")
-
-    @Provides
-    @MinifluxAuthentication
-    fun provideMinifluxAuthentication(): MinifluxAuthenticationMethod =
-        MinifluxBasicAuthentication("", "")
+    fun provideMinifluxAPI(): MinifluxAPI =
+        MinifluxAPIFactory()
+            .create(
+                baseURL = URL(""),
+                httpClient = OkHttpClient.Builder()
+                    .addInterceptor(
+                        MinifluxAuthenticationInterceptor(
+                            MinifluxAuthenticationMethod.APIKey(
+                                apiKey = ""
+                            )
+                        )
+                    )
+                    .build()
+            )
 
 }

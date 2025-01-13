@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
 import com.liuvil.versati.activities.main.navigation.NavigationRoot
-import com.liuvil.versati.api.MinifluxApi
+import com.liuvil.versati.api.MinifluxAPI
 import com.liuvil.versati.theme.Theme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -14,7 +14,7 @@ import javax.inject.Inject
 class MainActivity: ComponentActivity() {
 
     @Inject
-    lateinit var minifluxApi: MinifluxApi
+    lateinit var minifluxApi: MinifluxAPI
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

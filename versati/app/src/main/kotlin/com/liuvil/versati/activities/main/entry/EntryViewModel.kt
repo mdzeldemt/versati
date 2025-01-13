@@ -2,7 +2,7 @@ package com.liuvil.versati.activities.main.entry
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import com.liuvil.versati.api.MinifluxApi
+import com.liuvil.versati.api.MinifluxAPI
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.framework.lazy.Failure
 import com.liuvil.versati.framework.lazy.LazyResult
@@ -34,7 +34,7 @@ data class Enclosure(
 
 @HiltViewModel
 class EntryViewModel @Inject constructor(
-    private val minifluxApi: MinifluxApi
+    private val minifluxApi: MinifluxAPI
 ): BaseViewModel<Int>() {
 
     private var _entryId: Int? = null
