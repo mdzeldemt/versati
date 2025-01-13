@@ -29,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
@@ -50,6 +51,7 @@ import com.liuvil.versati.activities.main.feed.drawer.ExpandableDrawerItem
 import com.liuvil.versati.activities.main.feed.drawer.FlatDrawerItem
 import com.liuvil.versati.activities.main.feed.entry_list.EntryListView
 import com.liuvil.versati.activities.main.feed.entry_list.buildFromAPIModel
+import com.liuvil.versati.activities.main.feed.page.PageDialog
 import com.liuvil.versati.activities.main.feed.search.SearchDialog
 import com.liuvil.versati.api.data.EntryStatus
 import com.liuvil.versati.components.BlockingBox
@@ -60,6 +62,7 @@ import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import kotlinx.coroutines.launch
 import java.time.ZoneId
+import kotlin.math.ceil
 import kotlin.math.max
 
 // TODO: Make configurable
@@ -120,6 +123,7 @@ fun FeedView(
     val scrollState = rememberLazyListState()
     var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
     var showSearchDialog by remember { mutableStateOf(false) }
+    var showPageDialog by remember { mutableStateOf(false) }
     val isRefreshing by remember {
         derivedStateOf { entriesResponse is None || entriesResponse is Loading }
     }
@@ -374,6 +378,9 @@ fun FeedView(
                     isBlocking = isRefreshing
                 ) {
                     entriesResponse.ifSuccess { entriesResponse ->
+                        val currentPage = offset / PAGE_ENTRY_COUNT + 1
+                        val totalPages = ceil(entriesResponse.total.toFloat() / PAGE_ENTRY_COUNT).toInt()
+
                         if (entriesResponse.entries.isNotEmpty()) {
                             LazyColumn (
                                 state = scrollState,
@@ -412,54 +419,56 @@ fun FeedView(
                                 }
 
                                 item {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Row {
-                                            if (offset > 0) {
-                                                IconButton(
-                                                    onClick = {
-                                                        coroutineScope.launch {
-                                                            updateOffset(max(offset - PAGE_ENTRY_COUNT, 0))
-                                                        }
-                                                    },
+                                    Row(Modifier.padding(12.dp)) {
+                                        areThereUnreadEntries.ifSuccess { areThereUnreadEntries ->
+                                            if (areThereUnreadEntries) {
+                                                Button(
+                                                    onClick = { showMarkAsReadConfirmationDialog = true }
                                                 ) {
-                                                    Icon(
-                                                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                                        tint = MaterialTheme.colorScheme.primary,
-                                                        contentDescription = null
-                                                    )
-                                                }
-                                            }
-
-                                            Spacer(Modifier.weight(1f))
-
-                                            if (offset < entriesResponse.total - PAGE_ENTRY_COUNT) {
-                                                IconButton(
-                                                    onClick = {
-                                                        coroutineScope.launch {
-                                                            updateOffset(offset + PAGE_ENTRY_COUNT)
-                                                        }
-                                                    }
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.AutoMirrored.Default.ArrowForward,
-                                                        tint = MaterialTheme.colorScheme.primary,
-                                                        contentDescription = null
-                                                    )
+                                                    Text("Mark all as read")
                                                 }
                                             }
                                         }
 
-                                        areThereUnreadEntries.ifSuccess { areThereUnreadEntries ->
-                                            if (areThereUnreadEntries) {
-                                                Button(
-                                                    onClick = { showMarkAsReadConfirmationDialog = true },
-                                                    modifier = Modifier.padding(16.dp)
-                                                ) {
-                                                    Text("Mark all as read")
+                                        Spacer(Modifier.weight(1f))
+
+                                        if (offset > 0) {
+                                            IconButton(
+                                                onClick = {
+                                                    coroutineScope.launch {
+                                                        updateOffset(max(offset - PAGE_ENTRY_COUNT, 0))
+                                                    }
+                                                },
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    contentDescription = null
+                                                )
+                                            }
+                                        }
+
+                                        TextButton(
+                                            onClick = {
+                                                showPageDialog = true
+                                            }
+                                        ) {
+                                            Text("$currentPage / $totalPages")
+                                        }
+
+                                        if (offset < entriesResponse.total - PAGE_ENTRY_COUNT) {
+                                            IconButton(
+                                                onClick = {
+                                                    coroutineScope.launch {
+                                                        updateOffset(offset + PAGE_ENTRY_COUNT)
+                                                    }
                                                 }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Default.ArrowForward,
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    contentDescription = null
+                                                )
                                             }
                                         }
                                     }
@@ -492,6 +501,19 @@ fun FeedView(
                                     }
                                 },
                                 onRespond = { showMarkAsReadConfirmationDialog = false }
+                            )
+                        }
+
+                        if (showPageDialog) {
+                            PageDialog(
+                                initialValue = currentPage,
+                                totalPages = totalPages,
+                                onSubmit = {
+                                    coroutineScope.launch {
+                                        updateOffset((it - 1) * PAGE_ENTRY_COUNT)
+                                    }
+                                },
+                                onRespond = { showPageDialog = false }
                             )
                         }
                     }
