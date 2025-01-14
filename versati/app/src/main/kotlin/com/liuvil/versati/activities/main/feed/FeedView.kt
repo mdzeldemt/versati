@@ -53,7 +53,7 @@ import com.liuvil.versati.activities.main.feed.entry_list.EntryListView
 import com.liuvil.versati.activities.main.feed.entry_list.buildFromAPIModel
 import com.liuvil.versati.activities.main.feed.page.PageDialog
 import com.liuvil.versati.activities.main.feed.search.SearchDialog
-import com.liuvil.versati.api.data.EntryStatus
+import com.liuvil.versati.api.miniflux.data.EntryStatus
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.framework.date.formatHumanReadable

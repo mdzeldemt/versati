@@ -1,15 +1,15 @@
-package com.liuvil.versati.api
+package com.liuvil.versati.api.miniflux
 
-import com.liuvil.versati.api.data.Category
-import com.liuvil.versati.api.data.Enclosure
-import com.liuvil.versati.api.data.EntriesGetResponse
-import com.liuvil.versati.api.data.EntriesUpdateRequest
-import com.liuvil.versati.api.data.Entry
-import com.liuvil.versati.api.data.EntryStatus
-import com.liuvil.versati.api.data.Feed
-import com.liuvil.versati.api.data.FeedCountersResponse
-import com.liuvil.versati.api.data.Icon
-import com.liuvil.versati.api.data.SortDirection
+import com.liuvil.versati.api.miniflux.data.Category
+import com.liuvil.versati.api.miniflux.data.Enclosure
+import com.liuvil.versati.api.miniflux.data.EntriesGetResponse
+import com.liuvil.versati.api.miniflux.data.EntriesUpdateRequest
+import com.liuvil.versati.api.miniflux.data.Entry
+import com.liuvil.versati.api.miniflux.data.EntryStatus
+import com.liuvil.versati.api.miniflux.data.Feed
+import com.liuvil.versati.api.miniflux.data.FeedCountersResponse
+import com.liuvil.versati.api.miniflux.data.Icon
+import com.liuvil.versati.api.miniflux.data.SortDirection
 
 interface MinifluxAPI {
 

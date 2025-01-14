@@ -1,8 +1,8 @@
-package com.liuvil.versati.api
+package com.liuvil.versati.api.miniflux
 
-import com.liuvil.versati.api.converter.BodyConverterFactory
-import com.liuvil.versati.api.converter.QueryParamConverterFactory
-import com.liuvil.versati.api.retrofit.MinifluxRetrofitAPI
+import com.liuvil.versati.api.miniflux.converter.BodyConverterFactory
+import com.liuvil.versati.api.miniflux.converter.QueryParamConverterFactory
+import com.liuvil.versati.api.miniflux.retrofit.MinifluxRetrofitAPI
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import java.net.URL

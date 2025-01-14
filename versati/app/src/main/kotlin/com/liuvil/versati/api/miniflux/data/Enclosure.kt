@@ -1,4 +1,4 @@
-package com.liuvil.versati.api.data
+package com.liuvil.versati.api.miniflux.data
 
 import java.net.URL
 

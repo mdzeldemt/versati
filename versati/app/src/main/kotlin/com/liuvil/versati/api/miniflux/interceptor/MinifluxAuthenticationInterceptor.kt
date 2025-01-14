@@ -1,4 +1,4 @@
-package com.liuvil.versati.api.interceptor
+package com.liuvil.versati.api.miniflux.interceptor
 
 import okhttp3.Headers
 import okhttp3.Interceptor

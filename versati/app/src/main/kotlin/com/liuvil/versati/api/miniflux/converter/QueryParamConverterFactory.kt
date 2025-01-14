@@ -1,4 +1,4 @@
-package com.liuvil.versati.api.converter
+package com.liuvil.versati.api.miniflux.converter
 
 import com.google.gson.annotations.SerializedName
 import retrofit2.Converter

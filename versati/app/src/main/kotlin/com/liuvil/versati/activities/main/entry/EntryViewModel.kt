@@ -2,8 +2,8 @@ package com.liuvil.versati.activities.main.entry
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import com.liuvil.versati.api.MinifluxAPI
-import com.liuvil.versati.api.data.EntryStatus
+import com.liuvil.versati.api.miniflux.MinifluxAPI
+import com.liuvil.versati.api.miniflux.data.EntryStatus
 import com.liuvil.versati.framework.lazy.Failure
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.Loading

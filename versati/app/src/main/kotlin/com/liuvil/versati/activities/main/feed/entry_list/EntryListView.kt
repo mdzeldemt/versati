@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.api.data.EntryStatus
+import com.liuvil.versati.api.miniflux.data.EntryStatus
 import com.liuvil.versati.framework.mimetype.isImageMimeType
 import org.jsoup.Jsoup
 import java.net.URL
@@ -62,7 +62,7 @@ fun EntryListView(
     }
 }
 
-fun buildFromAPIModel(entry: com.liuvil.versati.api.data.Entry): Entry =
+fun buildFromAPIModel(entry: com.liuvil.versati.api.miniflux.data.Entry): Entry =
     Entry(
         id = entry.id,
         title = entry.title,

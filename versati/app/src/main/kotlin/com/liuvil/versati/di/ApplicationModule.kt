@@ -1,9 +1,9 @@
 package com.liuvil.versati.di
 
-import com.liuvil.versati.api.MinifluxAPI
-import com.liuvil.versati.api.MinifluxAPIFactory
-import com.liuvil.versati.api.interceptor.MinifluxAuthenticationInterceptor
-import com.liuvil.versati.api.interceptor.MinifluxAuthenticationMethod
+import com.liuvil.versati.api.miniflux.MinifluxAPI
+import com.liuvil.versati.api.miniflux.MinifluxAPIFactory
+import com.liuvil.versati.api.miniflux.interceptor.MinifluxAuthenticationInterceptor
+import com.liuvil.versati.api.miniflux.interceptor.MinifluxAuthenticationMethod
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -35,8 +35,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":miniflux"))
-
     coreLibraryDesugaring(libs.desugar)
     implementation(libs.kotlin.stdlib)
 
@@ -46,6 +44,10 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.hilt.work)
     implementation(libs.hilt.navigation.compose)
+
+    // API
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 
     // Support libraries
     implementation(libs.kotlinx.coroutines.android)

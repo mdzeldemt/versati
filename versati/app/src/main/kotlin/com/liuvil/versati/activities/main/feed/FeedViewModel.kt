@@ -4,12 +4,12 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import com.liuvil.versati.api.MinifluxAPI
-import com.liuvil.versati.api.data.EntriesGetResponse
-import com.liuvil.versati.api.data.EntriesUpdateRequest
-import com.liuvil.versati.api.data.EntryStatus
-import com.liuvil.versati.api.data.FeedCountersResponse
-import com.liuvil.versati.api.data.SortDirection
+import com.liuvil.versati.api.miniflux.MinifluxAPI
+import com.liuvil.versati.api.miniflux.data.EntriesGetResponse
+import com.liuvil.versati.api.miniflux.data.EntriesUpdateRequest
+import com.liuvil.versati.api.miniflux.data.EntryStatus
+import com.liuvil.versati.api.miniflux.data.FeedCountersResponse
+import com.liuvil.versati.api.miniflux.data.SortDirection
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.lazy.lazyLoad
@@ -22,17 +22,17 @@ class FeedViewModel @Inject constructor(
     private val minifluxApi: MinifluxAPI
 ): BaseViewModel<Unit>() {
 
-    private val _categories = mutableStateOf<LazyResult<List<com.liuvil.versati.api.data.Category>>>(None())
-    private val _feeds = mutableStateOf<LazyResult<List<com.liuvil.versati.api.data.Feed>>>(None())
-    private val _feedIconsById = mutableStateMapOf<Int, LazyResult<com.liuvil.versati.api.data.Icon>>()
+    private val _categories = mutableStateOf<LazyResult<List<com.liuvil.versati.api.miniflux.data.Category>>>(None())
+    private val _feeds = mutableStateOf<LazyResult<List<com.liuvil.versati.api.miniflux.data.Feed>>>(None())
+    private val _feedIconsById = mutableStateMapOf<Int, LazyResult<com.liuvil.versati.api.miniflux.data.Icon>>()
     private val _feedCounters = mutableStateOf<LazyResult<FeedCountersResponse>>(None())
     private val _entriesResponse = mutableStateOf<LazyResult<EntriesGetResponse>>(None())
 
     val source = mutableStateOf<Source>(Source.Unread)
     val offset = mutableIntStateOf(0)
-    val categories: State<LazyResult<List<com.liuvil.versati.api.data.Category>>> = _categories
-    val feeds: State<LazyResult<List<com.liuvil.versati.api.data.Feed>>> = _feeds
-    val feedIconsById: Map<Int, LazyResult<com.liuvil.versati.api.data.Icon>> = _feedIconsById
+    val categories: State<LazyResult<List<com.liuvil.versati.api.miniflux.data.Category>>> = _categories
+    val feeds: State<LazyResult<List<com.liuvil.versati.api.miniflux.data.Feed>>> = _feeds
+    val feedIconsById: Map<Int, LazyResult<com.liuvil.versati.api.miniflux.data.Icon>> = _feedIconsById
     val feedCounters: State<LazyResult<FeedCountersResponse>> = _feedCounters
     val entriesResponse: State<LazyResult<EntriesGetResponse>> = _entriesResponse
 
