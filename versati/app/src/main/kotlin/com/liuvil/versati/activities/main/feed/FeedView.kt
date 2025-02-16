@@ -137,7 +137,9 @@ fun FeedView(
             source = it
             offset = 0
             drawerState.close()
-            viewModel.reloadEntriesAndEnclosures()
+            coroutineScope.launch {
+                viewModel.reloadEntriesAndEnclosures()
+            }
             scrollState.scrollToItem(0)
         }
     }
@@ -145,7 +147,9 @@ fun FeedView(
     val updateOffset: suspend (Int) -> Unit = remember {
         {
             offset = it
-            viewModel.reloadEntriesAndEnclosures()
+            coroutineScope.launch {
+                viewModel.reloadEntriesAndEnclosures()
+            }
             scrollState.scrollToItem(0)
         }
     }
