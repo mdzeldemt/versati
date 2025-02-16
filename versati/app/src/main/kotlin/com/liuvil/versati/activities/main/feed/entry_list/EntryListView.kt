@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.api.miniflux.data.EntryStatus
+import com.liuvil.versati.repository.api.data.EntryStatus
 import com.liuvil.versati.framework.mimetype.isImageMimeType
 import org.jsoup.Jsoup
 import java.net.URL
@@ -61,20 +61,6 @@ fun EntryListView(
         }
     }
 }
-
-fun buildFromAPIModel(entry: com.liuvil.versati.api.miniflux.data.Entry): Entry =
-    Entry(
-        id = entry.id,
-        title = entry.title,
-        feedTitle = entry.feed.title,
-        publishedAt = entry.publishedAt,
-        content = parseEntryContent(entry.content),
-        imageURL = entry.enclosures
-            .find { isImageMimeType(it.mimeType)}
-            ?.url
-        ,
-        isRead = entry.status == EntryStatus.READ
-    )
 
 // TODO: Move to separate package
 fun parseEntryContent(entryContent: String): EntryContent {

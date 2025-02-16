@@ -18,6 +18,13 @@ sealed class LazyResult<T> {
         return null
     }
 
+    inline fun <R> ifFailure(block: (Exception) -> R): R? {
+        if (this is Failure) {
+            return block(exception)
+        }
+        return null
+    }
+
     fun <U> map(
         block: (T) -> U
     ): LazyResult<U> =
@@ -51,10 +58,16 @@ suspend fun <T> lazyLoad(
 suspend fun <K, V> lazyLoad(
     state: SnapshotStateMap<K, LazyResult<V>>,
     key: K,
-    block: suspend () -> V
+    block: suspend () -> V?
 ) {
     state[key] = Loading()
-    state[key] = handle(block)
+    try {
+        block()?.let {
+            state[key] = Success(it)
+        } ?: state.remove(key)
+    } catch (exception: Exception) {
+        state[key] = Failure(exception)
+    }
 }
 
 private suspend fun <T> handle(block: suspend () -> T): LazyResult<T> =

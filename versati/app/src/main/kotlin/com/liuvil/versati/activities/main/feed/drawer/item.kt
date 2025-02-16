@@ -37,7 +37,7 @@ data class FlatDrawerItem(
     override val onClick: () -> Unit
 ): DrawerItem(title, badge, selected, onClick) {
     sealed interface Icon {
-        data class Data(val bytes: String): Icon
+        data class Data(val data: String): Icon
         data class Vector(val vector: ImageVector): Icon
     }
 }
@@ -56,7 +56,7 @@ internal fun FlatDrawerItem(
                     when (icon) {
                         is FlatDrawerItem.Icon.Data -> {
                             val decodedBytes = Base64.decode(
-                                icon.bytes.substringAfter(","),
+                                icon.data.substringAfter(","),
                                 Base64.DEFAULT
                             )
                             val bitmap = BitmapFactory.decodeByteArray(

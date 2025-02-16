@@ -4,123 +4,129 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import com.liuvil.versati.api.miniflux.MinifluxAPI
-import com.liuvil.versati.api.miniflux.data.EntriesGetResponse
-import com.liuvil.versati.api.miniflux.data.EntriesUpdateRequest
-import com.liuvil.versati.api.miniflux.data.EntryStatus
-import com.liuvil.versati.api.miniflux.data.FeedCountersResponse
-import com.liuvil.versati.api.miniflux.data.SortDirection
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.lazy.lazyLoad
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
+import com.liuvil.versati.repository.Origin
+import com.liuvil.versati.repository.Repository
+import com.liuvil.versati.repository.api.data.EntriesGetResponse
+import com.liuvil.versati.repository.api.data.FeedCountersResponse
+import com.liuvil.versati.repository.data.Category
+import com.liuvil.versati.repository.data.Enclosure
+import com.liuvil.versati.repository.data.Feed
+import com.liuvil.versati.repository.data.Icon
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
-    private val minifluxApi: MinifluxAPI
+    private val repository: Repository
 ): BaseViewModel<Unit>() {
 
-    private val _categories = mutableStateOf<LazyResult<List<com.liuvil.versati.api.miniflux.data.Category>>>(None())
-    private val _feeds = mutableStateOf<LazyResult<List<com.liuvil.versati.api.miniflux.data.Feed>>>(None())
-    private val _feedIconsById = mutableStateMapOf<Int, LazyResult<com.liuvil.versati.api.miniflux.data.Icon>>()
+    private val _categories = mutableStateOf<LazyResult<List<Category>>>(None())
+    private val _feeds = mutableStateOf<LazyResult<List<Feed>>>(None())
     private val _feedCounters = mutableStateOf<LazyResult<FeedCountersResponse>>(None())
+    private val _iconsById = mutableStateMapOf<Int, LazyResult<Icon>>()
     private val _entriesResponse = mutableStateOf<LazyResult<EntriesGetResponse>>(None())
+    private val _enclosuresByEntryId = mutableStateMapOf<Int, LazyResult<Enclosure>>()
 
     val source = mutableStateOf<Source>(Source.Unread)
     val offset = mutableIntStateOf(0)
-    val categories: State<LazyResult<List<com.liuvil.versati.api.miniflux.data.Category>>> = _categories
-    val feeds: State<LazyResult<List<com.liuvil.versati.api.miniflux.data.Feed>>> = _feeds
-    val feedIconsById: Map<Int, LazyResult<com.liuvil.versati.api.miniflux.data.Icon>> = _feedIconsById
+    val categories: State<LazyResult<List<Category>>> = _categories
+    val feeds: State<LazyResult<List<Feed>>> = _feeds
     val feedCounters: State<LazyResult<FeedCountersResponse>> = _feedCounters
+    val iconsById: Map<Int, LazyResult<Icon>> = _iconsById
     val entriesResponse: State<LazyResult<EntriesGetResponse>> = _entriesResponse
+    val enclosuresByEntryId: Map<Int, LazyResult<Enclosure>> = _enclosuresByEntryId
 
     suspend fun reloadCategories() {
         lazyLoad(_categories) {
-            minifluxApi.getCategories()
+            repository.getAllCategories()
         }
     }
 
     suspend fun reloadFeeds() {
         lazyLoad(_feeds) {
-            minifluxApi.getFeeds()
+            repository.getAllFeeds()
         }
     }
 
-    suspend fun reloadFeedIcon(id: Int) {
-        lazyLoad(_feedIconsById, id) {
-            minifluxApi.getFeedIcon(id)
+    suspend fun reloadIcon(id: Int) {
+        lazyLoad(_iconsById, id) {
+            repository.getIconById(
+                id = id,
+                origin = Origin.LocalThenRemote
+            )
         }
     }
 
     suspend fun reloadFeedCounters() {
         lazyLoad(_feedCounters) {
-            minifluxApi.getFeedCounters()
+            repository.getFeedCounters()
         }
     }
 
-    suspend fun reloadEntries() {
+    suspend fun reloadEntriesAndEnclosures() {
         lazyLoad(_entriesResponse) {
             source.value.let {
                 when (it) {
                     is Source.Unread ->
-                        minifluxApi.getEntries(
-                            status = EntryStatus.UNREAD,
-                            direction = SortDirection.DESCENDING,
+                        repository.getAllEntries(
+                            read = false,
                             offset = offset.intValue,
                             globallyVisible = true,
                             limit = PAGE_ENTRY_COUNT
                         )
                     is Source.Read ->
-                        minifluxApi.getEntries(
-                            status = EntryStatus.READ,
-                            direction = SortDirection.DESCENDING,
+                        repository.getAllEntries(
+                            read = true,
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
                     is Source.Starred ->
-                        minifluxApi.getEntries(
+                        repository.getAllEntries(
                             starred = true,
-                            direction = SortDirection.DESCENDING,
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
                     is Source.Category ->
-                        minifluxApi.getCategoryEntries(
+                        repository.getEntriesFromCategory(
                             categoryId = it.id,
-                            status = EntryStatus.UNREAD,
-                            direction = SortDirection.DESCENDING,
+                            read = false,
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
                     is Source.Feed ->
-                        minifluxApi.getFeedEntries(
+                        repository.getEntriesFromFeed(
                             feedId = it.id,
-                            status = EntryStatus.UNREAD,
-                            direction = SortDirection.DESCENDING,
+                            read = false,
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
                     is Source.Search ->
-                        minifluxApi.getEntries(
-                            status = EntryStatus.UNREAD,
-                            direction = SortDirection.DESCENDING,
-                            offset = offset.intValue,
+                        repository.getAllEntries(
                             search = it.term,
+                            offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
+                }
+            }
+        }
+
+        entriesResponse.value.ifSuccess { entriesResponse ->
+            entriesResponse.entries.forEach { entry ->
+                lazyLoad(_enclosuresByEntryId, entry.id) {
+                    repository.getEnclosuresByEntryId(entry.id).firstOrNull()
                 }
             }
         }
     }
 
     suspend fun markAsRead(entryIds: List<Int>) {
-        minifluxApi.updateEntries(
-            EntriesUpdateRequest(
-                entryIds = entryIds,
-                status = EntryStatus.READ
-            )
+        repository.updateEntriesRead(
+            ids = entryIds,
+            read = true
         )
     }
 

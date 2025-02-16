@@ -2,15 +2,16 @@ package com.liuvil.versati.activities.main.entry
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import com.liuvil.versati.api.miniflux.MinifluxAPI
-import com.liuvil.versati.api.miniflux.data.EntryStatus
 import com.liuvil.versati.framework.lazy.Failure
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.lazy.Success
-import com.liuvil.versati.framework.lazy.lazyLoad
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
+import com.liuvil.versati.repository.data.Enclosure
+import com.liuvil.versati.repository.data.Feed
+import com.liuvil.versati.repository.Origin
+import com.liuvil.versati.repository.Repository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.net.URL
 import java.time.OffsetDateTime
@@ -25,25 +26,19 @@ data class Entry(
     val createdAt: OffsetDateTime,
     val publishedAt: OffsetDateTime,
     val read: Boolean,
-    val enclosureId: Int?
-)
-
-data class Enclosure(
-    val url: URL
+    val enclosureUrl: URL?
 )
 
 @HiltViewModel
 class EntryViewModel @Inject constructor(
-    private val minifluxApi: MinifluxAPI
+    private val repository: Repository
 ): BaseViewModel<Int>() {
 
     private var _entryId: Int? = null
     private val _entry = mutableStateOf<LazyResult<Entry>>(None())
-    private val _enclosure = mutableStateOf<LazyResult<Enclosure>>(None())
     private val _starred = mutableStateOf<LazyResult<Boolean>>(None())
 
     val entry: State<LazyResult<Entry>> = _entry
-    val enclosure: State<LazyResult<Enclosure>> = _enclosure
     val starred: State<LazyResult<Boolean>> = _starred
 
     override suspend fun initialize(initData: Int) {
@@ -55,8 +50,22 @@ class EntryViewModel @Inject constructor(
             _entry.value = Loading()
             _starred.value = Loading()
 
-            val entry = try {
-                minifluxApi.getEntry(entryId)
+            val entry: com.liuvil.versati.repository.data.Entry
+            val feed: Feed
+            val enclosures: List<Enclosure>
+            try {
+                entry = repository.getEntryById(
+                    id = entryId,
+                    origin = Origin.LocalThenRemote
+                )
+                feed = repository.getFeedById(
+                    id = entry.feedId,
+                    origin = Origin.LocalThenRemote
+                )
+                enclosures = repository.getEnclosuresByEntryId(
+                    entryId = entryId,
+                    origin = Origin.LocalThenRemote
+                )
             } catch (exception: Exception) {
                 _entry.value = Failure(exception)
                 _starred.value = Failure(exception)
@@ -68,23 +77,17 @@ class EntryViewModel @Inject constructor(
                     title = entry.title,
                     content = entry.content,
                     url = entry.url,
-                    feedTitle = entry.feed.title,
+                    feedTitle = feed.title,
                     author = entry.author.let {
                         it.ifEmpty { null }
                     },
                     createdAt = entry.createdAt,
                     publishedAt = entry.publishedAt,
-                    read = entry.status == EntryStatus.READ,
-                    enclosureId = entry.enclosures.firstOrNull()?.id
+                    read = entry.read,
+                    enclosureUrl = enclosures.firstOrNull()?.url
                 )
             )
             _starred.value = Success(entry.starred)
-        }
-    }
-
-    suspend fun loadEnclosure(id: Int) {
-        lazyLoad(_enclosure) {
-            Enclosure(url = minifluxApi.getEnclosure(id).url)
         }
     }
 
@@ -94,7 +97,7 @@ class EntryViewModel @Inject constructor(
                 _starred.value = Loading()
 
                 try {
-                    minifluxApi.toggleEntryBookmark(entryId)
+                    repository.toggleEntryStarred(entryId)
                 } catch (exception: Exception) {
                     _starred.value = Failure(exception)
                     return

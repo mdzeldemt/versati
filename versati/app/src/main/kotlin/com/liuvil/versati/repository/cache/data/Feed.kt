@@ -1,0 +1,18 @@
+package com.liuvil.versati.repository.cache.data
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.liuvil.versati.repository.data.Feed
+import java.net.URL
+
+@Entity(tableName = "feeds")
+data class Feed(
+    @PrimaryKey override val id: Int,
+    override val feedUrl: URL,
+    override val siteUrl: URL,
+    override val title: String,
+    override val description: String,
+    override val categoryId: Int,
+    override val hideGlobally: Boolean,
+    override val iconId: Int,
+): Feed

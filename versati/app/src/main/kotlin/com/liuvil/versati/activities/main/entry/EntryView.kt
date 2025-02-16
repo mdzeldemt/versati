@@ -66,7 +66,6 @@ fun EntryView(
 ) {
     val viewModel = bindViewModel<Int, EntryViewModel>(id)
     val entry by viewModel.entry
-    val enclosure by viewModel.enclosure
     val starred by viewModel.starred
 
     var showDetailsDialog by remember { mutableStateOf(false) }
@@ -75,14 +74,6 @@ fun EntryView(
 
     LaunchedEffect(Unit) {
         viewModel.loadEntry()
-
-        entry.ifSuccess { entry ->
-            if (!Jsoup.parse(entry.content).containsImages()) {
-                entry.enclosureId?.let { enclosureId ->
-                    viewModel.loadEnclosure(id = enclosureId)
-                }
-            }
-        }
     }
 
     Scaffold(
@@ -174,12 +165,14 @@ fun EntryView(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                enclosure.ifSuccess { enclosure ->
-                    AsyncImage(
-                        model = enclosure.url.toString(),
-                        contentDescription = null,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
+                if (!Jsoup.parse(it.content).containsImages()) {
+                    it.enclosureUrl?.let { enclosureUrl ->
+                        AsyncImage(
+                            model = enclosureUrl.toString(),
+                            contentDescription = null,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                    }
                 }
 
                 EntryContentView(

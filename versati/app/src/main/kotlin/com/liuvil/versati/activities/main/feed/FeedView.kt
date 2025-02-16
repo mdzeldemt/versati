@@ -49,17 +49,18 @@ import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.feed.drawer.Drawer
 import com.liuvil.versati.activities.main.feed.drawer.ExpandableDrawerItem
 import com.liuvil.versati.activities.main.feed.drawer.FlatDrawerItem
+import com.liuvil.versati.activities.main.feed.entry_list.Entry
 import com.liuvil.versati.activities.main.feed.entry_list.EntryListView
-import com.liuvil.versati.activities.main.feed.entry_list.buildFromAPIModel
+import com.liuvil.versati.activities.main.feed.entry_list.parseEntryContent
 import com.liuvil.versati.activities.main.feed.page.PageDialog
 import com.liuvil.versati.activities.main.feed.search.SearchDialog
-import com.liuvil.versati.api.miniflux.data.EntryStatus
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.framework.date.formatHumanReadable
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.viewmodel.bindViewModel
+import com.liuvil.versati.repository.api.data.EntryStatus
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import kotlin.math.ceil
@@ -87,9 +88,10 @@ fun FeedView(
     var offset by viewModel.offset
     val categories by viewModel.categories
     val feeds by viewModel.feeds
-    val feedIconsById = viewModel.feedIconsById
     val feedCounters by viewModel.feedCounters
+    val iconsById = viewModel.iconsById
     val entriesResponse by viewModel.entriesResponse
+    val enclosuresByEntryId = viewModel.enclosuresByEntryId
 
     val categoriesById by remember {
         derivedStateOf {
@@ -110,7 +112,7 @@ fun FeedView(
     val areThereUnreadEntries by remember {
         derivedStateOf {
             entriesResponse.map {
-                it.entries.any { it.status == EntryStatus.UNREAD }
+                it.entries.any { entry -> entry.status == EntryStatus.UNREAD }
             }
         }
     }
@@ -135,7 +137,7 @@ fun FeedView(
             source = it
             offset = 0
             drawerState.close()
-            viewModel.reloadEntries()
+            viewModel.reloadEntriesAndEnclosures()
             scrollState.scrollToItem(0)
         }
     }
@@ -143,7 +145,7 @@ fun FeedView(
     val updateOffset: suspend (Int) -> Unit = remember {
         {
             offset = it
-            viewModel.reloadEntries()
+            viewModel.reloadEntriesAndEnclosures()
             scrollState.scrollToItem(0)
         }
     }
@@ -155,18 +157,16 @@ fun FeedView(
 
         feeds.ifNone {
             viewModel.reloadFeeds()
+        }
 
-            feeds.ifSuccess { feeds ->
-                feeds.forEach { feed ->
-                    viewModel.reloadFeedIcon(feed.icon.iconId)
-                }
+        feeds.ifSuccess { feeds ->
+            feeds.forEach { feed ->
+                viewModel.reloadIcon(feed.iconId)
             }
-
-            viewModel.reloadFeedCounters()
         }
 
         entriesResponse.ifNone {
-            viewModel.reloadEntries()
+            viewModel.reloadEntriesAndEnclosures()
         }
     }
 
@@ -182,7 +182,9 @@ fun FeedView(
                     icon = FlatDrawerItem.Icon.Vector(
                         vector = Icons.Outlined.Today
                     ),
-                    badge = totalUnreadCount?.let { "$it" },
+                    badge = totalUnreadCount
+                        ?.takeIf { it > 0 }
+                        ?.let { "$it" },
                     selected = source == Source.Unread
                 ) {
                     coroutineScope.launch {
@@ -207,7 +209,7 @@ fun FeedView(
 
             categories.ifSuccess { categories ->
                 feeds.ifSuccess { feeds ->
-                    val feedsByCategoryId = feeds.groupBy { it.category.id }
+                    val feedsByCategoryId = feeds.groupBy { it.categoryId }
 
                     categories.forEach { category ->
                         val categoryUnreadCount = feedCounters.ifSuccess { feedCounters ->
@@ -228,14 +230,13 @@ fun FeedView(
                                         val feedUnreadCount = feedCounters.ifSuccess { feedCounters ->
                                             feedCounters.unreads.getOrDefault(feed.id, 0)
                                         }
-
                                         add(
                                             FlatDrawerItem(
                                                 title = feed.title,
-                                                icon = feedIconsById[feed.icon.iconId]?.let { icon ->
+                                                icon = iconsById[feed.iconId]?.let { icon ->
                                                     icon.ifSuccess {
                                                         FlatDrawerItem.Icon.Data(
-                                                            bytes = it.data
+                                                            data = it.data
                                                         )
                                                     }
                                                 },
@@ -275,7 +276,9 @@ fun FeedView(
                     icon = FlatDrawerItem.Icon.Vector(
                         vector = Icons.Outlined.Book
                     ),
-                    badge = totalReadCount?.let { "$it" },
+                    badge = totalReadCount
+                        ?.takeIf { it > 0 }
+                        ?.let { "$it" },
                     selected = source == Source.Read
                 ) {
                     coroutineScope.launch {
@@ -366,7 +369,7 @@ fun FeedView(
                 isRefreshing = isRefreshing,
                 onRefresh = {
                     coroutineScope.launch {
-                        viewModel.reloadEntries()
+                        viewModel.reloadEntriesAndEnclosures()
                     }
                 },
                 contentAlignment = Alignment.Center,
@@ -378,110 +381,146 @@ fun FeedView(
                     isBlocking = isRefreshing
                 ) {
                     entriesResponse.ifSuccess { entriesResponse ->
-                        val currentPage = offset / PAGE_ENTRY_COUNT + 1
-                        val totalPages = ceil(entriesResponse.total.toFloat() / PAGE_ENTRY_COUNT).toInt()
+                        entriesResponse.total.let { totalEntries ->
+                            val currentPage = offset / PAGE_ENTRY_COUNT + 1
+                            val totalPages = ceil(totalEntries.toFloat() / PAGE_ENTRY_COUNT).toInt()
+                            if (entriesResponse.entries.isNotEmpty()) {
+                                LazyColumn(
+                                    state = scrollState,
+                                    verticalArrangement = Arrangement.Top,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    item {
+                                        entriesResponse.entries
+                                            .groupBy {
+                                                it.publishedAt
+                                                    .atZoneSameInstant(ZoneId.systemDefault())
+                                                    .toLocalDate()
+                                            }
+                                            .forEach { (date, entries) ->
+                                                Text(
+                                                    text = date.formatHumanReadable(),
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(
+                                                            start = 10.dp,
+                                                            top = 10.dp,
+                                                            end = 10.dp
+                                                        )
+                                                )
 
-                        if (entriesResponse.entries.isNotEmpty()) {
-                            LazyColumn (
-                                state = scrollState,
-                                verticalArrangement = Arrangement.Top,
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                item {
-                                    entriesResponse.entries
-                                        .groupBy {
-                                            it.publishedAt
-                                                .atZoneSameInstant(ZoneId.systemDefault())
-                                                .toLocalDate()
-                                        }
-                                        .forEach { (date, entries) ->
-                                            Text(
-                                                text = date.formatHumanReadable(),
-                                                color = MaterialTheme.colorScheme.primary,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(
-                                                        start = 10.dp,
-                                                        top = 10.dp,
-                                                        end = 10.dp
-                                                    )
-                                            )
+                                                EntryListView(
+                                                    entries = entries.map { entry ->
+                                                        Entry(
+                                                            id = entry.id,
+                                                            title = entry.title,
+                                                            feedTitle = feedsById.ifSuccess {
+                                                                it[entry.feedId]?.title
+                                                            } ?: "...",
+                                                            publishedAt = entry.publishedAt,
+                                                            content = parseEntryContent(entry.content),
+                                                            imageURL = enclosuresByEntryId[entry.id]
+                                                                ?.let { enclosure ->
+                                                                    enclosure.ifSuccess {
+                                                                        it.url
+                                                                    }
+                                                                },
+                                                            isRead = entry.status == EntryStatus.READ
+                                                        )
+                                                    },
+                                                    onEntryTileClicked = onEntryOpenRequest
+                                                )
+                                            }
+                                    }
 
-                                            EntryListView(
-                                                entries = entries.map { entry ->
-                                                    buildFromAPIModel(entry)
-                                                },
-                                                onEntryTileClicked = onEntryOpenRequest
-                                            )
-                                        }
-                                }
+                                    item {
+                                        Row(Modifier.padding(12.dp)) {
+                                            areThereUnreadEntries.ifSuccess { areThereUnreadEntries ->
+                                                if (areThereUnreadEntries) {
+                                                    Button(
+                                                        onClick = {
+                                                            showMarkAsReadConfirmationDialog = true
+                                                        }
+                                                    ) {
+                                                        Text("Mark all as read")
+                                                    }
+                                                }
+                                            }
 
-                                item {
-                                    Row(Modifier.padding(12.dp)) {
-                                        areThereUnreadEntries.ifSuccess { areThereUnreadEntries ->
-                                            if (areThereUnreadEntries) {
-                                                Button(
-                                                    onClick = { showMarkAsReadConfirmationDialog = true }
+                                            Spacer(Modifier.weight(1f))
+
+                                            if (offset > 0) {
+                                                IconButton(
+                                                    onClick = {
+                                                        coroutineScope.launch {
+                                                            updateOffset(
+                                                                max(
+                                                                    offset - PAGE_ENTRY_COUNT,
+                                                                    0
+                                                                )
+                                                            )
+                                                        }
+                                                    },
                                                 ) {
-                                                    Text("Mark all as read")
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        contentDescription = null
+                                                    )
                                                 }
                                             }
-                                        }
 
-                                        Spacer(Modifier.weight(1f))
-
-                                        if (offset > 0) {
-                                            IconButton(
+                                            TextButton(
                                                 onClick = {
-                                                    coroutineScope.launch {
-                                                        updateOffset(max(offset - PAGE_ENTRY_COUNT, 0))
-                                                    }
-                                                },
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                                    tint = MaterialTheme.colorScheme.primary,
-                                                    contentDescription = null
-                                                )
-                                            }
-                                        }
-
-                                        TextButton(
-                                            onClick = {
-                                                showPageDialog = true
-                                            }
-                                        ) {
-                                            Text("$currentPage / $totalPages")
-                                        }
-
-                                        if (offset < entriesResponse.total - PAGE_ENTRY_COUNT) {
-                                            IconButton(
-                                                onClick = {
-                                                    coroutineScope.launch {
-                                                        updateOffset(offset + PAGE_ENTRY_COUNT)
-                                                    }
+                                                    showPageDialog = true
                                                 }
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.AutoMirrored.Default.ArrowForward,
-                                                    tint = MaterialTheme.colorScheme.primary,
-                                                    contentDescription = null
-                                                )
+                                                Text("$currentPage / $totalPages")
+                                            }
+
+                                            if (offset < totalEntries - PAGE_ENTRY_COUNT) {
+                                                IconButton(
+                                                    onClick = {
+                                                        coroutineScope.launch {
+                                                            updateOffset(offset + PAGE_ENTRY_COUNT)
+                                                        }
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Default.ArrowForward,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        contentDescription = null
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
+                            } else {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    Text("No entries found.")
+                                }
                             }
-                        } else {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
-                            ) {
-                                Text("No entries found.")
+
+                            if (showPageDialog) {
+                                PageDialog(
+                                    initialValue = currentPage,
+                                    totalPages = totalPages,
+                                    onSubmit = {
+                                        coroutineScope.launch {
+                                            updateOffset((it - 1) * PAGE_ENTRY_COUNT)
+                                        }
+                                    },
+                                    onRespond = { showPageDialog = false }
+                                )
                             }
                         }
 
@@ -496,24 +535,13 @@ fun FeedView(
                                         viewModel.markAsRead(
                                             entryIds = entriesResponse.entries.map { it.id }
                                         )
-                                        viewModel.reloadEntries()
+                                        coroutineScope.launch {
+                                            viewModel.reloadEntriesAndEnclosures()
+                                        }
                                         scrollState.scrollToItem(0)
                                     }
                                 },
                                 onRespond = { showMarkAsReadConfirmationDialog = false }
-                            )
-                        }
-
-                        if (showPageDialog) {
-                            PageDialog(
-                                initialValue = currentPage,
-                                totalPages = totalPages,
-                                onSubmit = {
-                                    coroutineScope.launch {
-                                        updateOffset((it - 1) * PAGE_ENTRY_COUNT)
-                                    }
-                                },
-                                onRespond = { showPageDialog = false }
                             )
                         }
                     }
