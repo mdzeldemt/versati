@@ -6,7 +6,7 @@ import com.liuvil.versati.repository.api.data.EntriesUpdateRequest
 import com.liuvil.versati.repository.api.data.EntryStatus
 import com.liuvil.versati.repository.api.data.FeedCountersResponse
 import com.liuvil.versati.repository.api.data.SortDirection
-import com.liuvil.versati.repository.cache.database.CacheDatabase
+import com.liuvil.versati.repository.cache.CacheDatabase
 import com.liuvil.versati.repository.data.Category
 import com.liuvil.versati.repository.data.Enclosure
 import com.liuvil.versati.repository.data.Entry

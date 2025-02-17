@@ -1,4 +1,4 @@
-package com.liuvil.versati.repository.cache.database.dao
+package com.liuvil.versati.repository.cache.dao
 
 import androidx.room.Dao
 import androidx.room.Insert

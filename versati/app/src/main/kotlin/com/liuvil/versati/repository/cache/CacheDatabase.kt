@@ -1,13 +1,15 @@
-package com.liuvil.versati.repository.cache.database
+package com.liuvil.versati.repository.cache
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.liuvil.versati.repository.cache.database.dao.CategoryCache
-import com.liuvil.versati.repository.cache.database.dao.EnclosureCache
-import com.liuvil.versati.repository.cache.database.dao.EntryCache
-import com.liuvil.versati.repository.cache.database.dao.FeedCache
-import com.liuvil.versati.repository.cache.database.dao.IconCache
+import com.liuvil.versati.framework.database.type_converter.OffsetDateTimeTypeConverter
+import com.liuvil.versati.framework.database.type_converter.URLTypeConverter
+import com.liuvil.versati.repository.cache.dao.CategoryCache
+import com.liuvil.versati.repository.cache.dao.EnclosureCache
+import com.liuvil.versati.repository.cache.dao.EntryCache
+import com.liuvil.versati.repository.cache.dao.FeedCache
+import com.liuvil.versati.repository.cache.dao.IconCache
 import com.liuvil.versati.repository.cache.data.Category
 import com.liuvil.versati.repository.cache.data.Enclosure
 import com.liuvil.versati.repository.cache.data.Entry
@@ -25,7 +27,7 @@ import com.liuvil.versati.repository.cache.data.Icon
     version = 1,
     exportSchema = false
 )
-@TypeConverters(RoomConverters::class)
+@TypeConverters(OffsetDateTimeTypeConverter::class, URLTypeConverter::class)
 abstract class CacheDatabase: RoomDatabase() {
     abstract fun categoryCache(): CategoryCache
     abstract fun enclosureCache(): EnclosureCache

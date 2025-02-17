@@ -3,7 +3,7 @@ package com.liuvil.versati.repository.di
 import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.liuvil.versati.repository.cache.database.CacheDatabase
+import com.liuvil.versati.repository.cache.CacheDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

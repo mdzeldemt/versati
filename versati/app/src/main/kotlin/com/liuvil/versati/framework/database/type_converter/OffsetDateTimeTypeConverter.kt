@@ -1,11 +1,10 @@
-package com.liuvil.versati.repository.cache.database
+package com.liuvil.versati.framework.database.type_converter
 
 import androidx.room.TypeConverter
-import java.net.URL
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
-object RoomConverters {
+class OffsetDateTimeTypeConverter {
     private val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
     @TypeConverter
@@ -15,12 +14,4 @@ object RoomConverters {
     @TypeConverter
     fun toOffsetDateTime(value: String?): OffsetDateTime? =
         value?.let { OffsetDateTime.parse(it, formatter) }
-
-    @TypeConverter
-    fun fromUrl(value: URL?): String? =
-        value?.toString()
-
-    @TypeConverter
-    fun toUrl(value: String?): URL? =
-        value?.let { URL(it) }
 }
