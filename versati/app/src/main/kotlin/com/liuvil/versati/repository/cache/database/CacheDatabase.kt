@@ -3,11 +3,11 @@ package com.liuvil.versati.repository.cache.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.liuvil.versati.repository.cache.dao.CategoryCache
-import com.liuvil.versati.repository.cache.dao.EnclosureCache
-import com.liuvil.versati.repository.cache.dao.EntryCache
-import com.liuvil.versati.repository.cache.dao.FeedCache
-import com.liuvil.versati.repository.cache.dao.IconCache
+import com.liuvil.versati.repository.cache.database.dao.CategoryCache
+import com.liuvil.versati.repository.cache.database.dao.EnclosureCache
+import com.liuvil.versati.repository.cache.database.dao.EntryCache
+import com.liuvil.versati.repository.cache.database.dao.FeedCache
+import com.liuvil.versati.repository.cache.database.dao.IconCache
 import com.liuvil.versati.repository.cache.data.Category
 import com.liuvil.versati.repository.cache.data.Enclosure
 import com.liuvil.versati.repository.cache.data.Entry
