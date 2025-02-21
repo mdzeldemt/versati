@@ -1,4 +1,4 @@
-package com.liuvil.versati.repository.di
+package com.liuvil.versati.repository.cache.di
 
 import android.content.Context
 import androidx.room.Room
@@ -15,7 +15,7 @@ private const val CACHE_DATABASE_NAME = "network_cache_db"
 
 @Module
 @InstallIn(SingletonComponent::class)
-class CacheModule {
+class CacheDatabaseModule {
     @Provides
     fun provideCacheDatabase(
         @ApplicationContext context: Context
