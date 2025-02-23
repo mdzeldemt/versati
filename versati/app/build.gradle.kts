@@ -87,8 +87,9 @@ dependencies {
     // HTML parsing
     implementation(libs.jsoup)
 
-    // Caching
+    // Databases
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+    implementation(libs.android.database.sqlcipher)
 }
