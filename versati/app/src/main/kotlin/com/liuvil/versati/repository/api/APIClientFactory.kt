@@ -2,28 +2,30 @@ package com.liuvil.versati.repository.api
 
 import com.liuvil.versati.repository.api.converter.BodyConverterFactory
 import com.liuvil.versati.repository.api.converter.QueryParamConverterFactory
-import com.liuvil.versati.repository.api.interceptor.MinifluxAuthenticationInterceptor
-import com.liuvil.versati.repository.api.interceptor.MinifluxAuthenticationMethod
+import com.liuvil.versati.repository.api.auth.AuthInterceptor
+import com.liuvil.versati.repository.api.auth.AuthContext
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import java.net.URL
+import javax.inject.Inject
 
-class MinifluxClientFactory {
+class APIClientFactory @Inject constructor(
+    private val credentialsStore: AuthContext
+) {
     fun create(
-        baseURL: URL,
-        authenticationMethod: MinifluxAuthenticationMethod
-    ): MinifluxClient =
+        baseURL: URL
+    ): APIClient =
         Retrofit.Builder()
             .baseUrl(baseURL)
             .client(
                 OkHttpClient.Builder()
                     .addInterceptor(
-                        MinifluxAuthenticationInterceptor(authenticationMethod)
+                        AuthInterceptor(credentialsStore)
                     )
                     .build()
             )
             .addConverterFactory(BodyConverterFactory.create())
             .addConverterFactory(QueryParamConverterFactory())
             .build()
-            .create(MinifluxClient::class.java)
+            .create(APIClient::class.java)
 }

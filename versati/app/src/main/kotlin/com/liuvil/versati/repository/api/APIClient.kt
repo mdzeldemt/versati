@@ -16,7 +16,7 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-interface MinifluxClient {
+interface APIClient {
 
     @GET("/v1/categories")
     suspend fun getCategories(): List<Category>

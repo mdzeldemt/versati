@@ -1,10 +1,9 @@
-package com.liuvil.versati.repository.di
+package com.liuvil.versati.repository.api.di
 
-import com.liuvil.versati.repository.api.MinifluxClient
+import com.liuvil.versati.repository.api.APIClient
+import com.liuvil.versati.repository.api.auth.AuthInterceptor
 import com.liuvil.versati.repository.api.converter.BodyConverterFactory
 import com.liuvil.versati.repository.api.converter.QueryParamConverterFactory
-import com.liuvil.versati.repository.api.interceptor.MinifluxAuthenticationInterceptor
-import com.liuvil.versati.repository.api.interceptor.MinifluxAuthenticationMethod
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,23 +14,22 @@ import java.net.URL
 
 @Module
 @InstallIn(SingletonComponent::class)
-class MinifluxClientModule {
+class APIClientModule {
+
     @Provides
-    fun provideMinifluxClient(
+    fun provideAPIClient(
         baseURL: URL,
-        authenticationMethod: MinifluxAuthenticationMethod
-    ): MinifluxClient =
+        authInterceptor: AuthInterceptor
+    ): APIClient =
         Retrofit.Builder()
             .baseUrl(baseURL)
             .client(
                 OkHttpClient.Builder()
-                    .addInterceptor(
-                        MinifluxAuthenticationInterceptor(authenticationMethod)
-                    )
+                    .addInterceptor(authInterceptor)
                     .build()
             )
-            .addConverterFactory(BodyConverterFactory.create())
+            .addConverterFactory(BodyConverterFactory.Companion.create())
             .addConverterFactory(QueryParamConverterFactory())
             .build()
-            .create(MinifluxClient::class.java)
+            .create(APIClient::class.java)
 }

@@ -22,7 +22,7 @@ internal abstract class BodyConverterFactory: Converter.Factory() {
                             OffsetDateTime.parse(
                                 json.asString
                             )
-                        } as JsonDeserializer<OffsetDateTime>
+                        }
                     )
                     .create()
             )

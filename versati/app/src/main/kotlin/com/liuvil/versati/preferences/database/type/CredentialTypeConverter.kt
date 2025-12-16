@@ -1,4 +1,4 @@
-package com.liuvil.versati.preferences.database.type_converter
+package com.liuvil.versati.preferences.database.type
 
 import androidx.room.TypeConverter
 import com.liuvil.versati.framework.json.buildPolymorphicJson

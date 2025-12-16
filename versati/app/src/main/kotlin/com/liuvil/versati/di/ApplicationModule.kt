@@ -1,6 +1,6 @@
 package com.liuvil.versati.di
 
-import com.liuvil.versati.repository.api.interceptor.MinifluxAuthenticationMethod
+import com.liuvil.versati.repository.api.auth.Credentials
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,8 +16,8 @@ class ApplicationModule {
         URL("")
 
     @Provides
-    fun provideAuthenticationMethod(): MinifluxAuthenticationMethod =
-        MinifluxAuthenticationMethod.APIKey(
+    fun provideCredentials(): Credentials =
+        Credentials.APIKey(
             apiKey = ""
         )
 }

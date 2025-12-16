@@ -1,6 +1,6 @@
 package com.liuvil.versati.repository
 
-import com.liuvil.versati.repository.api.MinifluxClient
+import com.liuvil.versati.repository.api.APIClient
 import com.liuvil.versati.repository.api.data.EntriesGetResponse
 import com.liuvil.versati.repository.api.data.EntriesUpdateRequest
 import com.liuvil.versati.repository.api.data.EntryStatus
@@ -16,7 +16,7 @@ import com.liuvil.versati.repository.data.conversion.toCache
 import javax.inject.Inject
 
 class Repository @Inject constructor(
-    private val minifluxClient: MinifluxClient,
+    private val apiClient: APIClient,
     cacheDatabase: CacheDatabase
 ) {
     private val categoryCache = cacheDatabase.categoryCache()
@@ -33,7 +33,7 @@ class Repository @Inject constructor(
             categoryCache.getAllCategories()
         },
         remote = {
-            minifluxClient.getCategories()
+            apiClient.getCategories()
                 .map {
                     it.toCache()
                 }
@@ -53,7 +53,7 @@ class Repository @Inject constructor(
             enclosureCache.getEnclosuresByEntryId(entryId)
         },
         remote = {
-            minifluxClient.getEntry(entryId).enclosures
+            apiClient.getEntry(entryId).enclosures
                 .map {
                     it.toCache()
                 }
@@ -73,7 +73,7 @@ class Repository @Inject constructor(
                 entryCache.getEntryById(id)
             },
             remote = {
-                minifluxClient.getEntry(id).toCache()
+                apiClient.getEntry(id).toCache()
             },
             sync = {
                 entryCache.insertEntry(it)
@@ -88,7 +88,7 @@ class Repository @Inject constructor(
         offset: Int? = null,
         limit: Int? = null
     ): EntriesGetResponse =
-        minifluxClient.getEntries(
+        apiClient.getEntries(
             status = read?.let {
                 if (it) EntryStatus.READ else EntryStatus.UNREAD
             },
@@ -110,7 +110,7 @@ class Repository @Inject constructor(
         offset: Int? = null,
         limit: Int? = null
     ): EntriesGetResponse =
-        minifluxClient.getCategoryEntries(
+        apiClient.getCategoryEntries(
             categoryId = categoryId,
             status = read?.let {
                 if (it) EntryStatus.READ else EntryStatus.UNREAD
@@ -130,7 +130,7 @@ class Repository @Inject constructor(
         offset: Int? = null,
         limit: Int? = null
     ): EntriesGetResponse =
-        minifluxClient.getFeedEntries(
+        apiClient.getFeedEntries(
             feedId = feedId,
             status = read?.let {
                 if (it) EntryStatus.READ else EntryStatus.UNREAD
@@ -148,7 +148,7 @@ class Repository @Inject constructor(
         ids: List<Int>,
         read: Boolean
     ) {
-        minifluxClient.updateEntries(
+        apiClient.updateEntries(
             EntriesUpdateRequest(
                 entryIds = ids,
                 status = if (read) EntryStatus.READ else EntryStatus.UNREAD
@@ -158,7 +158,7 @@ class Repository @Inject constructor(
     }
 
     suspend fun toggleEntryStarred(id: Int) {
-        minifluxClient.toggleEntryBookmark(id)
+        apiClient.toggleEntryBookmark(id)
         entryCache.getEntryById(id)?.let {
             entryCache.updateEntryStarred(id, !it.starred)
         }
@@ -173,7 +173,7 @@ class Repository @Inject constructor(
             feedCache.getFeedById(id)
         },
         remote = {
-            minifluxClient.getFeed(id).toCache()
+            apiClient.getFeed(id).toCache()
         },
         sync = {
             feedCache.insertFeed(it)
@@ -187,7 +187,7 @@ class Repository @Inject constructor(
             feedCache.getAllFeeds()
         },
         remote = {
-            minifluxClient.getFeeds()
+            apiClient.getFeeds()
                 .map { it.toCache() }
         },
         sync = {
@@ -197,7 +197,7 @@ class Repository @Inject constructor(
     ).provide(origin)
 
     suspend fun getFeedCounters(): FeedCountersResponse =
-        minifluxClient.getFeedCounters()
+        apiClient.getFeedCounters()
 
     // Icons
     suspend fun getIconById(
@@ -208,7 +208,7 @@ class Repository @Inject constructor(
             iconCache.getIconById(id)
         },
         remote = {
-            minifluxClient.getFeedIcon(id).toCache()
+            apiClient.getFeedIcon(id).toCache()
         },
         sync = {
             iconCache.insertIcon(it)

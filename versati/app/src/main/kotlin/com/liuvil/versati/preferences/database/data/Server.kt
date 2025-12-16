@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.liuvil.versati.preferences.data.Server
-import com.liuvil.versati.preferences.database.type_converter.CredentialTypeConverter
+import com.liuvil.versati.preferences.database.type.CredentialTypeConverter
 import java.net.URL
 
 @Entity(tableName = "servers")
