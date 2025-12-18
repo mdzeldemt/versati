@@ -1,11 +1,11 @@
-package com.liuvil.versati.activities.main.navigation
+package com.liuvil.versati.activities.main.home.navigation
 
 import kotlinx.serialization.Serializable
 
-abstract class NavigationDestination {
+abstract class HomeNavigationDestination {
 
     @Serializable
-    object Main
+    object Feed
 
     @Serializable
     data class Entry(

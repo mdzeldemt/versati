@@ -1,22 +1,25 @@
 package com.liuvil.versati.preferences
 
-import com.liuvil.versati.preferences.data.Server
-import com.liuvil.versati.preferences.data.egg.ServerEgg
-import com.liuvil.versati.preferences.database.PreferenceDatabase
-import com.liuvil.versati.preferences.database.data.conversion.toDatabase
+import android.content.Context
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
+private const val PREFERENCES_DATA_STORE_NAME = "preferences"
+
+private val Context.dataStore by preferencesDataStore(name = PREFERENCES_DATA_STORE_NAME)
+
+private object PreferenceKey {
+    val ACTIVE_SERVER_ID = stringPreferencesKey("active_server_id")
+}
+
 class PreferenceStore @Inject constructor(
-    preferenceDatabase: PreferenceDatabase
+    @ApplicationContext val context: Context
 ) {
-    private val serverDao = preferenceDatabase.serverDao()
-
-    suspend fun getAllServers(): List<Server> =
-        serverDao.getAllServers()
-
-    suspend fun createServer(egg: ServerEgg) =
-        serverDao.insertServer(egg.toDatabase())
-
-    suspend fun deleteServer(id: Int) =
-        serverDao.deleteServerById(id)
+    val activeServerID = context.dataStore.data
+        .map { preferences ->
+            preferences[PreferenceKey.ACTIVE_SERVER_ID]?.toInt()
+        }
 }

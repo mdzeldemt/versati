@@ -61,10 +61,11 @@ import java.time.ZoneId
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntryView(
-    id: Int,
+    serverID: Int,
+    entryID: Int,
     onDismiss: () -> Unit
 ) {
-    val viewModel = bindViewModel<Int, EntryViewModel>(id)
+    val viewModel = bindViewModel<InitData, EntryViewModel>(InitData(serverID, entryID))
     val entry by viewModel.entry
     val starred by viewModel.starred
 
@@ -189,7 +190,7 @@ fun EntryView(
                         AlertDialog(
                             onDismissRequest = { showDetailsDialog = false },
                             title = { Text("Entry details") },
-                            text = { Text(getEntryLongDetailsText(id, it, starred)) },
+                            text = { Text(getEntryLongDetailsText(entryID, it, starred)) },
                             confirmButton = {
                                 TextButton(onClick = { showDetailsDialog = false }) {
                                     Text("Close")

@@ -1,12 +1,12 @@
 package com.liuvil.versati.preferences.data
 
-interface Credential
+sealed interface Credential
 
-interface MinifluxBasicCredential: Credential {
-    val username: String
+data class BasicCredential(
+    val username: String,
     val password: String
-}
+): Credential
 
-interface MinifluxAPIKeyCredential: Credential {
+data class APIKeyCredential(
     val apiKey: String
-}
+): Credential

@@ -1,32 +1,37 @@
-package com.liuvil.versati.activities.main.navigation
+package com.liuvil.versati.activities.main.home
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.liuvil.versati.activities.main.feed.FeedView
 import com.liuvil.versati.activities.main.entry.EntryView
+import com.liuvil.versati.activities.main.feed.FeedView
+import com.liuvil.versati.activities.main.home.navigation.HomeNavigationDestination
 
 @Composable
-fun NavigationRoot() {
+fun HomeView(
+    serverID: Int
+) {
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = NavigationDestination.Main
+        startDestination = HomeNavigationDestination.Feed
     ) {
-        composable<NavigationDestination.Main> {
+        composable<HomeNavigationDestination.Feed> {
             FeedView(
+                serverID = serverID,
                 onEntryOpenRequest = {
-                    navController.navigate(NavigationDestination.Entry(id = it))
+                    navController.navigate(HomeNavigationDestination.Entry(id = it))
                 }
             )
         }
 
-        composable<NavigationDestination.Entry> {
+        composable<HomeNavigationDestination.Entry> {
             EntryView(
-                id = it.toRoute<NavigationDestination.Entry>().id,
+                serverID = serverID,
+                entryID = it.toRoute<HomeNavigationDestination.Entry>().id,
                 onDismiss = {
                     navController.popBackStack()
                 }

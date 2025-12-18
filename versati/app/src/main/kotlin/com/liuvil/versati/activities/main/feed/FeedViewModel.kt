@@ -1,13 +1,18 @@
 package com.liuvil.versati.activities.main.feed
 
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.viewModelScope
+import com.liuvil.versati.activities.main.home.RepositoryFactory
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.lazy.lazyLoad
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
+import com.liuvil.versati.preferences.PreferenceStore
+import com.liuvil.versati.preferences.ServerRepository
 import com.liuvil.versati.repository.Origin
 import com.liuvil.versati.repository.Repository
 import com.liuvil.versati.repository.api.data.EntriesGetResponse
@@ -17,12 +22,22 @@ import com.liuvil.versati.repository.data.Enclosure
 import com.liuvil.versati.repository.data.Feed
 import com.liuvil.versati.repository.data.Icon
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
+
+data class InitData(
+    val serverID: Int
+)
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
-    private val repository: Repository
-): BaseViewModel<Unit>() {
+    private val repositoryFactory: RepositoryFactory
+): BaseViewModel<InitData>() {
+
+    private lateinit var repository: Repository
 
     private val _categories = mutableStateOf<LazyResult<List<Category>>>(None())
     private val _feeds = mutableStateOf<LazyResult<List<Feed>>>(None())
@@ -39,6 +54,10 @@ class FeedViewModel @Inject constructor(
     val iconsById: Map<Int, LazyResult<Icon>> = _iconsById
     val entriesResponse: State<LazyResult<EntriesGetResponse>> = _entriesResponse
     val enclosuresByEntryId: Map<Int, LazyResult<Enclosure>> = _enclosuresByEntryId
+
+    override suspend fun initialize(initData: InitData) {
+        repository = repositoryFactory.create(initData.serverID)
+    }
 
     suspend fun reloadCategories() {
         lazyLoad(_categories) {

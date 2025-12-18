@@ -81,9 +81,10 @@ sealed interface Source {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedView(
+    serverID: Int,
     onEntryOpenRequest: (Int) -> Unit
 ) {
-    val viewModel = bindViewModel<FeedViewModel>()
+    val viewModel = bindViewModel<InitData, FeedViewModel>(InitData(serverID))
     var source by viewModel.source
     var offset by viewModel.offset
     val categories by viewModel.categories
