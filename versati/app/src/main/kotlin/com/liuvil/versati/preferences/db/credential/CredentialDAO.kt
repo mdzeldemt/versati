@@ -7,9 +7,9 @@ import androidx.room.Query
 
 @Dao
 interface CredentialDAO {
-    @Query("SELECT * FROM credentials WHERE serverID = :serverID")
-    suspend fun getByServerID(serverID: Int): Credential?
+    @Query("SELECT * FROM credentials WHERE connectionID = :connectionID")
+    suspend fun getByConnectionID(connectionID: Long): Credentials
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(credential: Credential)
+    suspend fun upsert(credentials: Credentials)
 }

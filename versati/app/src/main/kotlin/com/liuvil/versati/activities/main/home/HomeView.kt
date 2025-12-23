@@ -5,35 +5,61 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.liuvil.versati.activities.main.entry.EntryView
-import com.liuvil.versati.activities.main.feed.FeedView
-import com.liuvil.versati.activities.main.home.navigation.HomeNavigationDestination
+import com.liuvil.versati.activities.main.home.entry.EntryView
+import com.liuvil.versati.activities.main.home.feed.FeedView
+import com.liuvil.versati.activities.main.preferences.PreferencesView
+import com.liuvil.versati.framework.navigation.safePop
+import kotlinx.serialization.Serializable
+
+private object NavigationDestination {
+    @Serializable
+    data object Feed
+
+    @Serializable
+    data class Entry(
+        val id: Int
+    )
+
+    @Serializable
+    data object Preferences
+}
 
 @Composable
 fun HomeView(
-    serverID: Int
+    connectionID: Long
 ) {
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = HomeNavigationDestination.Feed
+        startDestination = NavigationDestination.Feed
     ) {
-        composable<HomeNavigationDestination.Feed> {
+        composable<NavigationDestination.Feed> {
             FeedView(
-                serverID = serverID,
-                onEntryOpenRequest = {
-                    navController.navigate(HomeNavigationDestination.Entry(id = it))
+                connectionID = connectionID,
+                onEntryTileClicked = {
+                    navController.navigate(NavigationDestination.Entry(id = it))
+                },
+                onPreferencesDrawerItemClicked = {
+                    navController.navigate(NavigationDestination.Preferences)
                 }
             )
         }
 
-        composable<HomeNavigationDestination.Entry> {
+        composable<NavigationDestination.Entry> {
             EntryView(
-                serverID = serverID,
-                entryID = it.toRoute<HomeNavigationDestination.Entry>().id,
+                connectionID = connectionID,
+                entryID = it.toRoute<NavigationDestination.Entry>().id,
                 onDismiss = {
-                    navController.popBackStack()
+                    navController.safePop()
+                }
+            )
+        }
+
+        composable<NavigationDestination.Preferences> {
+            PreferencesView(
+                onDismiss = {
+                    navController.safePop()
                 }
             )
         }

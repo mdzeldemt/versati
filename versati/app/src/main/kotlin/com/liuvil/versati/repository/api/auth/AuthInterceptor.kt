@@ -1,8 +1,8 @@
 package com.liuvil.versati.repository.api.auth
 
-import com.liuvil.versati.preferences.data.APIKeyCredential
-import com.liuvil.versati.preferences.data.BasicCredential
-import com.liuvil.versati.preferences.data.Credential
+import com.liuvil.versati.preferences.data.APIKeyCredentials
+import com.liuvil.versati.preferences.data.BasicCredentials
+import com.liuvil.versati.preferences.data.Credentials
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -11,7 +11,7 @@ import java.util.Base64
 import javax.inject.Inject
 
 class AuthInterceptor @Inject constructor(
-    private val credential: Credential
+    private val credentials: Credentials
 ): Interceptor {
     @Throws(IOException::class)
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -19,20 +19,20 @@ class AuthInterceptor @Inject constructor(
 
         val headers = originalRequest.headers.newBuilder()
             .apply {
-                when (credential) {
-                    is BasicCredential -> add(
+                when (credentials) {
+                    is BasicCredentials -> add(
                         "Authorization",
                         "Basic ${
                             Base64.getEncoder()
                                 .encodeToString(
-                                    "${credential.username}:${credential.password}"
+                                    "${credentials.username}:${credentials.password}"
                                         .toByteArray()
                                 )
                         }"
                     )
 
-                    is APIKeyCredential -> add(
-                        "X-Auth-Token", credential.apiKey
+                    is APIKeyCredentials -> add(
+                        "X-Auth-Token", credentials.apiKey
                     )
                 }
             }

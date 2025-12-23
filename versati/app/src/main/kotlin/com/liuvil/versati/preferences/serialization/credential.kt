@@ -1,8 +1,8 @@
 package com.liuvil.versati.preferences.serialization
 
-import com.liuvil.versati.preferences.data.APIKeyCredential
-import com.liuvil.versati.preferences.data.BasicCredential
-import com.liuvil.versati.preferences.data.Credential
+import com.liuvil.versati.preferences.data.APIKeyCredentials
+import com.liuvil.versati.preferences.data.BasicCredentials
+import com.liuvil.versati.preferences.data.Credentials
 import com.liuvil.versati.preferences.db.credential.CredentialType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -19,27 +19,32 @@ private data class APIKeyCredentialPayload(
 )
 
 fun serialize(
-    credential: Credential
+    credentials: Credentials
 ): ByteArray =
-    Json.encodeToString {
-        when (credential) {
-            is BasicCredential -> BasicCredentialPayload(credential.username, credential.password)
-            is APIKeyCredential -> APIKeyCredentialPayload(credential.apiKey)
-        }
-    }.encodeToByteArray()
+    when (credentials) {
+        is BasicCredentials ->
+            Json.encodeToString(
+                BasicCredentialPayload(credentials.username, credentials.password)
+            ).encodeToByteArray()
+
+        is APIKeyCredentials ->
+            Json.encodeToString(
+                APIKeyCredentialPayload(credentials.apiKey)
+            ).encodeToByteArray()
+    }
 
 fun deserialize(
     value: ByteArray,
     credentialType: CredentialType
-): Credential =
+): Credentials =
     when (credentialType) {
         CredentialType.BASIC -> {
             val payload = Json.decodeFromString<BasicCredentialPayload>(value.decodeToString())
-            BasicCredential(payload.username, payload.password)
+            BasicCredentials(payload.username, payload.password)
         }
 
         CredentialType.API_KEY -> {
             val payload = Json.decodeFromString<APIKeyCredentialPayload>(value.decodeToString())
-            APIKeyCredential(payload.apiKey)
+            APIKeyCredentials(payload.apiKey)
         }
     }

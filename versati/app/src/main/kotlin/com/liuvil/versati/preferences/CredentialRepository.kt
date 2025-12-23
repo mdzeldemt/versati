@@ -1,15 +1,14 @@
 package com.liuvil.versati.preferences
 
-import com.liuvil.versati.framework.database.EntityConstants.KEY_AUTO_GENERATED
 import com.liuvil.versati.framework.encryption.Secret
 import com.liuvil.versati.framework.encryption.decrypt
 import com.liuvil.versati.framework.encryption.encrypt
 import com.liuvil.versati.framework.keystore.MissingSecretKeyException
 import com.liuvil.versati.framework.keystore.generateSecretKey
 import com.liuvil.versati.framework.keystore.loadSecretKey
-import com.liuvil.versati.preferences.data.APIKeyCredential
-import com.liuvil.versati.preferences.data.BasicCredential
-import com.liuvil.versati.preferences.data.Credential
+import com.liuvil.versati.preferences.data.APIKeyCredentials
+import com.liuvil.versati.preferences.data.BasicCredentials
+import com.liuvil.versati.preferences.data.Credentials
 import com.liuvil.versati.preferences.db.credential.CredentialDAO
 import com.liuvil.versati.preferences.db.credential.CredentialType
 import com.liuvil.versati.preferences.serialization.deserialize
@@ -19,10 +18,11 @@ import javax.inject.Inject
 class CredentialRepository @Inject constructor(
     private val credentialDAO: CredentialDAO
 ) {
-    suspend fun getByServerID(
-        serverID: Int
-    ): Credential? {
-        val credential = credentialDAO.getByServerID(serverID) ?: return null
+
+    suspend fun getByConnectionID(
+        connectionID: Long
+    ): Credentials {
+        val credential = credentialDAO.getByConnectionID(connectionID)
         val secret = Secret(credential.ciphertext, credential.iv)
 
         val payload = decrypt(
@@ -34,10 +34,10 @@ class CredentialRepository @Inject constructor(
     }
 
     suspend fun upsert(
-        serverID: Int,
-        credential: Credential,
+        connectionID: Long,
+        credentials: Credentials,
     ) {
-        val payload = serialize(credential)
+        val payload = serialize(credentials)
 
         val secret = encrypt(
             value = payload,
@@ -45,12 +45,11 @@ class CredentialRepository @Inject constructor(
         )
 
         credentialDAO.upsert(
-            com.liuvil.versati.preferences.db.credential.Credential(
-                id = KEY_AUTO_GENERATED,
-                serverID = serverID,
-                credentialType = when (credential) {
-                    is BasicCredential -> CredentialType.BASIC
-                    is APIKeyCredential -> CredentialType.API_KEY
+            com.liuvil.versati.preferences.db.credential.Credentials(
+                connectionID = connectionID,
+                credentialType = when (credentials) {
+                    is BasicCredentials -> CredentialType.BASIC
+                    is APIKeyCredentials -> CredentialType.API_KEY
                 },
                 ciphertext = secret.ciphertext,
                 iv = secret.iv

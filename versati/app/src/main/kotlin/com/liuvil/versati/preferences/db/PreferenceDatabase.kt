@@ -4,15 +4,15 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.liuvil.versati.framework.database.type_converter.URLTypeConverter
-import com.liuvil.versati.preferences.db.credential.Credential
+import com.liuvil.versati.preferences.db.credential.Credentials
 import com.liuvil.versati.preferences.db.credential.CredentialDAO
-import com.liuvil.versati.preferences.db.server.Server
-import com.liuvil.versati.preferences.db.server.ServerDAO
+import com.liuvil.versati.preferences.db.connection.Connection
+import com.liuvil.versati.preferences.db.connection.ConnectionDAO
 
 @Database(
     entities = [
-        Credential::class,
-        Server::class
+        Connection::class,
+        Credentials::class
     ],
     version = 1,
     exportSchema = false
@@ -21,6 +21,6 @@ import com.liuvil.versati.preferences.db.server.ServerDAO
     URLTypeConverter::class
 )
 abstract class PreferenceDatabase: RoomDatabase() {
+    abstract fun connectionDAO(): ConnectionDAO
     abstract fun credentialDAO(): CredentialDAO
-    abstract fun serverDAO(): ServerDAO
 }
