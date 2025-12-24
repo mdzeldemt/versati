@@ -32,9 +32,16 @@ import com.liuvil.versati.components.menu.modal.ModalMenuItem
 import com.liuvil.versati.framework.viewmodel.bindViewModel
 import kotlinx.coroutines.launch
 
-private sealed class Selection {
-    data object None: Selection()
-    data class Single(val connectionID: Long): Selection()
+private sealed class Menu {
+    data class Connection(
+        val connectionID: Long
+    ): Menu()
+}
+
+private sealed class Dialog {
+    data class Deletion(
+        val connectionID: Long
+    ): Dialog()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,9 +54,8 @@ internal fun OverviewView(
     val viewModel = bindViewModel<OverviewViewModel>()
     val connections by viewModel.connections
 
-    var selection by remember { mutableStateOf<Selection>(Selection.None) }
-    var showActionMenu by remember { mutableStateOf(false) }
-    var showDeletionConfirmationDialog by remember { mutableStateOf(false) }
+    var activeMenu by remember { mutableStateOf<Menu?>(null) }
+    var activeDialog by remember { mutableStateOf<Dialog?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -99,10 +105,9 @@ internal fun OverviewView(
                                 onEditClicked(it.id)
                             },
                             onLongClick = {
-                                selection = Selection.Single(
+                                activeMenu = Menu.Connection(
                                     connectionID = it.id
                                 )
-                                showActionMenu = true
                             }
                         )
                     }
@@ -120,9 +125,9 @@ internal fun OverviewView(
         }
     }
 
-    selection.let {
-        if (it is Selection.Single) {
-            if (showActionMenu) {
+    activeMenu?.let {
+        when (it) {
+            is Menu.Connection ->
                 ModalMenu(
                     items = listOf(
                         ModalMenuItem("Edit") {
@@ -131,16 +136,21 @@ internal fun OverviewView(
                             )
                         },
                         ModalMenuItem("Delete") {
-                            showDeletionConfirmationDialog = true
+                            activeDialog = Dialog.Deletion(
+                                connectionID = it.connectionID
+                            )
                         },
                     ),
                     onDismiss = {
-                        showActionMenu = false
+                        activeMenu = null
                     }
                 )
-            }
+        }
+    }
 
-            if (showDeletionConfirmationDialog) {
+    activeDialog?.let {
+        when (it) {
+            is Dialog.Deletion ->
                 ConfirmationDialog(
                     titleText = "Delete connection",
                     bodyText = "Are you sure you want to delete the selected connection? This action cannot be undone.",
@@ -155,10 +165,9 @@ internal fun OverviewView(
                         }
                     },
                     onRespond = {
-                        showDeletionConfirmationDialog = false
+                        activeDialog = null
                     }
                 )
-            }
         }
     }
 }
