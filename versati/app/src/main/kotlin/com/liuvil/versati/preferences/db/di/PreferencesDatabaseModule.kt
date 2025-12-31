@@ -10,6 +10,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 private const val PREFERENCES_DATABASE_NAME = "preferences"
 
@@ -18,6 +19,7 @@ private const val PREFERENCES_DATABASE_NAME = "preferences"
 class PreferencesDatabaseModule {
 
     @Provides
+    @Singleton
     fun providePreferencesDatabase(
         @ApplicationContext context: Context
     ): PreferenceDatabase {
@@ -31,11 +33,13 @@ class PreferencesDatabaseModule {
     }
 
     @Provides
+    @Singleton
     fun provideConnectionDao(
         database: PreferenceDatabase
     ): ConnectionDAO = database.connectionDAO()
 
     @Provides
+    @Singleton
     fun provideCredentialDao(
         database: PreferenceDatabase
     ): CredentialDAO = database.credentialDAO()
