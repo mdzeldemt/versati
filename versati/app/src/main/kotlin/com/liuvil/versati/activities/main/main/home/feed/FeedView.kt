@@ -16,7 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
@@ -70,6 +69,21 @@ import kotlin.math.max
 
 // TODO: Make configurable
 const val PAGE_ENTRY_COUNT = 10
+
+private sealed class Dialog {
+    data class Search(
+        val initialTerm: String
+    ): Dialog()
+
+    data class Page(
+        val currentPage: Int,
+        val totalPages: Int
+    ): Dialog()
+
+    data class MarkAsReadConfirmation(
+        val entryIds: List<Int>
+    ): Dialog()
+}
 
 sealed interface Source {
     data object Unread: Source
@@ -125,12 +139,12 @@ fun FeedView(
 
     // Entry List View
     val scrollState = rememberLazyListState()
-    var showMarkAsReadConfirmationDialog by remember { mutableStateOf(false) }
-    var showSearchDialog by remember { mutableStateOf(false) }
-    var showPageDialog by remember { mutableStateOf(false) }
     val isRefreshing by remember {
         derivedStateOf { entriesResponse is None || entriesResponse is Loading }
     }
+
+    // Dialogs
+    var activeDialog by remember { mutableStateOf<Dialog?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -303,7 +317,15 @@ fun FeedView(
                 ) {
                     coroutineScope.launch {
                         drawerState.close()
-                        showSearchDialog = true
+                        activeDialog = Dialog.Search(
+                            initialTerm = source.let {
+                                if (it is Source.Search) {
+                                    it.term
+                                } else {
+                                    ""
+                                }
+                            }
+                        )
                     }
                 }
             )
@@ -344,30 +366,7 @@ fun FeedView(
                         title?.let {
                             Text(it)
                         }
-                    },
-                    actions = {
-                        areThereUnreadEntries.ifSuccess { areThereUnreadEntries ->
-                            if (areThereUnreadEntries) {
-                                IconButton(
-                                    onClick = { showMarkAsReadConfirmationDialog = true }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Check,
-                                        contentDescription = null
-                                    )
-                                }
-                            }
-                        }
-                    },
-                    modifier = Modifier.clickable(
-                        onClick = {
-                            if (source is Source.Search) {
-                                showSearchDialog = true
-                            }
-                        },
-                        indication = null,
-                        interactionSource = null
-                    )
+                    }
                 )
             }
         ) { padding ->
@@ -449,7 +448,11 @@ fun FeedView(
                                                     if (areThereUnreadEntries) {
                                                         Button(
                                                             onClick = {
-                                                                showMarkAsReadConfirmationDialog = true
+                                                                activeDialog = Dialog.MarkAsReadConfirmation(
+                                                                    entryIds = entriesResponse.entries.map {
+                                                                        it.id
+                                                                    }
+                                                                )
                                                             }
                                                         ) {
                                                             Text("Mark all as read")
@@ -482,7 +485,10 @@ fun FeedView(
 
                                                 TextButton(
                                                     onClick = {
-                                                        showPageDialog = true
+                                                        activeDialog = Dialog.Page(
+                                                            currentPage = currentPage,
+                                                            totalPages = totalPages
+                                                        )
                                                     }
                                                 ) {
                                                     Text("$currentPage / $totalPages")
@@ -516,42 +522,6 @@ fun FeedView(
                                         Text("No entries found.")
                                     }
                                 }
-
-                                if (showPageDialog) {
-                                    PageDialog(
-                                        initialValue = currentPage,
-                                        totalPages = totalPages,
-                                        onSubmit = {
-                                            coroutineScope.launch {
-                                                updateOffset((it - 1) * PAGE_ENTRY_COUNT)
-                                            }
-                                        },
-                                        onRespond = { showPageDialog = false }
-                                    )
-                                }
-                            }
-
-                            if (showMarkAsReadConfirmationDialog) {
-                                ConfirmationDialog(
-                                    titleText = "Mark page as read",
-                                    bodyText = "Are you sure you want to mark all entries in this page as read?",
-                                    confirmText = "Mark as read",
-                                    dismissText = "Cancel",
-                                    onConfirm = {
-                                        coroutineScope.launch {
-                                            viewModel.markAsRead(
-                                                entryIds = entriesResponse.entries.map { it.id }
-                                            )
-                                            coroutineScope.launch {
-                                                viewModel.reloadEntriesAndEnclosures()
-                                            }
-                                            scrollState.scrollToItem(0)
-                                        }
-                                    },
-                                    onRespond = {
-                                        showMarkAsReadConfirmationDialog = false
-                                    }
-                                )
                             }
                         }
 
@@ -577,22 +547,65 @@ fun FeedView(
                             }
                         }
                     }
-
-                    if (showSearchDialog) {
-                        SearchDialog(
-                            initialTerm = source.let {
-                                if (it is Source.Search) it.term else ""
-                            },
-                            onSubmit = { searchTerm ->
-                                coroutineScope.launch {
-                                    updateSourceSelection(Source.Search(term = searchTerm))
-                                }
-                            },
-                            onRespond = { showSearchDialog = false }
-                        )
-                    }
                 }
             }
+        }
+    }
+
+    activeDialog?.let {
+        when (it) {
+            is Dialog.Search ->
+                SearchDialog(
+                    initialTerm = it.initialTerm,
+                    onSubmit = { searchTerm ->
+                        coroutineScope.launch {
+                            updateSourceSelection(
+                                Source.Search(
+                                    term = searchTerm
+                                )
+                            )
+                        }
+                    },
+                    onRespond = {
+                        activeDialog = null
+                    }
+                )
+
+            is Dialog.Page ->
+                PageDialog(
+                    initialValue = it.currentPage,
+                    totalPages = it.totalPages,
+                    onSubmit = {
+                        coroutineScope.launch {
+                            updateOffset((it - 1) * PAGE_ENTRY_COUNT)
+                        }
+                    },
+                    onRespond = {
+                        activeDialog = null
+                    }
+                )
+
+            is Dialog.MarkAsReadConfirmation ->
+                ConfirmationDialog(
+                    titleText = "Mark page as read",
+                    bodyText = "Are you sure you want to mark all entries in this page as read?",
+                    confirmText = "Mark as read",
+                    dismissText = "Cancel",
+                    onConfirm = {
+                        coroutineScope.launch {
+                            viewModel.markAsRead(
+                                entryIds = it.entryIds
+                            )
+                            coroutineScope.launch {
+                                viewModel.reloadEntriesAndEnclosures()
+                            }
+                            scrollState.scrollToItem(0)
+                        }
+                    },
+                    onRespond = {
+                        activeDialog = null
+                    }
+                )
         }
     }
 }
