@@ -2,6 +2,9 @@ package com.liuvil.versati.framework.lazy
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.snapshots.SnapshotStateMap
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 
 sealed class LazyResult<T> {
     inline fun <R> ifNone(block: () -> R): R? {
@@ -18,9 +21,9 @@ sealed class LazyResult<T> {
         return null
     }
 
-    inline fun <R> ifFailure(block: (Exception) -> R): R? {
+    inline fun <R> ifFailure(block: (Throwable) -> R): R? {
         if (this is Failure) {
-            return block(exception)
+            return block(reason)
         }
         return null
     }
@@ -38,14 +41,14 @@ sealed class LazyResult<T> {
                     Failure(exception)
                 }
             is Failure ->
-                Failure(exception)
+                Failure(reason)
         }
 }
 
 class None<T>: LazyResult<T>()
 class Loading<T>: LazyResult<T>()
 data class Success<T>(val value: T): LazyResult<T>()
-data class Failure<T>(val exception: Exception): LazyResult<T>()
+data class Failure<T>(val reason: Throwable): LazyResult<T>()
 
 suspend fun <T> lazyLoad(
     state: MutableState<LazyResult<T>>,
@@ -70,7 +73,20 @@ suspend fun <K, V> lazyLoad(
     }
 }
 
-private suspend fun <T> handle(block: suspend () -> T): LazyResult<T> =
+fun <T> lazyObserve(
+    flow: Flow<T>
+): Flow<LazyResult<T>> =
+    flow
+        .map {
+            Success(it)
+        }
+        .catch {
+            Failure<T>(it)
+        }
+
+private suspend fun <T> handle(
+    block: suspend () -> T
+): LazyResult<T> =
     try {
         Success(block())
     } catch (exception: Exception) {

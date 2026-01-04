@@ -1,12 +1,7 @@
 package com.liuvil.versati.framework.string
 
-import java.net.URL
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 fun isValidURL(value: String): Boolean {
-    return try {
-        URL(value)
-        true
-    } catch (e: Exception) {
-        false
-    }
+    return value.toHttpUrlOrNull() != null
 }

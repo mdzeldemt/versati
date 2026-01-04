@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.liuvil.versati.activities.main.preferences.connections.ConnectionPreferencesView
-import com.liuvil.versati.activities.main.preferences.home.HomePreferencesView
+import com.liuvil.versati.activities.main.preferences.connection.ConnectionPreferencesView
+import com.liuvil.versati.activities.main.preferences.overview.OverviewPreferencesView
 import com.liuvil.versati.framework.navigation.safePop
 import kotlinx.serialization.Serializable
 
@@ -28,8 +28,8 @@ fun PreferencesView(
         startDestination = NavigationDestination.Home
     ) {
         composable<NavigationDestination.Home> {
-            HomePreferencesView(
-                onConnectionsTileClicked = {
+            OverviewPreferencesView(
+                onConnectionClicked = {
                     navController.navigate(NavigationDestination.Connections)
                 },
                 onDismiss = onDismiss
