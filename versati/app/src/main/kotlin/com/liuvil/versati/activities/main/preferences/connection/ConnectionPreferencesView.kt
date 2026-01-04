@@ -14,6 +14,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,17 +27,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.components.form.action.SimpleActionTile
-import com.liuvil.versati.components.form.text.SimpleTextField
 import com.liuvil.versati.components.scaffold.action.BackButton
 import com.liuvil.versati.framework.app.restartApp
 import com.liuvil.versati.framework.string.isValidURL
 import com.liuvil.versati.framework.viewmodel.viewOf
-import com.liuvil.versati.preferences.data.APIKeyCredentials
-import com.liuvil.versati.preferences.data.BasicCredentials
-import com.liuvil.versati.preferences.data.Credentials
+import com.liuvil.versati.preferences.APIKeyCredentials
+import com.liuvil.versati.preferences.BasicCredentials
+import com.liuvil.versati.preferences.Credentials
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.net.URL
@@ -135,7 +136,7 @@ internal fun ConnectionPreferencesView(
                                 null
                             }
                     },
-                    onRespond = {
+                    onDismiss = {
                         activeDialog = null
                     }
                 )
@@ -155,7 +156,7 @@ internal fun ConnectionPreferencesView(
                                 null
                             }
                     },
-                    onRespond = {
+                    onDismiss = {
                         activeDialog = null
                     }
                 )
@@ -210,9 +211,12 @@ private fun AuthenticationTile(
 private fun BaseURLInputDialog(
     initialValue: URL?,
     onSubmit: (URL?) -> Unit,
-    onRespond: () -> Unit
+    onDismiss: () -> Unit
 ) {
-    var value by remember { mutableStateOf(initialValue?.toString() ?: "") }
+    var value by remember {
+        mutableStateOf(initialValue?.toString() ?: "")
+    }
+
     val isError by remember {
         derivedStateOf {
             value.isNotEmpty() && !isValidURL(value)
@@ -220,14 +224,16 @@ private fun BaseURLInputDialog(
     }
 
     AlertDialog(
-        onDismissRequest = onRespond,
+        onDismissRequest = onDismiss,
         title = {
             Text("Set base URL")
         },
         text = {
-            SimpleTextField(
+            TextField(
                 value = value,
-                labelText = "Base URL",
+                label = {
+                    Text("Base URL")
+                },
                 isError = isError,
                 onValueChange = {
                     value = it
@@ -238,7 +244,11 @@ private fun BaseURLInputDialog(
             TextButton(
                 enabled = !isError,
                 onClick = {
-                    onSubmit(value.toHttpUrl().toUrl())
+                    if (value.isNotEmpty()) {
+                        onSubmit(value.toHttpUrl().toUrl())
+                    } else {
+                        onSubmit(null)
+                    }
                 }
             ) {
                 Text("OK")
@@ -246,7 +256,7 @@ private fun BaseURLInputDialog(
         },
         dismissButton = {
             TextButton(onClick = {
-                onRespond()
+                onDismiss()
             }) {
                 Text("Cancel")
             }
@@ -258,7 +268,7 @@ private fun BaseURLInputDialog(
 private fun CredentialsInputDialog(
     initialValue: Credentials?,
     onSubmit: (Credentials?) -> Unit,
-    onRespond: () -> Unit
+    onDismiss: () -> Unit
 ) {
     var credentialType by remember {
         mutableStateOf(
@@ -313,18 +323,18 @@ private fun CredentialsInputDialog(
     }
 
     AlertDialog(
-        onDismissRequest = onRespond,
+        onDismissRequest = onDismiss,
         title = {
             Text("Set credentials")
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)
+                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top)
             ) {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top)
+                    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)
                 ) {
-                    listOf(CredentialType.API_KEY, CredentialType.BASIC, null)
+                    listOf(null, CredentialType.API_KEY, CredentialType.BASIC)
                         .forEach {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -341,45 +351,56 @@ private fun CredentialsInputDialog(
                                 )
                                 Text(
                                     when (it) {
+                                        null -> "None"
                                         CredentialType.API_KEY -> "API key"
                                         CredentialType.BASIC -> "Basic"
-                                        null -> "None"
                                     }
                                 )
                             }
                         }
                 }
 
-                credentialType?.let {
-                    when (it) {
-                        CredentialType.API_KEY ->
-                            SimpleTextField(
-                                value = apiKey,
-                                labelText = "API key",
-                                isError = isApiKeyError,
-                                onValueChange = {
-                                    apiKey = it
-                                }
-                            )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)
+                ) {
+                    credentialType?.let {
+                        when (it) {
+                            CredentialType.API_KEY ->
+                                TextField(
+                                    value = apiKey,
+                                    label = {
+                                        Text("API key")
+                                    },
+                                    isError = isApiKeyError,
+                                    onValueChange = {
+                                        apiKey = it
+                                    }
+                                )
 
-                        CredentialType.BASIC -> {
-                            SimpleTextField(
-                                value = username,
-                                labelText = "Username",
-                                isError = isUsernameError,
-                                onValueChange = {
-                                    username = it
-                                }
-                            )
+                            CredentialType.BASIC -> {
+                                TextField(
+                                    value = username,
+                                    label = {
+                                        Text("Username")
+                                    },
+                                    isError = isUsernameError,
+                                    onValueChange = {
+                                        username = it
+                                    }
+                                )
 
-                            SimpleTextField(
-                                value = password,
-                                labelText = "Password",
-                                isError = isPasswordError,
-                                onValueChange = {
-                                    password = it
-                                }
-                            )
+                                TextField(
+                                    value = password,
+                                    label = {
+                                        Text("Password")
+                                    },
+                                    isError = isPasswordError,
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    onValueChange = {
+                                        password = it
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -410,16 +431,17 @@ private fun CredentialsInputDialog(
                             null -> null
                         }
                     )
-                    onRespond()
                 }
             ) {
                 Text("OK")
             }
         },
         dismissButton = {
-            TextButton(onClick = {
-                onRespond()
-            }) {
+            TextButton(
+                onClick = {
+                    onDismiss()
+                }
+            ) {
                 Text("Cancel")
             }
         }

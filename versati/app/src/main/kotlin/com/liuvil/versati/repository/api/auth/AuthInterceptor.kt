@@ -1,8 +1,8 @@
 package com.liuvil.versati.repository.api.auth
 
-import com.liuvil.versati.preferences.data.APIKeyCredentials
-import com.liuvil.versati.preferences.data.BasicCredentials
-import com.liuvil.versati.preferences.data.Credentials
+import com.liuvil.versati.preferences.APIKeyCredentials
+import com.liuvil.versati.preferences.BasicCredentials
+import com.liuvil.versati.preferences.Credentials
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response

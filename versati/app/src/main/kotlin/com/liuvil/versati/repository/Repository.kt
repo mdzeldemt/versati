@@ -13,7 +13,6 @@ import com.liuvil.versati.repository.data.Entry
 import com.liuvil.versati.repository.data.Feed
 import com.liuvil.versati.repository.data.Icon
 import com.liuvil.versati.repository.data.conversion.toCache
-import javax.inject.Inject
 
 class Repository(
     private val apiClient: APIClient,

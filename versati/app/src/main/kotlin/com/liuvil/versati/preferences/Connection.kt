@@ -1,4 +1,4 @@
-package com.liuvil.versati.preferences.data
+package com.liuvil.versati.preferences
 
 import java.net.URL
 

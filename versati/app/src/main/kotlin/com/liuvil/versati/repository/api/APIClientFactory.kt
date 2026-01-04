@@ -1,6 +1,6 @@
 package com.liuvil.versati.repository.api
 
-import com.liuvil.versati.preferences.data.Credentials
+import com.liuvil.versati.preferences.Credentials
 import com.liuvil.versati.repository.api.auth.AuthInterceptor
 import com.liuvil.versati.repository.api.converter.BodyConverterFactory
 import com.liuvil.versati.repository.api.converter.QueryParamConverterFactory

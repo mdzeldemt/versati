@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.home.feed.drawer
+package com.liuvil.versati.activities.main.main.home.feed.drawer
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding

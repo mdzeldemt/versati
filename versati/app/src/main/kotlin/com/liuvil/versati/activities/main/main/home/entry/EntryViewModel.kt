@@ -1,26 +1,24 @@
-package com.liuvil.versati.activities.main.home.entry
+package com.liuvil.versati.activities.main.main.home.entry
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import com.liuvil.versati.activities.main.home.RepositoryFactory
+import com.liuvil.versati.activities.main.main.home.RepositoryFactory
 import com.liuvil.versati.framework.lazy.Failure
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.lazy.Success
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
-import com.liuvil.versati.repository.data.Enclosure
-import com.liuvil.versati.repository.data.Feed
 import com.liuvil.versati.repository.Origin
 import com.liuvil.versati.repository.Repository
+import com.liuvil.versati.repository.data.Enclosure
+import com.liuvil.versati.repository.data.Feed
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CompletableDeferred
 import java.net.URL
 import java.time.OffsetDateTime
 import javax.inject.Inject
 
 data class InitData(
-    val connectionID: Long,
     val entryID: Int
 )
 
@@ -41,7 +39,7 @@ class EntryViewModel @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ): BaseViewModel<InitData>() {
 
-    private val repository = CompletableDeferred<Repository>()
+    private lateinit var repository: Repository
 
     private var entryID: Int = -1
 
@@ -52,10 +50,7 @@ class EntryViewModel @Inject constructor(
     val starred: State<LazyResult<Boolean>> = _starred
 
     override suspend fun initialize(initData: InitData) {
-        repository.complete(
-            repositoryFactory.create(initData.connectionID)
-        )
-
+        repository = repositoryFactory.create()
         entryID = initData.entryID
     }
 
@@ -67,15 +62,15 @@ class EntryViewModel @Inject constructor(
         val feed: Feed
         val enclosures: List<Enclosure>
         try {
-            entry = repository.await().getEntryById(
+            entry = repository.getEntryById(
                 id = entryID,
                 origin = Origin.LocalThenRemote
             )
-            feed = repository.await().getFeedById(
+            feed = repository.getFeedById(
                 id = entry.feedId,
                 origin = Origin.LocalThenRemote
             )
-            enclosures = repository.await().getEnclosuresByEntryId(
+            enclosures = repository.getEnclosuresByEntryId(
                 entryId = entryID,
                 origin = Origin.LocalThenRemote
             )
@@ -108,8 +103,7 @@ class EntryViewModel @Inject constructor(
             _starred.value = Loading()
 
             try {
-                repository.await()
-                    .toggleEntryStarred(entryID)
+                repository.toggleEntryStarred(entryID)
             } catch (exception: Exception) {
                 _starred.value = Failure(exception)
                 return

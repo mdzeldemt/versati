@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.home.entry
+package com.liuvil.versati.activities.main.main.home.entry
 
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -51,7 +51,7 @@ import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.android.openURLExternally
 import com.liuvil.versati.framework.date.formatHumanReadableLong
 import com.liuvil.versati.framework.preferences.entry.content.css.DEFAULT_ENTRY_CONTENT_STYLESHEET
-import com.liuvil.versati.framework.viewmodel.bindViewModel
+import com.liuvil.versati.framework.viewmodel.viewOf
 import kotlinx.coroutines.launch
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -61,11 +61,11 @@ import java.time.ZoneId
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntryView(
-    connectionID: Long,
     entryID: Int,
     onDismiss: () -> Unit
-) {
-    val viewModel = bindViewModel<InitData, EntryViewModel>(InitData(connectionID, entryID))
+) = viewOf<InitData, EntryViewModel>(
+    InitData(entryID)
+) { viewModel ->
     val entry by viewModel.entry
     val starred by viewModel.starred
 

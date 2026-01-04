@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.home.feed
+package com.liuvil.versati.activities.main.main.home.feed
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,20 +48,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.activities.main.home.feed.drawer.Drawer
-import com.liuvil.versati.activities.main.home.feed.drawer.ExpandableDrawerItem
-import com.liuvil.versati.activities.main.home.feed.drawer.FlatDrawerItem
-import com.liuvil.versati.activities.main.home.feed.entry_list.Entry
-import com.liuvil.versati.activities.main.home.feed.entry_list.EntryListView
-import com.liuvil.versati.activities.main.home.feed.entry_list.parseEntryContent
-import com.liuvil.versati.activities.main.home.feed.page.PageDialog
-import com.liuvil.versati.activities.main.home.feed.search.SearchDialog
+import com.liuvil.versati.activities.main.main.home.feed.drawer.Drawer
+import com.liuvil.versati.activities.main.main.home.feed.drawer.ExpandableDrawerItem
+import com.liuvil.versati.activities.main.main.home.feed.drawer.FlatDrawerItem
+import com.liuvil.versati.activities.main.main.home.feed.entry_list.Entry
+import com.liuvil.versati.activities.main.main.home.feed.entry_list.EntryListView
+import com.liuvil.versati.activities.main.main.home.feed.entry_list.parseEntryContent
+import com.liuvil.versati.activities.main.main.home.feed.page.PageDialog
+import com.liuvil.versati.activities.main.main.home.feed.search.SearchDialog
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.framework.date.formatHumanReadable
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
-import com.liuvil.versati.framework.viewmodel.bindViewModel
+import com.liuvil.versati.framework.viewmodel.viewOf
 import com.liuvil.versati.repository.api.data.EntryStatus
 import kotlinx.coroutines.launch
 import java.time.ZoneId
@@ -83,11 +83,9 @@ sealed interface Source {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedView(
-    connectionID: Long,
     onEntryTileClicked: (Int) -> Unit,
     onPreferencesDrawerItemClicked: () -> Unit
-) {
-    val viewModel = bindViewModel<InitData, FeedViewModel>(InitData(connectionID))
+) = viewOf<FeedViewModel> { viewModel ->
     var source by viewModel.source
     var offset by viewModel.offset
     val categories by viewModel.categories
@@ -536,7 +534,7 @@ fun FeedView(
                             if (showMarkAsReadConfirmationDialog) {
                                 ConfirmationDialog(
                                     titleText = "Mark page as read",
-                                    bodyText = "Are you sure you want to mark this page as read?",
+                                    bodyText = "Are you sure you want to mark all entries in this page as read?",
                                     confirmText = "Mark as read",
                                     dismissText = "Cancel",
                                     onConfirm = {

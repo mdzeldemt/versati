@@ -1,10 +1,10 @@
-package com.liuvil.versati.activities.main.home.feed
+package com.liuvil.versati.activities.main.main.home.feed
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import com.liuvil.versati.activities.main.home.RepositoryFactory
+import com.liuvil.versati.activities.main.main.home.RepositoryFactory
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.lazy.lazyLoad
@@ -18,19 +18,14 @@ import com.liuvil.versati.repository.data.Enclosure
 import com.liuvil.versati.repository.data.Feed
 import com.liuvil.versati.repository.data.Icon
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CompletableDeferred
 import javax.inject.Inject
-
-data class InitData(
-    val connectionID: Long
-)
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
     private val repositoryFactory: RepositoryFactory
-): BaseViewModel<InitData>() {
+): BaseViewModel<Unit>() {
 
-    private val _repository = CompletableDeferred<Repository>()
+    private lateinit var repository: Repository
 
     private val _categories = mutableStateOf<LazyResult<List<Category>>>(None())
     private val _feeds = mutableStateOf<LazyResult<List<Feed>>>(None())
@@ -48,27 +43,25 @@ class FeedViewModel @Inject constructor(
     val entriesResponse: State<LazyResult<EntriesGetResponse>> = _entriesResponse
     val enclosuresByEntryId: Map<Int, LazyResult<Enclosure>> = _enclosuresByEntryId
 
-    override suspend fun initialize(initData: InitData) {
-        _repository.complete(
-            repositoryFactory.create(initData.connectionID)
-        )
+    override suspend fun initialize(initData: Unit) {
+        repository = repositoryFactory.create()
     }
 
     suspend fun reloadCategories() {
         lazyLoad(_categories) {
-            _repository.await().getAllCategories()
+            repository.getAllCategories()
         }
     }
 
     suspend fun reloadFeeds() {
         lazyLoad(_feeds) {
-            _repository.await().getAllFeeds()
+            repository.getAllFeeds()
         }
     }
 
     suspend fun reloadIcon(id: Int) {
         lazyLoad(_iconsById, id) {
-            _repository.await().getIconById(
+            repository.getIconById(
                 id = id,
                 origin = Origin.LocalThenRemote
             )
@@ -77,7 +70,7 @@ class FeedViewModel @Inject constructor(
 
     suspend fun reloadFeedCounters() {
         lazyLoad(_feedCounters) {
-            _repository.await().getFeedCounters()
+            repository.getFeedCounters()
         }
     }
 
@@ -86,40 +79,40 @@ class FeedViewModel @Inject constructor(
             source.value.let {
                 when (it) {
                     is Source.Unread ->
-                        _repository.await().getAllEntries(
+                        repository.getAllEntries(
                             read = false,
                             offset = offset.intValue,
                             globallyVisible = true,
                             limit = PAGE_ENTRY_COUNT
                         )
                     is Source.Read ->
-                        _repository.await().getAllEntries(
+                        repository.getAllEntries(
                             read = true,
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
                     is Source.Starred ->
-                        _repository.await().getAllEntries(
+                        repository.getAllEntries(
                             starred = true,
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
                     is Source.Category ->
-                        _repository.await().getEntriesFromCategory(
+                        repository.getEntriesFromCategory(
                             categoryId = it.id,
                             read = false,
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
                     is Source.Feed ->
-                        _repository.await().getEntriesFromFeed(
+                        repository.getEntriesFromFeed(
                             feedId = it.id,
                             read = false,
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
                     is Source.Search ->
-                        _repository.await().getAllEntries(
+                        repository.getAllEntries(
                             search = it.term,
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
@@ -131,14 +124,14 @@ class FeedViewModel @Inject constructor(
         entriesResponse.value.ifSuccess { entriesResponse ->
             entriesResponse.entries.forEach { entry ->
                 lazyLoad(_enclosuresByEntryId, entry.id) {
-                    _repository.await().getEnclosuresByEntryId(entry.id).firstOrNull()
+                    repository.getEnclosuresByEntryId(entry.id).firstOrNull()
                 }
             }
         }
     }
 
     suspend fun markAsRead(entryIds: List<Int>) {
-        _repository.await().updateEntriesRead(
+        repository.updateEntriesRead(
             ids = entryIds,
             read = true
         )

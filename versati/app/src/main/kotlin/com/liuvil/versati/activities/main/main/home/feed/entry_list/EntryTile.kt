@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.home.feed.entry_list
+package com.liuvil.versati.activities.main.main.home.feed.entry_list
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

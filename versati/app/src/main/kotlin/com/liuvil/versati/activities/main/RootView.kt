@@ -1,33 +1,46 @@
 package com.liuvil.versati.activities.main
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import com.liuvil.versati.activities.main.home.HomeView
-import com.liuvil.versati.activities.main.welcome.WelcomeView
-import com.liuvil.versati.framework.viewmodel.bindViewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.liuvil.versati.activities.main.main.MainView
+import com.liuvil.versati.activities.main.preferences.PreferencesView
+import com.liuvil.versati.framework.navigation.safePop
+import kotlinx.serialization.Serializable
+
+private object NavigationDestination {
+    @Serializable
+    object Main
+
+    @Serializable
+    object Preferences
+}
 
 @Composable
 fun RootView() {
-    val viewModel = bindViewModel<RootViewModel>()
-    val connectionID by viewModel.connectionID
+    val navController = rememberNavController()
 
-    LaunchedEffect(Unit) {
-        viewModel.reloadConnectionID()
-    }
-
-    connectionID.ifSuccess {
-        if (it != null) {
-            HomeView(
-                connectionID = it
+    NavHost(
+        navController = navController,
+        startDestination = NavigationDestination.Main
+    ) {
+        composable<NavigationDestination.Main> {
+            MainView(
+                onPreferencesClicked = {
+                    navController.navigate(
+                        NavigationDestination.Preferences
+                    )
+                }
             )
-        } else {
-            WelcomeView()
         }
-    } ?: Box(
-        modifier = Modifier.fillMaxSize()
-    )
+
+        composable<NavigationDestination.Preferences> {
+            PreferencesView(
+                onDismiss = {
+                    navController.safePop()
+                }
+            )
+        }
+    }
 }
