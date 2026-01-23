@@ -14,6 +14,13 @@ sealed class LazyResult<T> {
         return null
     }
 
+    inline fun <R> ifLoading(block: () -> R): R? {
+        if (this is Loading) {
+            return block()
+        }
+        return null
+    }
+
     inline fun <R> ifSuccess(block: (T) -> R): R? {
         if (this is Success) {
             return block(value)

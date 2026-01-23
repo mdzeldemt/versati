@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.android.openURLExternally
 import com.liuvil.versati.framework.date.formatHumanReadableLong
+import com.liuvil.versati.framework.lazy.Success
 import com.liuvil.versati.framework.preferences.entry.content.css.DEFAULT_ENTRY_CONTENT_STYLESHEET
 import com.liuvil.versati.framework.viewmodel.viewOf
 import kotlinx.coroutines.launch
@@ -101,10 +102,9 @@ fun EntryView(
                                 contentDescription = null
                             )
                         }
-                    }
 
-                    starred.ifSuccess { starred ->
                         IconButton(
+                            enabled = starred is Success,
                             onClick = {
                                 coroutineScope.launch {
                                     viewModel.toggleStarred()
@@ -113,10 +113,12 @@ fun EntryView(
                         ) {
                             Icon(
                                 imageVector =
-                                if (starred)
-                                    Icons.Filled.Star
-                                else
-                                    Icons.Outlined.StarOutline,
+                                starred.ifSuccess { starred ->
+                                    if (starred)
+                                        Icons.Filled.Star
+                                    else
+                                        Icons.Outlined.StarOutline
+                                } ?: Icons.Filled.Star,
                                 contentDescription = null
                             )
                         }
