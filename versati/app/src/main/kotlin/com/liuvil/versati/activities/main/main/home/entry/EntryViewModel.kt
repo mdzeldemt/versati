@@ -8,6 +8,7 @@ import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.lazy.Success
+import com.liuvil.versati.framework.lazy.lazyLoad
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import com.liuvil.versati.repository.Origin
 import com.liuvil.versati.repository.Repository
@@ -99,17 +100,9 @@ class EntryViewModel @Inject constructor(
     }
 
     suspend fun toggleStarred() {
-        _starred.value.ifSuccess { starred ->
-            _starred.value = Loading()
-
-            try {
-                repository.toggleEntryStarred(entryID)
-            } catch (exception: Exception) {
-                _starred.value = Failure(exception)
-                return
-            }
-
-            _starred.value = Success(!starred)
+        lazyLoad(_starred) {
+            repository.toggleEntryStarred(entryID)
+            repository.getEntryById(entryID).starred
         }
     }
 }

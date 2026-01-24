@@ -56,8 +56,20 @@ import com.liuvil.versati.framework.viewmodel.viewOf
 import kotlinx.coroutines.launch
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.net.URL
 import java.time.OffsetDateTime
 import java.time.ZoneId
+
+private sealed class Dialog {
+    data class Details(
+        val id: Int,
+        val url: URL,
+        val author: String?,
+        val createdAt: OffsetDateTime,
+        val publishedAt: OffsetDateTime,
+        val read: Boolean
+    ): Dialog()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +82,7 @@ fun EntryView(
     val entry by viewModel.entry
     val starred by viewModel.starred
 
-    var showDetailsDialog by remember { mutableStateOf(false) }
+    var activeDialog by remember { mutableStateOf<Dialog?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -91,37 +103,45 @@ fun EntryView(
                     }
                 },
                 actions = {
-                    entry.ifSuccess {
-                        IconButton(
-                            onClick = {
-                                showDetailsDialog = true
+                    IconButton(
+                        enabled = entry is Success,
+                        onClick = {
+                            entry.ifSuccess {
+                                activeDialog = Dialog.Details(
+                                    id = entryID,
+                                    url = it.url,
+                                    author = it.author,
+                                    createdAt = it.createdAt,
+                                    publishedAt = it.publishedAt,
+                                    read = it.read
+                                )
                             }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Info,
-                                contentDescription = null
-                            )
                         }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = null
+                        )
+                    }
 
-                        IconButton(
-                            enabled = starred is Success,
-                            onClick = {
-                                coroutineScope.launch {
-                                    viewModel.toggleStarred()
-                                }
+                    IconButton(
+                        enabled = starred is Success,
+                        onClick = {
+                            coroutineScope.launch {
+                                viewModel.toggleStarred()
                             }
-                        ) {
-                            Icon(
-                                imageVector =
+                        }
+                    ) {
+                        Icon(
+                            imageVector =
                                 starred.ifSuccess { starred ->
                                     if (starred)
                                         Icons.Filled.Star
                                     else
                                         Icons.Outlined.StarOutline
                                 } ?: Icons.Filled.Star,
-                                contentDescription = null
-                            )
-                        }
+                            contentDescription = null
+                        )
                     }
                 }
             )
@@ -186,27 +206,43 @@ fun EntryView(
                 Button(onClick = openURL) {
                     Text("Open in web browser")
                 }
-
-                if (showDetailsDialog) {
-                    starred.ifSuccess { starred ->
-                        AlertDialog(
-                            onDismissRequest = { showDetailsDialog = false },
-                            title = { Text("Entry details") },
-                            text = { Text(getEntryLongDetailsText(entryID, it, starred)) },
-                            confirmButton = {
-                                TextButton(onClick = { showDetailsDialog = false }) {
-                                    Text("Close")
-                                }
-                            }
-                        )
-                    }
-                }
             }
         } ?: Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.fillMaxSize(),
         ) {
             CircularProgressIndicator()
+        }
+    }
+
+    activeDialog?.let {
+        when (it) {
+            is Dialog.Details ->
+                starred.ifSuccess { starred ->
+                    AlertDialog(
+                        onDismissRequest = { activeDialog = null },
+                        title = {
+                            Text("Entry details")
+                        },
+                        text = {
+                            Text(
+                                getEntryLongDetailsText(
+                                    id = it.id,
+                                    url = it.url,
+                                    author = it.author,
+                                    createdAt = it.createdAt,
+                                    publishedAt = it.publishedAt,
+                                    read = it.read
+                                )
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { activeDialog = null }) {
+                                Text("Close")
+                            }
+                        }
+                    )
+                }
         }
     }
 }
@@ -228,31 +264,34 @@ private fun getEntryShortDetailsText(
     ).joinToString(separator = " / ")
 
 private fun getEntryLongDetailsText(
-    entryId: Int,
-    entry: Entry,
-    starredEntry: Boolean
+    id: Int,
+    url: URL,
+    author: String?,
+    createdAt: OffsetDateTime,
+    publishedAt: OffsetDateTime,
+    read: Boolean
 ): AnnotatedString = buildAnnotatedString {
     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
         append("id: ")
     }
-    append("$entryId")
+    append("$id")
 
     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
         append("\nURL: ")
     }
     withLink(
         LinkAnnotation.Url(
-            entry.url.toString(),
+            url.toString(),
             TextLinkStyles(SpanStyle(textDecoration = TextDecoration.Underline))
         )
     ) {
-        append("${entry.url}")
+        append(url.toString())
     }
 
     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
         append("\nauthor: ")
     }
-    entry.author?.let { author ->
+    author?.let { author ->
         append(author)
     } ?: withStyle(style = SpanStyle(fontStyle = FontStyle.Italic)) {
         append("none")
@@ -261,20 +300,15 @@ private fun getEntryLongDetailsText(
     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
         append("\ncreated at: ")
     }
-    append("${entry.createdAt}")
+    append(createdAt.formatHumanReadableLong())
 
     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
         append("\npublished at: ")
     }
-    append("${entry.publishedAt}")
+    append(publishedAt.formatHumanReadableLong())
 
     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
         append("\nread: ")
     }
-    append("${entry.read}")
-
-    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-        append("\nstarred: ")
-    }
-    append("$starredEntry")
+    append(if (read) "yes" else "no")
 }
