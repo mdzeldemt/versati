@@ -6,8 +6,6 @@ import com.liuvil.versati.repository.api.APIClientFactory
 import com.liuvil.versati.repository.cache.CacheDatabase
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.last
 import javax.inject.Inject
 
 class RepositoryFactory @Inject constructor(
