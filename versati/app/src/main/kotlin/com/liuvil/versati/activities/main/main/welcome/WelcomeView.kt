@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun WelcomeView(
-    onPreferencesButtonClicked: () -> Unit
+    onPreferencesClicked: () -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
@@ -36,7 +36,7 @@ fun WelcomeView(
         )
 
         Button(
-            onClick = onPreferencesButtonClicked
+            onClick = onPreferencesClicked
         ) {
             Text("Go to Preferences")
         }

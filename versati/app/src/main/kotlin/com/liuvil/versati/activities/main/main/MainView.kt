@@ -23,12 +23,12 @@ fun MainView(
             when (it) {
                 is OnboardingState.Incomplete ->
                     WelcomeView(
-                        onPreferencesButtonClicked = onPreferencesClicked
+                        onPreferencesClicked = onPreferencesClicked
                     )
 
                 is OnboardingState.Complete ->
                     HomeView(
-                        onPreferencesDrawerItemClicked = onPreferencesClicked
+                        onPreferencesClicked = onPreferencesClicked
                     )
             }
         }

@@ -97,7 +97,7 @@ sealed interface Source {
 @Composable
 fun FeedView(
     onEntryTileClicked: (Int) -> Unit,
-    onPreferencesDrawerItemClicked: () -> Unit
+    onPreferencesClicked: () -> Unit
 ) = viewOf<FeedViewModel> { viewModel ->
     var source by viewModel.source
     var offset by viewModel.offset
@@ -328,17 +328,6 @@ fun FeedView(
                     }
                 }
             )
-
-            add(
-                FlatDrawerItem(
-                    title = "Preferences",
-                    icon = FlatDrawerItem.Icon.Vector(
-                        vector = Icons.Outlined.Settings
-                    ),
-                ) {
-                    onPreferencesDrawerItemClicked()
-                }
-            )
         },
         drawerState = drawerState
     ) {
@@ -364,6 +353,18 @@ fun FeedView(
                         }
                         title?.let {
                             Text(it)
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = {
+                                onPreferencesClicked()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Settings,
+                                contentDescription = null
+                            )
                         }
                     }
                 )

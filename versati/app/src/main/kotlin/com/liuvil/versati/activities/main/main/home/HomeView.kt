@@ -22,7 +22,7 @@ private object NavigationDestination {
 
 @Composable
 fun HomeView(
-    onPreferencesDrawerItemClicked: () -> Unit
+    onPreferencesClicked: () -> Unit
 ) {
     val navController = rememberNavController()
 
@@ -35,7 +35,7 @@ fun HomeView(
                 onEntryTileClicked = {
                     navController.navigate(NavigationDestination.Entry(id = it))
                 },
-                onPreferencesDrawerItemClicked = onPreferencesDrawerItemClicked
+                onPreferencesClicked = onPreferencesClicked
             )
         }
 
