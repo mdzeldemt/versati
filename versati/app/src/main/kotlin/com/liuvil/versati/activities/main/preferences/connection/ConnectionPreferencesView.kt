@@ -26,13 +26,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.components.form.action.SimpleActionTile
 import com.liuvil.versati.components.scaffold.action.BackButton
-import com.liuvil.versati.framework.app.restartApp
 import com.liuvil.versati.framework.string.isValidURL
 import com.liuvil.versati.framework.viewmodel.viewOf
 import com.liuvil.versati.preferences.APIKeyCredentials
@@ -50,8 +47,6 @@ private sealed class Dialog {
     data class CredentialsInput(
         val initialValue: Credentials?
     ): Dialog()
-
-    data object RestartConfirmation: Dialog()
 }
 
 private enum class CredentialType {
@@ -69,8 +64,6 @@ internal fun ConnectionPreferencesView(
     var activeDialog by remember { mutableStateOf<Dialog?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
-
-    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -128,15 +121,8 @@ internal fun ConnectionPreferencesView(
                         coroutineScope.launch {
                             viewModel.updateBaseURL(value)
                         }
-
-                        activeDialog =
-                            if (value != it.initialValue) {
-                                Dialog.RestartConfirmation
-                            } else {
-                                null
-                            }
                     },
-                    onDismiss = {
+                    onResponse = {
                         activeDialog = null
                     }
                 )
@@ -148,29 +134,8 @@ internal fun ConnectionPreferencesView(
                         coroutineScope.launch {
                             viewModel.updateCredentials(value)
                         }
-
-                        activeDialog =
-                            if (value != it.initialValue) {
-                                Dialog.RestartConfirmation
-                            } else {
-                                null
-                            }
                     },
-                    onDismiss = {
-                        activeDialog = null
-                    }
-                )
-
-            is Dialog.RestartConfirmation ->
-                ConfirmationDialog(
-                    titleText = "Restart to apply changes",
-                    bodyText = "To apply the changes immediately, you must restart the app. Do you want to do it now?",
-                    confirmText = "Restart now",
-                    dismissText = "Continue without restarting",
-                    onConfirm = {
-                        context.restartApp()
-                    },
-                    onDismiss = {
+                    onResponse = {
                         activeDialog = null
                     }
                 )
@@ -211,7 +176,7 @@ private fun AuthenticationTile(
 private fun BaseURLInputDialog(
     initialValue: URL?,
     onSubmit: (URL?) -> Unit,
-    onDismiss: () -> Unit
+    onResponse: () -> Unit
 ) {
     var value by remember {
         mutableStateOf(initialValue?.toString() ?: "")
@@ -224,7 +189,7 @@ private fun BaseURLInputDialog(
     }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = onResponse,
         title = {
             Text("Set base URL")
         },
@@ -249,6 +214,8 @@ private fun BaseURLInputDialog(
                     } else {
                         onSubmit(null)
                     }
+
+                    onResponse()
                 }
             ) {
                 Text("OK")
@@ -256,7 +223,7 @@ private fun BaseURLInputDialog(
         },
         dismissButton = {
             TextButton(onClick = {
-                onDismiss()
+                onResponse()
             }) {
                 Text("Cancel")
             }
@@ -268,7 +235,7 @@ private fun BaseURLInputDialog(
 private fun CredentialsInputDialog(
     initialValue: Credentials?,
     onSubmit: (Credentials?) -> Unit,
-    onDismiss: () -> Unit
+    onResponse: () -> Unit
 ) {
     var credentialType by remember {
         mutableStateOf(
@@ -323,7 +290,7 @@ private fun CredentialsInputDialog(
     }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = onResponse,
         title = {
             Text("Set credentials")
         },
@@ -431,6 +398,7 @@ private fun CredentialsInputDialog(
                             null -> null
                         }
                     )
+                    onResponse()
                 }
             ) {
                 Text("OK")
@@ -439,7 +407,7 @@ private fun CredentialsInputDialog(
         dismissButton = {
             TextButton(
                 onClick = {
-                    onDismiss()
+                    onResponse()
                 }
             ) {
                 Text("Cancel")
