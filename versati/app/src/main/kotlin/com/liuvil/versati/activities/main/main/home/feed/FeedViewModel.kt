@@ -1,9 +1,13 @@
 package com.liuvil.versati.activities.main.main.home.feed
 
+import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import com.liuvil.versati.activities.main.main.home.RepositoryFactory
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.None
@@ -16,7 +20,6 @@ import com.liuvil.versati.repository.api.data.FeedCountersResponse
 import com.liuvil.versati.repository.data.Category
 import com.liuvil.versati.repository.data.Enclosure
 import com.liuvil.versati.repository.data.Feed
-import com.liuvil.versati.repository.data.Icon
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -30,7 +33,7 @@ class FeedViewModel @Inject constructor(
     private val _categories = mutableStateOf<LazyResult<List<Category>>>(None())
     private val _feeds = mutableStateOf<LazyResult<List<Feed>>>(None())
     private val _feedCounters = mutableStateOf<LazyResult<FeedCountersResponse>>(None())
-    private val _iconsById = mutableStateMapOf<Int, LazyResult<Icon>>()
+    private val _iconsById = mutableStateMapOf<Int, LazyResult<ImageBitmap>>()
     private val _entriesResponse = mutableStateOf<LazyResult<EntriesGetResponse>>(None())
     private val _enclosuresByEntryId = mutableStateMapOf<Int, LazyResult<Enclosure>>()
 
@@ -39,7 +42,7 @@ class FeedViewModel @Inject constructor(
     val categories: State<LazyResult<List<Category>>> = _categories
     val feeds: State<LazyResult<List<Feed>>> = _feeds
     val feedCounters: State<LazyResult<FeedCountersResponse>> = _feedCounters
-    val iconsById: Map<Int, LazyResult<Icon>> = _iconsById
+    val iconsById: Map<Int, LazyResult<ImageBitmap>> = _iconsById
     val entriesResponse: State<LazyResult<EntriesGetResponse>> = _entriesResponse
     val enclosuresByEntryId: Map<Int, LazyResult<Enclosure>> = _enclosuresByEntryId
 
@@ -61,10 +64,19 @@ class FeedViewModel @Inject constructor(
 
     suspend fun reloadIcon(id: Int) {
         lazyLoad(_iconsById, id) {
-            repository.getIconById(
+            val icon = repository.getIconById(
                 id = id,
                 origin = Origin.LocalThenRemote
             )
+            val decodedBytes = Base64.decode(
+                icon.data.substringAfter(","),
+                Base64.DEFAULT
+            )
+            BitmapFactory.decodeByteArray(
+                decodedBytes,
+                0,
+                decodedBytes.size
+            ).asImageBitmap()
         }
     }
 
@@ -136,5 +148,4 @@ class FeedViewModel @Inject constructor(
             read = true
         )
     }
-
 }

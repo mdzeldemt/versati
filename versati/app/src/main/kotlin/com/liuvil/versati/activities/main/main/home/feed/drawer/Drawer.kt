@@ -13,16 +13,6 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-data class ExpandableDrawerItem(
-    override val title: String,
-    override val badge: String? = null,
-    override val selected: Boolean = false,
-    val expanded: Boolean,
-    val children: List<DrawerItem>,
-    val onToggle: () -> Unit,
-    override val onClick: () -> Unit,
-): DrawerItem(title, badge, selected, onClick)
-
 @Composable
 fun Drawer(
     items: List<DrawerItem>,

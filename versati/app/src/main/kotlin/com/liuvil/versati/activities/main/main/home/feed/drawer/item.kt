@@ -1,7 +1,5 @@
 package com.liuvil.versati.activities.main.main.home.feed.drawer
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -17,6 +15,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,10 +36,20 @@ data class FlatDrawerItem(
     override val onClick: () -> Unit
 ): DrawerItem(title, badge, selected, onClick) {
     sealed interface Icon {
-        data class Data(val data: String): Icon
+        data class Bitmap(val bitmap: ImageBitmap): Icon
         data class Vector(val vector: ImageVector): Icon
     }
 }
+
+data class ExpandableDrawerItem(
+    override val title: String,
+    override val badge: String? = null,
+    override val selected: Boolean = false,
+    val expanded: Boolean,
+    val children: List<DrawerItem>,
+    val onToggle: () -> Unit,
+    override val onClick: () -> Unit,
+): DrawerItem(title, badge, selected, onClick)
 
 @Composable
 internal fun FlatDrawerItem(
@@ -54,24 +63,12 @@ internal fun FlatDrawerItem(
             item.icon?.let { icon ->
                 Box(Modifier.size(20.dp)) {
                     when (icon) {
-                        is FlatDrawerItem.Icon.Data -> {
-                            val decodedBytes = Base64.decode(
-                                icon.data.substringAfter(","),
-                                Base64.DEFAULT
+                        is FlatDrawerItem.Icon.Bitmap -> {
+                            Image(
+                                bitmap = icon.bitmap,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize()
                             )
-                            val bitmap = BitmapFactory.decodeByteArray(
-                                decodedBytes,
-                                0,
-                                decodedBytes.size
-                            )
-
-                            if (bitmap != null) {
-                                Image(
-                                    bitmap = bitmap.asImageBitmap(),
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
                         }
                         is FlatDrawerItem.Icon.Vector ->
                             Icon(
