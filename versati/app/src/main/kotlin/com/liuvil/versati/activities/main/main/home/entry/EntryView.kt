@@ -12,6 +12,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.StarOutline
@@ -48,6 +50,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.liuvil.versati.framework.android.openShareSheet
 import com.liuvil.versati.framework.android.openURLExternally
 import com.liuvil.versati.framework.date.formatHumanReadableLong
 import com.liuvil.versati.framework.lazy.Success
@@ -86,6 +89,8 @@ fun EntryView(
 
     val coroutineScope = rememberCoroutineScope()
 
+    val context = LocalContext.current
+
     LaunchedEffect(Unit) {
         viewModel.loadEntry()
     }
@@ -106,20 +111,16 @@ fun EntryView(
                     IconButton(
                         enabled = entry is Success,
                         onClick = {
-                            entry.ifSuccess {
-                                activeDialog = Dialog.Details(
-                                    id = entryID,
-                                    url = it.url,
-                                    author = it.author,
-                                    createdAt = it.createdAt,
-                                    publishedAt = it.publishedAt,
-                                    read = it.read
+                            entry.ifSuccess { entry ->
+                                context.openShareSheet(
+                                    title = "Share entry link",
+                                    content = entry.url.toString()
                                 )
                             }
                         }
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Info,
+                            imageVector = Icons.Default.Share,
                             contentDescription = null
                         )
                     }
@@ -143,14 +144,38 @@ fun EntryView(
                             contentDescription = null
                         )
                     }
+
+                    IconButton(
+                        enabled = entry is Success,
+                        onClick = {
+                            entry.ifSuccess {
+                                activeDialog = Dialog.Details(
+                                    id = entryID,
+                                    url = it.url,
+                                    author = it.author,
+                                    createdAt = it.createdAt,
+                                    publishedAt = it.publishedAt,
+                                    read = it.read
+                                )
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = null
+                        )
+                    }
                 }
             )
         }
     ) { padding ->
         entry.ifSuccess {
-            val context = LocalContext.current
             val openURL: () -> Unit = remember {
-                { openURLExternally(Uri.parse(it.url.toString()), context) }
+                {
+                    context.openURLExternally(
+                        Uri.parse(it.url.toString())
+                    )
+                }
             }
 
             Column(
