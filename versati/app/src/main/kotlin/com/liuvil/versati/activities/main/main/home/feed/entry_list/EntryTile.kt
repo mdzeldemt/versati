@@ -8,17 +8,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.liuvil.versati.components.WrapperLayout
 import java.net.URL
 import java.time.Duration
@@ -30,9 +34,7 @@ fun EntryTile(
     timeSincePublished: Duration,
     content: String,
     imageUrl: URL? = null,
-    isRead: Boolean,
-    imagePadding: Dp = 8.dp,
-    imageCornerRadius: Dp = 4.dp,
+    isRead: Boolean
 ) {
     val text = @Composable {
         Text(title, fontWeight = FontWeight.Bold, maxLines = 3, overflow = TextOverflow.Ellipsis)
@@ -57,20 +59,34 @@ fun EntryTile(
             WrapperLayout(
                 pivotSize = 100.dp,
                 pivotContent = {
-                    AsyncImage(
-                        model = it.toString(),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .aspectRatio(1.2f)
-                            .padding(start = imagePadding, bottom = imagePadding)
-                            .clip(RoundedCornerShape(imageCornerRadius))
-                    )
+                    EntryImage(it)
                 },
                 wrapperContent = { text() }
             )
         } ?: Column(content = { text() })
     }
+}
+
+@Composable
+private fun EntryImage(
+    imageUrl: URL
+) {
+    AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(imageUrl.toString())
+            .crossfade(true)
+            .build(),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        placeholder = ColorPainter(
+            MaterialTheme.colorScheme.surfaceVariant
+                .copy(alpha = 0.5f)
+        ),
+        modifier = Modifier
+            .aspectRatio(1.2f)
+            .padding(start = 8.dp, bottom = 8.dp)
+            .clip(RoundedCornerShape(4.dp))
+    )
 }
 
 private fun toHumanReadable(
