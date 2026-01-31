@@ -89,22 +89,14 @@ private fun EntryImage(
         modifier = Modifier
             .aspectRatio(1.2f)
             .padding(start = 8.dp, bottom = 8.dp)
-            .clip(RoundedCornerShape(4.dp)),
-        loading = {
-            Box(
-                Modifier.background(
-                    MaterialTheme.colorScheme.surfaceVariant
-                        .copy(alpha = 0.5f)
-                )
-            )
-        },
+            .clip(RoundedCornerShape(4.dp))
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant
+                    .copy(alpha = 0.5f)
+            ),
         error = {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.background(
-                    MaterialTheme.colorScheme.surfaceVariant
-                        .copy(alpha = 0.5f)
-                )
             ) {
                 Icon(
                     imageVector = Icons.Outlined.BrokenImage,
