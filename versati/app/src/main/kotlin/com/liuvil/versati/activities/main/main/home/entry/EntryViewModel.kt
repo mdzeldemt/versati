@@ -3,6 +3,7 @@ package com.liuvil.versati.activities.main.main.home.entry
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.liuvil.versati.activities.main.main.home.RepositoryFactory
+import com.liuvil.versati.framework.html.extractImageURLs
 import com.liuvil.versati.framework.lazy.Failure
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.Loading
@@ -15,6 +16,7 @@ import com.liuvil.versati.repository.Repository
 import com.liuvil.versati.repository.data.Enclosure
 import com.liuvil.versati.repository.data.Feed
 import dagger.hilt.android.lifecycle.HiltViewModel
+import org.jsoup.Jsoup
 import java.net.URL
 import java.time.OffsetDateTime
 import javax.inject.Inject
@@ -32,7 +34,7 @@ data class Entry(
     val createdAt: OffsetDateTime,
     val publishedAt: OffsetDateTime,
     val read: Boolean,
-    val enclosureUrl: URL?
+    val imageURL: URL?
 )
 
 @HiltViewModel
@@ -81,19 +83,25 @@ class EntryViewModel @Inject constructor(
             return
         }
 
+        val document = Jsoup.parse(entry.content)
+        val imageURL =
+            if (extractImageURLs(document).isEmpty()) {
+                enclosures.firstOrNull()?.url
+            } else {
+                null
+            }
+
         _entry.value = Success(
             Entry(
                 title = entry.title,
                 content = entry.content,
                 url = entry.url,
                 feedTitle = feed.title,
-                author = entry.author.let {
-                    it.ifEmpty { null }
-                },
+                author = entry.author.takeIf { it.isNotEmpty() },
                 createdAt = entry.createdAt,
                 publishedAt = entry.publishedAt,
                 read = entry.read,
-                enclosureUrl = enclosures.firstOrNull()?.url
+                imageURL = imageURL
             )
         )
         _starred.value = Success(entry.starred)

@@ -89,7 +89,10 @@ class Repository(
     ): EntriesGetResponse =
         apiClient.getEntries(
             status = read?.let {
-                if (it) EntryStatus.READ else EntryStatus.UNREAD
+                if (it)
+                    EntryStatus.READ
+                else
+                    EntryStatus.UNREAD
             },
             direction = SortDirection.DESCENDING,
             starred = starred,
@@ -112,7 +115,10 @@ class Repository(
         apiClient.getCategoryEntries(
             categoryId = categoryId,
             status = read?.let {
-                if (it) EntryStatus.READ else EntryStatus.UNREAD
+                if (it)
+                    EntryStatus.READ
+                else
+                    EntryStatus.UNREAD
             },
             direction = SortDirection.DESCENDING,
             offset = offset,
@@ -132,7 +138,10 @@ class Repository(
         apiClient.getFeedEntries(
             feedId = feedId,
             status = read?.let {
-                if (it) EntryStatus.READ else EntryStatus.UNREAD
+                if (it)
+                    EntryStatus.READ
+                else
+                    EntryStatus.UNREAD
             },
             direction = SortDirection.DESCENDING,
             offset = offset,
@@ -150,7 +159,11 @@ class Repository(
         apiClient.updateEntries(
             EntriesUpdateRequest(
                 entryIds = ids,
-                status = if (read) EntryStatus.READ else EntryStatus.UNREAD
+                status =
+                    if (read)
+                        EntryStatus.READ
+                    else
+                        EntryStatus.UNREAD
             )
         )
         entryCache.updateEntriesRead(ids, read)

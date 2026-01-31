@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.liuvil.versati.activities.main.main.home.RepositoryFactory
+import com.liuvil.versati.framework.html.extractImageURLs
 import com.liuvil.versati.framework.lazy.Failure
 import com.liuvil.versati.framework.lazy.LazyResult
 import com.liuvil.versati.framework.lazy.Loading
@@ -25,7 +26,6 @@ import com.liuvil.versati.repository.data.Category
 import com.liuvil.versati.repository.data.Feed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import java.net.URL
 import java.time.OffsetDateTime
 import javax.inject.Inject
@@ -166,11 +166,8 @@ class FeedViewModel @Inject constructor(
                     val document = Jsoup.parse(it.content)
                     val text = document.text()
                     val imageURL =
-                        if (it.enclosures.isNotEmpty()) {
-                            it.enclosures.first().url
-                        } else {
-                            extractImageURLs(document).firstOrNull()
-                        }
+                        extractImageURLs(document).firstOrNull()
+                            ?: it.enclosures.firstOrNull()?.url
 
                     Entry(
                         id = it.id,
@@ -193,14 +190,4 @@ class FeedViewModel @Inject constructor(
             read = true
         )
     }
-}
-
-// TODO: Move to separate package
-fun extractImageURLs(
-    document: Document
-): List<URL> {
-    // TODO: Make configurable
-    return document.getElementsByTag("img")
-        .mapNotNull { it.attribute("src") }
-        .map { URL(it.value) }
 }

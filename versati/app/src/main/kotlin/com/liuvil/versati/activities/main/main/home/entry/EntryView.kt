@@ -56,8 +56,6 @@ import com.liuvil.versati.framework.lazy.Success
 import com.liuvil.versati.framework.preferences.entry.content.css.DEFAULT_ENTRY_CONTENT_STYLESHEET
 import com.liuvil.versati.framework.viewmodel.viewOf
 import kotlinx.coroutines.launch
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import java.net.URL
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -212,14 +210,12 @@ fun EntryView(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                if (!Jsoup.parse(it.content).containsImages()) {
-                    it.enclosureUrl?.let { enclosureUrl ->
-                        AsyncImage(
-                            model = enclosureUrl.toString(),
-                            contentDescription = null,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                    }
+                it.imageURL?.let { enclosureUrl ->
+                    AsyncImage(
+                        model = enclosureUrl.toString(),
+                        contentDescription = null,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
                 }
 
                 EntryContentView(
@@ -268,9 +264,6 @@ fun EntryView(
         }
     }
 }
-
-private fun Document.containsImages(): Boolean =
-    select("img").isNotEmpty()
 
 private fun getEntryShortDetailsText(
     feedTitle: String,
