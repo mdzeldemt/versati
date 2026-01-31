@@ -16,7 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.StarOutline
@@ -86,7 +86,7 @@ private sealed class Dialog {
 
 sealed interface Source {
     data object Unread: Source
-    data object Read: Source
+    data object History: Source
     data object Starred: Source
     data class Category(val id: Int): Source
     data class Feed(val id: Int): Source
@@ -283,17 +283,17 @@ fun FeedView(
             }
             add(
                 FlatDrawerItem(
-                    title = "Read",
+                    title = "History",
                     icon = FlatDrawerItem.Icon.Vector(
-                        vector = Icons.Outlined.Book
+                        vector = Icons.Outlined.History
                     ),
                     badge = totalReadCount
                         ?.takeIf { it > 0 }
                         ?.let { "$it" },
-                    selected = source == Source.Read
+                    selected = source == Source.History
                 ) {
                     coroutineScope.launch {
-                        updateSourceSelection(Source.Read)
+                        updateSourceSelection(Source.History)
                     }
                 }
             )
@@ -330,7 +330,7 @@ fun FeedView(
                         val title = source.let { source ->
                             when (source) {
                                 Source.Unread -> "Unread"
-                                Source.Read -> "Read"
+                                Source.History -> "History"
                                 Source.Starred -> "Starred"
                                 is Source.Category ->
                                     categoriesById.ifSuccess { categoriesById ->

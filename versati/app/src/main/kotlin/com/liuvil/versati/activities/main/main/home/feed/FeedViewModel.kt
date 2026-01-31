@@ -120,7 +120,7 @@ class FeedViewModel @Inject constructor(
                             globallyVisible = true,
                             limit = PAGE_ENTRY_COUNT
                         )
-                    is Source.Read ->
+                    is Source.History ->
                         repository.getAllEntries(
                             read = true,
                             offset = offset.intValue,
