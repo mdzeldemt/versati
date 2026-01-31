@@ -27,6 +27,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,12 +47,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.activities.main.main.home.feed.drawer.Drawer
-import com.liuvil.versati.activities.main.main.home.feed.drawer.ExpandableDrawerItem
-import com.liuvil.versati.activities.main.main.home.feed.drawer.FlatDrawerItem
+import com.liuvil.versati.components.drawer.DrawerItemIcon
+import com.liuvil.versati.components.drawer.DrawerItemLabel
+import com.liuvil.versati.components.drawer.NavigationDrawerItemGroup
 import com.liuvil.versati.activities.main.main.home.feed.entry_tile.EntryTile
 import com.liuvil.versati.activities.main.main.home.feed.page.PageDialog
 import com.liuvil.versati.activities.main.main.home.feed.search.SearchDialog
@@ -181,147 +185,179 @@ fun FeedView(
         }
     }
 
-    Drawer(
-        items = buildList {
-            val totalUnreadCount = feedCounters.ifSuccess { feedCounters ->
-                feedCounters.unreads.values.sum()
-            }
-
-            add(
-                FlatDrawerItem(
-                    title = "Unread",
-                    icon = FlatDrawerItem.Icon.Vector(
-                        vector = Icons.Outlined.Today
-                    ),
-                    badge = totalUnreadCount
-                        ?.takeIf { it > 0 }
-                        ?.let { "$it" },
-                    selected = source == Source.Unread
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                drawerShape = RectangleShape
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    coroutineScope.launch {
-                        updateSourceSelection(Source.Unread)
+                    val totalUnreadCount = feedCounters.ifSuccess { feedCounters ->
+                        feedCounters.unreads.values.sum()
                     }
-                }
-            )
 
-            add(
-                FlatDrawerItem(
-                    title = "Starred",
-                    icon = FlatDrawerItem.Icon.Vector(
-                        vector = Icons.Outlined.StarOutline
-                    ),
-                    selected = source == Source.Starred
-                ) {
-                    coroutineScope.launch {
-                        updateSourceSelection(Source.Starred)
-                    }
-                }
-            )
-
-            categories.ifSuccess { categories ->
-                feeds.ifSuccess { feeds ->
-                    val feedsByCategoryId = feeds.groupBy { it.categoryId }
-
-                    categories.forEach { category ->
-                        val categoryUnreadCount = feedCounters.ifSuccess { feedCounters ->
-                            feedsByCategoryId.getOrDefault(category.id, emptyList())
-                                .sumOf { feed ->
-                                    feedCounters.unreads.getOrDefault(feed.id, 0)
+                    NavigationDrawerItem(
+                        label = {
+                            DrawerItemLabel("Unread")
+                        },
+                        icon = {
+                            DrawerItemIcon(Icons.Outlined.Today)
+                        },
+                        badge = {
+                            totalUnreadCount
+                                ?.takeIf { it > 0 }
+                                ?.let {
+                                    Text("$it")
                                 }
+                        },
+                        selected = source == Source.Unread,
+                        onClick = {
+                            coroutineScope.launch {
+                                updateSourceSelection(Source.Unread)
+                            }
                         }
+                    )
 
-                        add(
-                            ExpandableDrawerItem(
-                                title = category.title,
-                                badge = categoryUnreadCount?.let { "$it" },
-                                selected = source == Source.Category(category.id),
-                                expanded = expandedCategories.getOrDefault(category.id, false),
-                                children = buildList {
+                    NavigationDrawerItem(
+                        label = {
+                            DrawerItemLabel("Starred")
+                        },
+                        icon = {
+                            DrawerItemIcon(Icons.Outlined.StarOutline)
+                        },
+                        selected = source == Source.Starred,
+                        onClick = {
+                            coroutineScope.launch {
+                                updateSourceSelection(Source.Starred)
+                            }
+                        }
+                    )
+
+                    categories.ifSuccess { categories ->
+                        feeds.ifSuccess { feeds ->
+                            val feedsByCategoryId = feeds.groupBy { it.categoryId }
+
+                            categories.forEach { category ->
+                                val categoryUnreadCount = feedCounters.ifSuccess { feedCounters ->
+                                    feedsByCategoryId.getOrDefault(category.id, emptyList())
+                                        .sumOf { feed ->
+                                            feedCounters.unreads.getOrDefault(feed.id, 0)
+                                        }
+                                }
+
+                                val expanded = expandedCategories.getOrDefault(category.id, false)
+                                NavigationDrawerItemGroup(
+                                    label = {
+                                        DrawerItemLabel(category.title)
+                                    },
+                                    expanded = expanded,
+                                    selected = source == Source.Category(category.id),
+                                    badge = {
+                                        categoryUnreadCount?.let {
+                                            Text("$it")
+                                        }
+                                    },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            updateSourceSelection(Source.Category(category.id))
+                                        }
+                                    },
+                                    onToggle = {
+                                        if (expanded) {
+                                            expandedCategories.remove(category.id)
+                                        } else {
+                                            expandedCategories[category.id] = true
+                                        }
+                                    }
+                                ) {
                                     feedsByCategoryId.getOrDefault(category.id, emptyList()).forEach { feed ->
                                         val feedUnreadCount = feedCounters.ifSuccess { feedCounters ->
                                             feedCounters.unreads.getOrDefault(feed.id, 0)
                                         }
-                                        add(
-                                            FlatDrawerItem(
-                                                title = feed.title,
-                                                icon = iconsById[feed.iconId]?.let { icon ->
+                                        NavigationDrawerItem(
+                                            label = {
+                                                DrawerItemLabel(feed.title)
+                                            },
+                                            icon = {
+                                                iconsById[feed.iconId]?.let { icon ->
                                                     icon.ifSuccess {
-                                                        FlatDrawerItem.Icon.Bitmap(
-                                                            bitmap = it
-                                                        )
+                                                        DrawerItemIcon(it)
                                                     }
-                                                },
-                                                badge = feedUnreadCount?.let { "$it" },
-                                                selected = source == Source.Feed(feed.id)
-                                            ) {
+                                                } ?: Text("${iconsById.size}")
+                                            },
+                                            badge = {
+                                                feedUnreadCount?.let {
+                                                    Text("$it")
+                                                }
+                                            },
+                                            selected = source == Source.Feed(feed.id),
+                                            onClick = {
                                                 coroutineScope.launch {
                                                     updateSourceSelection(Source.Feed(feed.id))
                                                 }
                                             }
                                         )
                                     }
-                                },
-                                onToggle = {
-                                    if (expandedCategories.getOrDefault(category.id, false)) {
-                                        expandedCategories.remove(category.id)
-                                    } else {
-                                        expandedCategories[category.id] = true
+                                }
+                            }
+                        }
+                    }
+
+                    val totalReadCount = feedCounters.ifSuccess { feedCounters ->
+                        feedCounters.reads.values.sum()
+                    }
+                    NavigationDrawerItem(
+                        label = {
+                            DrawerItemLabel("History")
+                        },
+                        icon = {
+                            DrawerItemIcon(Icons.Outlined.History)
+                        },
+                        badge = {
+                            totalReadCount
+                                ?.takeIf { it > 0 }
+                                ?.let {
+                                    Text("$it")
+                                }
+                        },
+                        selected = source == Source.History,
+                        onClick = {
+                            coroutineScope.launch {
+                                updateSourceSelection(Source.History)
+                            }
+                        }
+                    )
+
+                    NavigationDrawerItem(
+                        label = {
+                            DrawerItemLabel("Search")
+                        },
+                        icon = {
+                            DrawerItemIcon(Icons.Outlined.Search)
+                        },
+                        selected = source is Source.Search,
+                        onClick = {
+                            coroutineScope.launch {
+                                drawerState.close()
+                                activeDialog = Dialog.Search(
+                                    initialTerm = source.let {
+                                        if (it is Source.Search) {
+                                            it.term
+                                        } else {
+                                            ""
+                                        }
                                     }
-                                }
-                            ) {
-                                coroutineScope.launch {
-                                    updateSourceSelection(Source.Category(category.id))
-                                }
+                                )
                             }
-                        )
-                    }
+                        }
+                    )
                 }
             }
-
-            val totalReadCount = feedCounters.ifSuccess { feedCounters ->
-                feedCounters.reads.values.sum()
-            }
-            add(
-                FlatDrawerItem(
-                    title = "History",
-                    icon = FlatDrawerItem.Icon.Vector(
-                        vector = Icons.Outlined.History
-                    ),
-                    badge = totalReadCount
-                        ?.takeIf { it > 0 }
-                        ?.let { "$it" },
-                    selected = source == Source.History
-                ) {
-                    coroutineScope.launch {
-                        updateSourceSelection(Source.History)
-                    }
-                }
-            )
-
-            add(
-                FlatDrawerItem(
-                    title = "Search",
-                    icon = FlatDrawerItem.Icon.Vector(
-                        vector = Icons.Outlined.Search
-                    ),
-                    selected = source is Source.Search
-                ) {
-                    coroutineScope.launch {
-                        drawerState.close()
-                        activeDialog = Dialog.Search(
-                            initialTerm = source.let {
-                                if (it is Source.Search) {
-                                    it.term
-                                } else {
-                                    ""
-                                }
-                            }
-                        )
-                    }
-                }
-            )
-        },
-        drawerState = drawerState
+        }
     ) {
         Scaffold(
             topBar = {
