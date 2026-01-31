@@ -44,7 +44,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -108,7 +107,6 @@ fun FeedView(
     val feedCounters by viewModel.feedCounters
     val iconsById = viewModel.iconsById
     val entriesResponse by viewModel.entriesResponse
-    val enclosuresByEntryId = viewModel.enclosuresByEntryId
 
     val categoriesById by remember {
         derivedStateOf {
@@ -155,7 +153,7 @@ fun FeedView(
             offset = 0
             drawerState.close()
             coroutineScope.launch {
-                viewModel.reloadEntriesAndEnclosures()
+                viewModel.reloadEntries()
             }
             scrollState.scrollToItem(0)
         }
@@ -165,7 +163,7 @@ fun FeedView(
         {
             offset = it
             coroutineScope.launch {
-                viewModel.reloadEntriesAndEnclosures()
+                viewModel.reloadEntries()
             }
             scrollState.scrollToItem(0)
         }
@@ -187,7 +185,7 @@ fun FeedView(
         }
 
         entriesResponse.ifNone {
-            viewModel.reloadEntriesAndEnclosures()
+            viewModel.reloadEntries()
         }
     }
 
@@ -390,7 +388,7 @@ fun FeedView(
                 isRefreshing = isRefreshing,
                 onRefresh = {
                     coroutineScope.launch {
-                        viewModel.reloadEntriesAndEnclosures()
+                        viewModel.reloadEntries()
                     }
                 },
                 contentAlignment = Alignment.Center,
@@ -444,12 +442,7 @@ fun FeedView(
                                                                 } ?: "...",
                                                                 publishedAt = entry.publishedAt,
                                                                 content = parseEntryContent(entry.content),
-                                                                imageURL = enclosuresByEntryId[entry.id]
-                                                                    ?.let { enclosure ->
-                                                                        enclosure.ifSuccess {
-                                                                            it.url
-                                                                        }
-                                                                    },
+                                                                imageURL = entry.enclosures.firstOrNull()?.url,
                                                                 isRead = entry.status == EntryStatus.READ
                                                             )
                                                         },
@@ -613,7 +606,7 @@ fun FeedView(
                                 entryIds = it.entryIds
                             )
                             coroutineScope.launch {
-                                viewModel.reloadEntriesAndEnclosures()
+                                viewModel.reloadEntries()
                             }
                             scrollState.scrollToItem(0)
                         }

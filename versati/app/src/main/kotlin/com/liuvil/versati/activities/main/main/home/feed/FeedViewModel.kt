@@ -18,7 +18,6 @@ import com.liuvil.versati.repository.Repository
 import com.liuvil.versati.repository.api.data.EntriesGetResponse
 import com.liuvil.versati.repository.api.data.FeedCountersResponse
 import com.liuvil.versati.repository.data.Category
-import com.liuvil.versati.repository.data.Enclosure
 import com.liuvil.versati.repository.data.Feed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -35,7 +34,6 @@ class FeedViewModel @Inject constructor(
     private val _feedCounters = mutableStateOf<LazyResult<FeedCountersResponse>>(None())
     private val _iconsById = mutableStateMapOf<Int, LazyResult<ImageBitmap>>()
     private val _entriesResponse = mutableStateOf<LazyResult<EntriesGetResponse>>(None())
-    private val _enclosuresByEntryId = mutableStateMapOf<Int, LazyResult<Enclosure>>()
 
     val source = mutableStateOf<Source>(Source.Unread)
     val offset = mutableIntStateOf(0)
@@ -44,7 +42,6 @@ class FeedViewModel @Inject constructor(
     val feedCounters: State<LazyResult<FeedCountersResponse>> = _feedCounters
     val iconsById: Map<Int, LazyResult<ImageBitmap>> = _iconsById
     val entriesResponse: State<LazyResult<EntriesGetResponse>> = _entriesResponse
-    val enclosuresByEntryId: Map<Int, LazyResult<Enclosure>> = _enclosuresByEntryId
 
     override suspend fun initialize(initData: Unit) {
         repository = repositoryFactory.create()
@@ -86,7 +83,7 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    suspend fun reloadEntriesAndEnclosures() {
+    suspend fun reloadEntries() {
         lazyLoad(_entriesResponse) {
             source.value.let {
                 when (it) {
@@ -129,14 +126,6 @@ class FeedViewModel @Inject constructor(
                             offset = offset.intValue,
                             limit = PAGE_ENTRY_COUNT
                         )
-                }
-            }
-        }
-
-        entriesResponse.value.ifSuccess { entriesResponse ->
-            entriesResponse.entries.forEach { entry ->
-                lazyLoad(_enclosuresByEntryId, entry.id) {
-                    repository.getEnclosuresByEntryId(entry.id).firstOrNull()
                 }
             }
         }
