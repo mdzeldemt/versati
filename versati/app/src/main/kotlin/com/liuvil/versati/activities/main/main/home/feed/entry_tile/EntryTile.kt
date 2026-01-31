@@ -92,7 +92,7 @@ private fun EntryImage(
             .clip(RoundedCornerShape(4.dp))
             .background(
                 MaterialTheme.colorScheme.surfaceVariant
-                    .copy(alpha = 0.5f)
+                    .copy(alpha = 0.25f)
             ),
         error = {
             Box(
@@ -101,7 +101,9 @@ private fun EntryImage(
                 Icon(
                     imageVector = Icons.Outlined.BrokenImage,
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .alpha(0.5f),
                 )
             }
         }
