@@ -1,5 +1,6 @@
 package com.liuvil.versati.activities.main.main.home.feed
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -15,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Search
@@ -51,14 +54,15 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.components.drawer.DrawerItemIcon
-import com.liuvil.versati.components.drawer.DrawerItemLabel
-import com.liuvil.versati.components.drawer.NavigationDrawerItemGroup
 import com.liuvil.versati.activities.main.main.home.feed.entry_tile.EntryTile
 import com.liuvil.versati.activities.main.main.home.feed.page.PageDialog
 import com.liuvil.versati.activities.main.main.home.feed.search.SearchDialog
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
+import com.liuvil.versati.components.drawer.DrawerItemIcon
+import com.liuvil.versati.components.drawer.DrawerItemLabel
+import com.liuvil.versati.components.drawer.DrawerSectionHeader
+import com.liuvil.versati.components.drawer.NavigationDrawerItemGroup
 import com.liuvil.versati.framework.date.formatHumanReadable
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
@@ -237,6 +241,8 @@ fun FeedView(
                         }
                     )
 
+                    DrawerSectionHeader("Feeds")
+
                     categories.ifSuccess { categories ->
                         feeds.ifSuccess { feeds ->
                             val feedsByCategoryId = feeds.groupBy { it.categoryId }
@@ -306,6 +312,8 @@ fun FeedView(
                             }
                         }
                     }
+
+                    Spacer(Modifier.size(4.dp))
 
                     val totalReadCount = feedCounters.ifSuccess { feedCounters ->
                         feedCounters.reads.values.sum()
