@@ -29,6 +29,7 @@ import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.liuvil.versati.components.WrapperLayout
+import com.liuvil.versati.framework.kotlin.runIf
 import java.net.URL
 import java.time.Duration
 
@@ -59,8 +60,8 @@ fun EntryTile(
         Modifier
             .clickable { onClick() }
             .padding(10.dp)
-            .apply {
-                if (isRead) alpha(0.5f)
+            .runIf(isRead) {
+                alpha(0.5f)
             }
     ) {
         imageURL?.let {
