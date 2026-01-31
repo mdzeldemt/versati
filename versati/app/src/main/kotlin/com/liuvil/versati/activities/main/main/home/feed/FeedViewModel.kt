@@ -9,18 +9,35 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.liuvil.versati.activities.main.main.home.RepositoryFactory
+import com.liuvil.versati.framework.lazy.Failure
 import com.liuvil.versati.framework.lazy.LazyResult
+import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
+import com.liuvil.versati.framework.lazy.Success
 import com.liuvil.versati.framework.lazy.lazyLoad
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import com.liuvil.versati.repository.Origin
 import com.liuvil.versati.repository.Repository
 import com.liuvil.versati.repository.api.data.EntriesGetResponse
+import com.liuvil.versati.repository.api.data.EntryStatus
 import com.liuvil.versati.repository.api.data.FeedCountersResponse
 import com.liuvil.versati.repository.data.Category
 import com.liuvil.versati.repository.data.Feed
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.net.URL
+import java.time.OffsetDateTime
 import javax.inject.Inject
+
+data class Entry(
+    val id: Int,
+    val title: String,
+    val url: URL,
+    val feedID: Int,
+    val content: String,
+    val imageURL: URL?,
+    val isRead: Boolean,
+    val publishedAt: OffsetDateTime
+)
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
@@ -33,7 +50,8 @@ class FeedViewModel @Inject constructor(
     private val _feeds = mutableStateOf<LazyResult<List<Feed>>>(None())
     private val _feedCounters = mutableStateOf<LazyResult<FeedCountersResponse>>(None())
     private val _iconsById = mutableStateMapOf<Int, LazyResult<ImageBitmap>>()
-    private val _entriesResponse = mutableStateOf<LazyResult<EntriesGetResponse>>(None())
+    private val _entries = mutableStateOf<LazyResult<List<Entry>>>(None())
+    private val _totalEntries = mutableStateOf<LazyResult<Int>>(None())
 
     val source = mutableStateOf<Source>(Source.Unread)
     val offset = mutableIntStateOf(0)
@@ -41,7 +59,8 @@ class FeedViewModel @Inject constructor(
     val feeds: State<LazyResult<List<Feed>>> = _feeds
     val feedCounters: State<LazyResult<FeedCountersResponse>> = _feedCounters
     val iconsById: Map<Int, LazyResult<ImageBitmap>> = _iconsById
-    val entriesResponse: State<LazyResult<EntriesGetResponse>> = _entriesResponse
+    val entries: State<LazyResult<List<Entry>>> = _entries
+    val totalEntries: State<LazyResult<Int>> = _totalEntries
 
     override suspend fun initialize(initData: Unit) {
         repository = repositoryFactory.create()
@@ -84,8 +103,13 @@ class FeedViewModel @Inject constructor(
     }
 
     suspend fun reloadEntries() {
-        lazyLoad(_entriesResponse) {
-            source.value.let {
+        _entries.value = Loading()
+        _totalEntries.value = Loading()
+
+        val entriesResponse: EntriesGetResponse
+
+        try {
+            entriesResponse = source.value.let {
                 when (it) {
                     is Source.Unread ->
                         repository.getAllEntries(
@@ -128,7 +152,28 @@ class FeedViewModel @Inject constructor(
                         )
                 }
             }
+        } catch (exception: Exception) {
+            _entries.value = Failure(exception)
+            _feeds.value = Failure(exception)
+            return
         }
+
+        _entries.value = Success(
+            entriesResponse.entries
+                .map {
+                    Entry(
+                        id = it.id,
+                        title = it.title,
+                        url = it.url,
+                        feedID = it.feedId,
+                        isRead = it.status == EntryStatus.READ,
+                        content = it.content,
+                        imageURL = it.enclosures.firstOrNull()?.url,
+                        publishedAt = it.publishedAt
+                    )
+                }
+        )
+        _totalEntries.value = Success(entriesResponse.total)
     }
 
     suspend fun markAsRead(entryIds: List<Int>) {
