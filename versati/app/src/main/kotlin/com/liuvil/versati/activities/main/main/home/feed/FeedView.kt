@@ -1,6 +1,5 @@
 package com.liuvil.versati.activities.main.main.home.feed
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Search
@@ -32,7 +30,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,10 +56,11 @@ import com.liuvil.versati.activities.main.main.home.feed.page.PageDialog
 import com.liuvil.versati.activities.main.main.home.feed.search.SearchDialog
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
+import com.liuvil.versati.components.drawer.DrawerItem
+import com.liuvil.versati.components.drawer.DrawerItemGroup
 import com.liuvil.versati.components.drawer.DrawerItemIcon
 import com.liuvil.versati.components.drawer.DrawerItemLabel
 import com.liuvil.versati.components.drawer.DrawerSectionHeader
-import com.liuvil.versati.components.drawer.NavigationDrawerItemGroup
 import com.liuvil.versati.framework.date.formatHumanReadable
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
@@ -204,7 +202,7 @@ fun FeedView(
                         feedCounters.unreads.values.sum()
                     }
 
-                    NavigationDrawerItem(
+                    DrawerItem(
                         label = {
                             DrawerItemLabel("Unread")
                         },
@@ -226,7 +224,7 @@ fun FeedView(
                         }
                     )
 
-                    NavigationDrawerItem(
+                    DrawerItem(
                         label = {
                             DrawerItemLabel("Starred")
                         },
@@ -256,7 +254,7 @@ fun FeedView(
                                 }
 
                                 val expanded = expandedCategories.getOrDefault(category.id, false)
-                                NavigationDrawerItemGroup(
+                                DrawerItemGroup(
                                     label = {
                                         DrawerItemLabel(category.title)
                                     },
@@ -284,7 +282,7 @@ fun FeedView(
                                         val feedUnreadCount = feedCounters.ifSuccess { feedCounters ->
                                             feedCounters.unreads.getOrDefault(feed.id, 0)
                                         }
-                                        NavigationDrawerItem(
+                                        DrawerItem(
                                             label = {
                                                 DrawerItemLabel(feed.title)
                                             },
@@ -318,7 +316,7 @@ fun FeedView(
                     val totalReadCount = feedCounters.ifSuccess { feedCounters ->
                         feedCounters.reads.values.sum()
                     }
-                    NavigationDrawerItem(
+                    DrawerItem(
                         label = {
                             DrawerItemLabel("History")
                         },
@@ -340,7 +338,7 @@ fun FeedView(
                         }
                     )
 
-                    NavigationDrawerItem(
+                    DrawerItem(
                         label = {
                             DrawerItemLabel("Search")
                         },
