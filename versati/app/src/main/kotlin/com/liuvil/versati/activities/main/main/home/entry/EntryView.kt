@@ -12,7 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Info
@@ -243,31 +242,29 @@ fun EntryView(
     activeDialog?.let {
         when (it) {
             is Dialog.Details ->
-                starred.ifSuccess { starred ->
-                    AlertDialog(
-                        onDismissRequest = { activeDialog = null },
-                        title = {
-                            Text("Entry details")
-                        },
-                        text = {
-                            Text(
-                                getEntryLongDetailsText(
-                                    id = it.id,
-                                    url = it.url,
-                                    author = it.author,
-                                    createdAt = it.createdAt,
-                                    publishedAt = it.publishedAt,
-                                    read = it.read
-                                )
+                AlertDialog(
+                    onDismissRequest = { activeDialog = null },
+                    title = {
+                        Text("Entry details")
+                    },
+                    text = {
+                        Text(
+                            getEntryLongDetailsText(
+                                id = it.id,
+                                url = it.url,
+                                author = it.author,
+                                createdAt = it.createdAt,
+                                publishedAt = it.publishedAt,
+                                read = it.read
                             )
-                        },
-                        confirmButton = {
-                            TextButton(onClick = { activeDialog = null }) {
-                                Text("Close")
-                            }
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { activeDialog = null }) {
+                            Text("Close")
                         }
-                    )
-                }
+                    }
+                )
         }
     }
 }
