@@ -50,9 +50,7 @@ import androidx.compose.ui.unit.dp
 import com.liuvil.versati.activities.main.main.home.feed.drawer.Drawer
 import com.liuvil.versati.activities.main.main.home.feed.drawer.ExpandableDrawerItem
 import com.liuvil.versati.activities.main.main.home.feed.drawer.FlatDrawerItem
-import com.liuvil.versati.activities.main.main.home.feed.entry_list.Entry
-import com.liuvil.versati.activities.main.main.home.feed.entry_list.EntryListView
-import com.liuvil.versati.activities.main.main.home.feed.entry_list.parseEntryContent
+import com.liuvil.versati.activities.main.main.home.feed.entry_tile.EntryTile
 import com.liuvil.versati.activities.main.main.home.feed.page.PageDialog
 import com.liuvil.versati.activities.main.main.home.feed.search.SearchDialog
 import com.liuvil.versati.components.BlockingBox
@@ -62,6 +60,8 @@ import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.viewmodel.viewOf
 import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import kotlin.math.ceil
 import kotlin.math.max
@@ -421,22 +421,29 @@ fun FeedView(
                                                         )
                                                 )
 
-                                                EntryListView(
-                                                    entries = entries.map { entry ->
-                                                        Entry(
-                                                            id = entry.id,
+                                                Column (
+                                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                ) {
+                                                    entries.forEach { entry ->
+                                                        EntryTile(
                                                             title = entry.title,
                                                             feedTitle = feedsById.ifSuccess {
                                                                 it[entry.feedID]?.title
                                                             } ?: "...",
-                                                            publishedAt = entry.publishedAt,
-                                                            content = parseEntryContent(entry.content),
+                                                            timeSincePublished = Duration.between(
+                                                                entry.publishedAt,
+                                                                OffsetDateTime.now()
+                                                            ),
+                                                            content = entry.text,
                                                             imageURL = entry.imageURL,
-                                                            isRead = entry.isRead
+                                                            isRead = entry.isRead,
+                                                            onClick = {
+                                                                onEntryTileClicked(entry.id)
+                                                            }
                                                         )
-                                                    },
-                                                    onEntryTileClicked = onEntryTileClicked
-                                                )
+                                                    }
+                                                }
                                             }
                                     }
 

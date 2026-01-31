@@ -24,6 +24,8 @@ import com.liuvil.versati.repository.api.data.FeedCountersResponse
 import com.liuvil.versati.repository.data.Category
 import com.liuvil.versati.repository.data.Feed
 import dagger.hilt.android.lifecycle.HiltViewModel
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import java.net.URL
 import java.time.OffsetDateTime
 import javax.inject.Inject
@@ -33,7 +35,7 @@ data class Entry(
     val title: String,
     val url: URL,
     val feedID: Int,
-    val content: String,
+    val text: String,
     val imageURL: URL?,
     val isRead: Boolean,
     val publishedAt: OffsetDateTime
@@ -161,14 +163,23 @@ class FeedViewModel @Inject constructor(
         _entries.value = Success(
             entriesResponse.entries
                 .map {
+                    val document = Jsoup.parse(it.content)
+                    val text = document.text()
+                    val imageURL =
+                        if (it.enclosures.isNotEmpty()) {
+                            it.enclosures.first().url
+                        } else {
+                            extractImageURLs(document).firstOrNull()
+                        }
+
                     Entry(
                         id = it.id,
                         title = it.title,
                         url = it.url,
                         feedID = it.feedId,
                         isRead = it.status == EntryStatus.READ,
-                        content = it.content,
-                        imageURL = it.enclosures.firstOrNull()?.url,
+                        text = text,
+                        imageURL = imageURL,
                         publishedAt = it.publishedAt
                     )
                 }
@@ -182,4 +193,14 @@ class FeedViewModel @Inject constructor(
             read = true
         )
     }
+}
+
+// TODO: Move to separate package
+fun extractImageURLs(
+    document: Document
+): List<URL> {
+    // TODO: Make configurable
+    return document.getElementsByTag("img")
+        .mapNotNull { it.attribute("src") }
+        .map { URL(it.value) }
 }

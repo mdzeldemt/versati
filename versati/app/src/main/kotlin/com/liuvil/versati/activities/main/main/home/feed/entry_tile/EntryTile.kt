@@ -1,11 +1,11 @@
-package com.liuvil.versati.activities.main.main.home.feed.entry_list
+package com.liuvil.versati.activities.main.main.home.feed.entry_tile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,8 +38,9 @@ fun EntryTile(
     feedTitle: String,
     timeSincePublished: Duration,
     content: String,
-    imageUrl: URL? = null,
-    isRead: Boolean
+    imageURL: URL? = null,
+    isRead: Boolean,
+    onClick: () -> Unit
 ) {
     val text = @Composable {
         Text(title, fontWeight = FontWeight.Bold, maxLines = 3, overflow = TextOverflow.Ellipsis)
@@ -55,12 +56,14 @@ fun EntryTile(
     }
 
     Box(
-        Modifier.fillMaxWidth()
+        Modifier
+            .clickable { onClick() }
+            .padding(10.dp)
             .apply {
                 if (isRead) alpha(0.5f)
             }
     ) {
-        imageUrl?.let {
+        imageURL?.let {
             WrapperLayout(
                 pivotSize = 100.dp,
                 pivotContent = {
