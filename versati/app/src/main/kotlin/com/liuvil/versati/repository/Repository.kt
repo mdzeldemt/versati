@@ -102,7 +102,16 @@ class Repository(
             limit = limit
         ).also { entriesResponse ->
             entryCache.insertEntries(
-                entriesResponse.entries.map { it.toCache() }
+                entriesResponse.entries.map {
+                    it.toCache()
+                }
+            )
+            enclosureCache.insertEnclosures(
+                entriesResponse.entries.flatMap { entry ->
+                    entry.enclosures.map {
+                        it.toCache()
+                    }
+                }
             )
         }
 
@@ -125,7 +134,16 @@ class Repository(
             limit = limit
         ).also { entriesResponse ->
             entryCache.insertEntries(
-                entriesResponse.entries.map { it.toCache() }
+                entriesResponse.entries.map {
+                    it.toCache()
+                }
+            )
+            enclosureCache.insertEnclosures(
+                entriesResponse.entries.flatMap { entry ->
+                    entry.enclosures.map {
+                        it.toCache()
+                    }
+                }
             )
         }
 
@@ -148,7 +166,16 @@ class Repository(
             limit = limit
         ).also { entriesResponse ->
             entryCache.insertEntries(
-                entriesResponse.entries.map { it.toCache() }
+                entriesResponse.entries.map {
+                    it.toCache()
+                }
+            )
+            enclosureCache.insertEnclosures(
+                entriesResponse.entries.flatMap { entry ->
+                    entry.enclosures.map {
+                        it.toCache()
+                    }
+                }
             )
         }
 
