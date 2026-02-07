@@ -75,10 +75,10 @@ private sealed class Dialog {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReadEntryView(
-    entryID: Int,
+    entryId: Int,
     onDismiss: () -> Unit
 ) = viewOf<InitData, ReadEntryViewModel>(
-    InitData(entryID)
+    InitData(entryId)
 ) { viewModel ->
     val entry by viewModel.entry
     val starred by viewModel.starred
@@ -148,7 +148,7 @@ fun ReadEntryView(
                         onClick = {
                             entry.ifSuccess {
                                 activeDialog = Dialog.Details(
-                                    id = entryID,
+                                    id = entryId,
                                     url = it.url,
                                     author = it.author,
                                     createdAt = it.createdAt,

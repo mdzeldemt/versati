@@ -8,6 +8,8 @@ import com.liuvil.versati.repository.api.data.EntriesUpdateRequest
 import com.liuvil.versati.repository.api.data.EntryStatus
 import com.liuvil.versati.repository.api.data.FeedCountersResponse
 import com.liuvil.versati.repository.api.data.SortDirection
+import com.liuvil.versati.repository.api.data.UpdateCategoryRequest
+import com.liuvil.versati.repository.api.data.UpdateFeedRequest
 import com.liuvil.versati.repository.cache.CacheDatabase
 import com.liuvil.versati.repository.data.Category
 import com.liuvil.versati.repository.data.Enclosure
@@ -48,10 +50,35 @@ class Repository(
 
     suspend fun createCategory(
         title: String
-    ): Int =
+    ): Category =
         apiClient.createCategory(
             CreateCategoryRequest(title)
-        ).id
+        )
+        .toCache()
+        .also {
+            categoryCache.insertCategory(it)
+        }
+
+    suspend fun updateCategory(
+        id: Int,
+        title: String
+    ): Category =
+        apiClient.updateCategory(
+            id = id,
+            request = UpdateCategoryRequest(title)
+        )
+        .toCache()
+        .also {
+            categoryCache.insertCategory(it)
+        }
+
+    suspend fun deleteCategory(
+        id: Int
+    ) =
+        apiClient.deleteCategory(id)
+            .also {
+                categoryCache.deleteCategory(id)
+            }
 
     // Enclosures
     suspend fun getEnclosuresByEntryId(
@@ -255,6 +282,29 @@ class Repository(
         apiClient.createFeed(
             CreateFeedRequest(feedUrl, categoryId)
         ).feedId
+
+    suspend fun updateFeed(
+        id: Int,
+        title: String,
+        feedUrl: URL,
+        categoryId: Int
+    ): Feed =
+        apiClient.updateFeed(
+            id = id,
+            request = UpdateFeedRequest(title, feedUrl, categoryId)
+        )
+        .toCache()
+        .also {
+            feedCache.insertFeed(it)
+        }
+
+    suspend fun deleteFeed(
+        id: Int
+    ) =
+        apiClient.deleteFeed(id)
+            .also {
+                feedCache.deleteFeed(id)
+            }
 
     // Icons
     suspend fun getIconById(

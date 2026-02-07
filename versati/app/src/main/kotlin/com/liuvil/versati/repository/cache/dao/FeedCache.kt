@@ -20,6 +20,9 @@ interface FeedCache {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFeeds(feeds: List<Feed>)
 
+    @Query("DELETE FROM feeds WHERE id = :id")
+    suspend fun deleteFeed(id: Int)
+
     @Query("DELETE FROM feeds")
     suspend fun deleteAllFeeds()
 }

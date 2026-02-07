@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreHoriz
@@ -72,6 +73,7 @@ import com.liuvil.versati.components.drawer.DrawerItemLabel
 import com.liuvil.versati.components.drawer.DrawerSectionHeader
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderButton
 import com.liuvil.versati.framework.date.formatHumanReadable
+import com.liuvil.versati.framework.throwable.detailedMessage
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
 import com.liuvil.versati.framework.viewmodel.viewOf
@@ -129,8 +131,10 @@ fun BrowseEntriesView(
     onEntryClicked: (Int) -> Unit,
     onAddCategoryClicked: () -> Unit,
     onEditCategoryClicked: (Int) -> Unit,
+    onRemoveCategoryClicked: (Int) -> Unit,
     onAddFeedClicked: () -> Unit,
     onEditFeedClicked: (Int) -> Unit,
+    onRemoveFeedClicked: (Int) -> Unit,
     onPreferencesClicked: () -> Unit
 ) = viewOf<BrowseEntriesViewModel> { viewModel ->
     var source by viewModel.source
@@ -633,7 +637,7 @@ fun BrowseEntriesView(
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = exception.message ?: "Unknown error",
+                                        text = exception.detailedMessage ?: "Unknown error",
                                         textAlign = TextAlign.Center
                                     )
                                 }
@@ -652,7 +656,7 @@ fun BrowseEntriesView(
                     title = "Categories and feeds",
                     items = listOf(
                         ActionBottomSheetItem(
-                            title = "Reload categories and feeds",
+                            title = "Reload",
                             icon = Icons.Default.Refresh,
                             onClick = {
                                 coroutineScope.launch {
@@ -689,10 +693,18 @@ fun BrowseEntriesView(
                         },
                     items = listOf(
                         ActionBottomSheetItem(
-                            title = "Edit category",
+                            title = "Edit",
                             icon = Icons.Default.Edit,
                             onClick = {
                                 onEditCategoryClicked(it.id)
+                            }
+                        ),
+                        ActionBottomSheetItem(
+                            title = "Remove",
+                            icon = Icons.Default.Delete,
+                            destructive = true,
+                            onClick = {
+                                onRemoveCategoryClicked(it.id)
                             }
                         )
                     ),
@@ -709,10 +721,18 @@ fun BrowseEntriesView(
                         },
                     items = listOf(
                         ActionBottomSheetItem(
-                            title = "Edit feed",
+                            title = "Edit",
                             icon = Icons.Default.Edit,
                             onClick = {
                                 onEditFeedClicked(it.id)
+                            }
+                        ),
+                        ActionBottomSheetItem(
+                            title = "Remove",
+                            icon = Icons.Default.Delete,
+                            destructive = true,
+                            onClick = {
+                                onRemoveFeedClicked(it.id)
                             }
                         )
                     ),
@@ -780,6 +800,7 @@ fun BrowseEntriesView(
 data class ActionBottomSheetItem(
     val title: String,
     val icon: ImageVector,
+    val destructive: Boolean = false,
     val onClick: () -> Unit
 )
 
@@ -816,6 +837,7 @@ fun ActionBottomSheet(
                 ActionItem(
                     text = it.title,
                     icon = it.icon,
+                    destructive = it.destructive,
                     onClick = {
                         it.onClick()
                         onDismiss()
@@ -830,8 +852,16 @@ fun ActionBottomSheet(
 fun ActionItem(
     text: String,
     icon: ImageVector,
+    destructive: Boolean,
     onClick: () -> Unit
 ) {
+    val tint =
+        if (destructive) {
+            MaterialTheme.colorScheme.error
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -841,11 +871,15 @@ fun ActionItem(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null
+            contentDescription = null,
+            tint = tint
         )
 
         Spacer(Modifier.width(16.dp))
 
-        Text(text)
+        Text(
+            text = text,
+            color = tint
+        )
     }
 }

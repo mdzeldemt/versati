@@ -17,7 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.components.form.menu.DropdownMenuField
 import com.liuvil.versati.components.form.menu.DropdownMenuItem
-import com.liuvil.versati.framework.exception.detailedMessage
+import com.liuvil.versati.framework.throwable.detailedMessage
 import com.liuvil.versati.framework.string.isValidURL
 import com.liuvil.versati.framework.viewmodel.viewOf
 import kotlinx.coroutines.launch

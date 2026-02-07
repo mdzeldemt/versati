@@ -22,7 +22,7 @@ import java.time.OffsetDateTime
 import javax.inject.Inject
 
 data class InitData(
-    val entryID: Int
+    val entryId: Int
 )
 
 data class Entry(
@@ -42,9 +42,9 @@ class ReadEntryViewModel @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ): BaseViewModel<InitData>() {
 
-    private lateinit var repository: Repository
+    private var entryId: Int = -1
 
-    private var entryID: Int = -1
+    private lateinit var repository: Repository
 
     private val _entry = mutableStateOf<LazyResult<Entry>>(None())
     private val _starred = mutableStateOf<LazyResult<Boolean>>(None())
@@ -53,8 +53,8 @@ class ReadEntryViewModel @Inject constructor(
     val starred: State<LazyResult<Boolean>> = _starred
 
     override suspend fun initialize(initData: InitData) {
+        entryId = initData.entryId
         repository = repositoryFactory.create()
-        entryID = initData.entryID
     }
 
     suspend fun loadEntry() {
@@ -66,7 +66,7 @@ class ReadEntryViewModel @Inject constructor(
         val enclosures: List<Enclosure>
         try {
             entry = repository.getEntryById(
-                id = entryID,
+                id = entryId,
                 origin = Origin.LocalThenRemote
             )
             feed = repository.getFeedById(
@@ -74,7 +74,7 @@ class ReadEntryViewModel @Inject constructor(
                 origin = Origin.LocalThenRemote
             )
             enclosures = repository.getEnclosuresByEntryId(
-                entryId = entryID,
+                entryId = entryId,
                 origin = Origin.LocalThenRemote
             )
         } catch (exception: Exception) {
@@ -109,8 +109,8 @@ class ReadEntryViewModel @Inject constructor(
 
     suspend fun toggleStarred() {
         lazyLoad(_starred) {
-            repository.toggleEntryStarred(entryID)
-            repository.getEntryById(entryID).starred
+            repository.toggleEntryStarred(entryId)
+            repository.getEntryById(entryId).starred
         }
     }
 }
