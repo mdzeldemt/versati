@@ -156,7 +156,7 @@ class FeedViewModel @Inject constructor(
             }
         } catch (exception: Exception) {
             _entries.value = Failure(exception)
-            _feeds.value = Failure(exception)
+            _totalEntries.value = Failure(exception)
             return
         }
 
