@@ -434,7 +434,34 @@ fun BrowseEntriesView(
                             }
                         }
                         title?.let {
-                            Text(it)
+                            Text(
+                                text = it,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(
+                                        onClick = {
+                                            source.let { source ->
+                                                when (source) {
+                                                    is Source.Category ->
+                                                        activeModal = Menu.Category(
+                                                            id = source.id
+                                                        )
+                                                    is Source.Feed ->
+                                                        activeModal = Menu.Feed(
+                                                            id = source.id
+                                                        )
+                                                    is Source.Search ->
+                                                        activeModal = Dialog.Search(
+                                                            initialTerm = source.term
+                                                        )
+                                                    else -> {}
+                                                }
+                                            }
+                                        },
+                                        interactionSource = null,
+                                        indication = null
+                                    )
+                            )
                         }
                     },
                     navigationIcon = {
