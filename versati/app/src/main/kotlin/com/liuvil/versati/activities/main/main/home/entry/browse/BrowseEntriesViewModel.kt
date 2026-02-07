@@ -1,7 +1,5 @@
-package com.liuvil.versati.activities.main.main.home.feed
+package com.liuvil.versati.activities.main.main.home.entry.browse
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -9,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.liuvil.versati.activities.main.main.home.RepositoryFactory
+import com.liuvil.versati.framework.api.decodeBitmap
 import com.liuvil.versati.framework.html.extractImageURLs
 import com.liuvil.versati.framework.lazy.Failure
 import com.liuvil.versati.framework.lazy.LazyResult
@@ -42,7 +41,7 @@ data class Entry(
 )
 
 @HiltViewModel
-class FeedViewModel @Inject constructor(
+class BrowseEntriesViewModel @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ): BaseViewModel<Unit>() {
 
@@ -86,15 +85,7 @@ class FeedViewModel @Inject constructor(
                 id = id,
                 origin = Origin.LocalThenRemote
             )
-            val decodedBytes = Base64.decode(
-                icon.data.substringAfter(","),
-                Base64.DEFAULT
-            )
-            BitmapFactory.decodeByteArray(
-                decodedBytes,
-                0,
-                decodedBytes.size
-            ).asImageBitmap()
+            decodeBitmap(icon.data).asImageBitmap()
         }
     }
 

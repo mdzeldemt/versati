@@ -58,7 +58,6 @@ fun SimpleActionTile(
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-
             }
         }
     }

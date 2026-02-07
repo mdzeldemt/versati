@@ -1,6 +1,8 @@
 package com.liuvil.versati.repository
 
 import com.liuvil.versati.repository.api.APIClient
+import com.liuvil.versati.repository.api.data.CreateCategoryRequest
+import com.liuvil.versati.repository.api.data.CreateFeedRequest
 import com.liuvil.versati.repository.api.data.EntriesGetResponse
 import com.liuvil.versati.repository.api.data.EntriesUpdateRequest
 import com.liuvil.versati.repository.api.data.EntryStatus
@@ -13,6 +15,7 @@ import com.liuvil.versati.repository.data.Entry
 import com.liuvil.versati.repository.data.Feed
 import com.liuvil.versati.repository.data.Icon
 import com.liuvil.versati.repository.data.conversion.toCache
+import java.net.URL
 
 class Repository(
     private val apiClient: APIClient,
@@ -42,6 +45,13 @@ class Repository(
             categoryCache.insertCategories(it)
         }
     ).provide(origin)
+
+    suspend fun createCategory(
+        title: String
+    ): Int =
+        apiClient.createCategory(
+            CreateCategoryRequest(title)
+        ).id
 
     // Enclosures
     suspend fun getEnclosuresByEntryId(
@@ -237,6 +247,14 @@ class Repository(
 
     suspend fun getFeedCounters(): FeedCountersResponse =
         apiClient.getFeedCounters()
+
+    suspend fun createFeed(
+        feedUrl: URL,
+        categoryId: Int
+    ): Int =
+        apiClient.createFeed(
+            CreateFeedRequest(feedUrl, categoryId)
+        ).feedId
 
     // Icons
     suspend fun getIconById(

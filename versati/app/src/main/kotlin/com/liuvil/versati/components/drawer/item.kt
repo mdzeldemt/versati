@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 private val DRAWER_ICON_SIZE = 20.dp
+private val HEADER_PADDING = 12.dp
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -101,6 +103,7 @@ internal fun DrawerItemGroup(
     expanded: Boolean,
     badge: @Composable () -> Unit,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
     onToggle: () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -112,10 +115,10 @@ internal fun DrawerItemGroup(
             icon = {
                 Icon(
                     imageVector =
-                    if (expanded)
-                        Icons.Default.KeyboardArrowDown
-                    else
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        if (expanded)
+                            Icons.Default.KeyboardArrowDown
+                        else
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
                     modifier = Modifier.clickable(
                         onClick = {
@@ -130,7 +133,8 @@ internal fun DrawerItemGroup(
                 badge()
             },
             selected = selected,
-            onClick = onClick
+            onClick = onClick,
+            onLongClick = onLongClick
         )
 
         if (expanded) {
@@ -181,21 +185,45 @@ internal fun DrawerItemLabel(
 
 @Composable
 internal fun DrawerSectionHeader(
-    title: String
+    title: String,
+    buttons: (@Composable () -> Unit)? = null
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
         Text(
             text = title,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(HEADER_PADDING)
+        )
+
+        if (buttons != null) {
+            Row {
+                buttons()
+            }
+        }
+    }
+}
+
+@Composable
+internal fun DrawerSectionHeaderButton(
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    IconButton(
+        onClick = onClick
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier
+                .padding(HEADER_PADDING)
+                .size(20.dp)
         )
     }
 }

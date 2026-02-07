@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.entry
+package com.liuvil.versati.activities.main.main.home.entry.read
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +38,7 @@ data class Entry(
 )
 
 @HiltViewModel
-class EntryViewModel @Inject constructor(
+class ReadEntryViewModel @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ): BaseViewModel<InitData>() {
 

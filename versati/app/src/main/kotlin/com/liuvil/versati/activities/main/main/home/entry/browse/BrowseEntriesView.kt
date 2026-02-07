@@ -1,5 +1,6 @@
-package com.liuvil.versati.activities.main.main.home.feed
+package com.liuvil.versati.activities.main.main.home.entry.browse
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -16,7 +18,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
@@ -28,6 +34,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
@@ -36,6 +43,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -48,12 +56,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.activities.main.main.home.feed.entry_tile.EntryTile
-import com.liuvil.versati.activities.main.main.home.feed.page.PageDialog
-import com.liuvil.versati.activities.main.main.home.feed.search.SearchDialog
+import com.liuvil.versati.activities.main.main.home.entry.browse.entry_tile.EntryTile
+import com.liuvil.versati.activities.main.main.home.entry.browse.page.PageDialog
+import com.liuvil.versati.activities.main.main.home.entry.browse.search.SearchDialog
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.components.drawer.DrawerItem
@@ -61,6 +70,7 @@ import com.liuvil.versati.components.drawer.DrawerItemGroup
 import com.liuvil.versati.components.drawer.DrawerItemIcon
 import com.liuvil.versati.components.drawer.DrawerItemLabel
 import com.liuvil.versati.components.drawer.DrawerSectionHeader
+import com.liuvil.versati.components.drawer.DrawerSectionHeaderButton
 import com.liuvil.versati.framework.date.formatHumanReadable
 import com.liuvil.versati.framework.lazy.Loading
 import com.liuvil.versati.framework.lazy.None
@@ -75,7 +85,21 @@ import kotlin.math.max
 // TODO: Make configurable
 const val PAGE_ENTRY_COUNT = 10
 
-private sealed class Dialog {
+private sealed class Modal
+
+private sealed class Menu: Modal() {
+    data object CategoriesAndFeeds: Menu()
+
+    data class Category(
+        val id: Int
+    ): Menu()
+
+    data class Feed(
+        val id: Int
+    ): Menu()
+}
+
+private sealed class Dialog: Modal() {
     data class Search(
         val initialTerm: String
     ): Dialog()
@@ -101,10 +125,14 @@ sealed interface Source {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FeedView(
-    onEntryTileClicked: (Int) -> Unit,
+fun BrowseEntriesView(
+    onEntryClicked: (Int) -> Unit,
+    onAddCategoryClicked: () -> Unit,
+    onEditCategoryClicked: (Int) -> Unit,
+    onAddFeedClicked: () -> Unit,
+    onEditFeedClicked: (Int) -> Unit,
     onPreferencesClicked: () -> Unit
-) = viewOf<FeedViewModel> { viewModel ->
+) = viewOf<BrowseEntriesViewModel> { viewModel ->
     var source by viewModel.source
     var offset by viewModel.offset
     val categories by viewModel.categories
@@ -141,7 +169,7 @@ fun FeedView(
     }
 
     // Dialogs
-    var activeDialog by remember { mutableStateOf<Dialog?>(null) }
+    var activeModal by remember { mutableStateOf<Modal?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -239,7 +267,17 @@ fun FeedView(
                         }
                     )
 
-                    DrawerSectionHeader("Feeds")
+                    DrawerSectionHeader(
+                        title = "Categories and feeds",
+                        buttons = {
+                            DrawerSectionHeaderButton(
+                                icon = Icons.Default.MoreHoriz,
+                                onClick = {
+                                    activeModal = Menu.CategoriesAndFeeds
+                                }
+                            )
+                        }
+                    )
 
                     categories.ifSuccess { categories ->
                         feeds.ifSuccess { feeds ->
@@ -269,6 +307,9 @@ fun FeedView(
                                         coroutineScope.launch {
                                             updateSourceSelection(Source.Category(category.id))
                                         }
+                                    },
+                                    onLongClick = {
+                                        activeModal = Menu.Category(category.id)
                                     },
                                     onToggle = {
                                         if (expanded) {
@@ -303,7 +344,10 @@ fun FeedView(
                                                 coroutineScope.launch {
                                                     updateSourceSelection(Source.Feed(feed.id))
                                                 }
-                                            }
+                                            },
+                                            onLongClick = {
+                                                activeModal = Menu.Feed(feed.id)
+                                            },
                                         )
                                     }
                                 }
@@ -349,7 +393,7 @@ fun FeedView(
                         onClick = {
                             coroutineScope.launch {
                                 drawerState.close()
-                                activeDialog = Dialog.Search(
+                                activeModal = Dialog.Search(
                                     initialTerm = source.let {
                                         if (it is Source.Search) {
                                             it.term
@@ -481,7 +525,7 @@ fun FeedView(
                                                             imageURL = entry.imageURL,
                                                             isRead = entry.isRead,
                                                             onClick = {
-                                                                onEntryTileClicked(entry.id)
+                                                                onEntryClicked(entry.id)
                                                             }
                                                         )
                                                     }
@@ -494,7 +538,7 @@ fun FeedView(
                                             if (entries.any { !it.isRead }) {
                                                 Button(
                                                     onClick = {
-                                                        activeDialog = Dialog.MarkAsReadConfirmation(
+                                                        activeModal = Dialog.MarkAsReadConfirmation(
                                                             entryIds = entries.map {
                                                                 it.id
                                                             }
@@ -534,7 +578,7 @@ fun FeedView(
 
                                                 TextButton(
                                                     onClick = {
-                                                        activeDialog = Dialog.Page(
+                                                        activeModal = Dialog.Page(
                                                             currentPage = currentPage,
                                                             totalPages = totalPages
                                                         )
@@ -601,8 +645,82 @@ fun FeedView(
         }
     }
 
-    activeDialog?.let {
+    activeModal?.let {
         when (it) {
+            is Menu.CategoriesAndFeeds ->
+                ActionBottomSheet(
+                    title = "Categories and feeds",
+                    items = listOf(
+                        ActionBottomSheetItem(
+                            title = "Reload categories and feeds",
+                            icon = Icons.Default.Refresh,
+                            onClick = {
+                                coroutineScope.launch {
+                                    viewModel.reloadCategories()
+                                    viewModel.reloadFeeds()
+                                }
+                            }
+                        ),
+                        ActionBottomSheetItem(
+                            title = "Add a category",
+                            icon = Icons.Default.Add,
+                            onClick = {
+                                onAddCategoryClicked()
+                            }
+                        ),
+                        ActionBottomSheetItem(
+                            title = "Add a feed",
+                            icon = Icons.Default.Add,
+                            onClick = {
+                                onAddFeedClicked()
+                            }
+                        )
+                    ),
+                    onDismiss = {
+                        activeModal = null
+                    }
+                )
+
+            is Menu.Category ->
+                ActionBottomSheet(
+                    title = categoriesById
+                        .ifSuccess { categoriesById ->
+                            categoriesById[it.id]?.title
+                        },
+                    items = listOf(
+                        ActionBottomSheetItem(
+                            title = "Edit category",
+                            icon = Icons.Default.Edit,
+                            onClick = {
+                                onEditCategoryClicked(it.id)
+                            }
+                        )
+                    ),
+                    onDismiss = {
+                        activeModal = null
+                    }
+                )
+
+            is Menu.Feed ->
+                ActionBottomSheet(
+                    title = feedsById
+                        .ifSuccess { feedsById ->
+                            feedsById[it.id]?.title
+                        },
+                    items = listOf(
+                        ActionBottomSheetItem(
+                            title = "Edit feed",
+                            icon = Icons.Default.Edit,
+                            onClick = {
+                                onEditFeedClicked(it.id)
+                            }
+                        )
+                    ),
+                    onDismiss = {
+                        activeModal = null
+                    }
+                )
+
             is Dialog.Search ->
                 SearchDialog(
                     initialTerm = it.initialTerm,
@@ -616,7 +734,7 @@ fun FeedView(
                         }
                     },
                     onRespond = {
-                        activeDialog = null
+                        activeModal = null
                     }
                 )
 
@@ -630,7 +748,7 @@ fun FeedView(
                         }
                     },
                     onRespond = {
-                        activeDialog = null
+                        activeModal = null
                     }
                 )
 
@@ -652,9 +770,82 @@ fun FeedView(
                         }
                     },
                     onRespond = {
-                        activeDialog = null
+                        activeModal = null
                     }
                 )
         }
+    }
+}
+
+data class ActionBottomSheetItem(
+    val title: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ActionBottomSheet(
+    title: String? = null,
+    items: List<ActionBottomSheetItem>,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = null
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            if (title != null) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
+            items.forEach {
+                ActionItem(
+                    text = it.title,
+                    icon = it.icon,
+                    onClick = {
+                        it.onClick()
+                        onDismiss()
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ActionItem(
+    text: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null
+        )
+
+        Spacer(Modifier.width(16.dp))
+
+        Text(text)
     }
 }
