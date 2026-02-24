@@ -20,7 +20,6 @@ import com.liuvil.versati.repository.Origin
 import com.liuvil.versati.repository.Repository
 import com.liuvil.versati.repository.api.data.EntriesGetResponse
 import com.liuvil.versati.repository.api.data.EntryStatus
-import com.liuvil.versati.repository.api.data.FeedCountersResponse
 import com.liuvil.versati.repository.data.Category
 import com.liuvil.versati.repository.data.Feed
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,16 +48,15 @@ class BrowseEntriesViewModel @Inject constructor(
 
     private val _categories = mutableStateOf<LazyResult<List<Category>>>(None())
     private val _feeds = mutableStateOf<LazyResult<List<Feed>>>(None())
-    private val _feedCounters = mutableStateOf<LazyResult<FeedCountersResponse>>(None())
     private val _iconsById = mutableStateMapOf<Int, LazyResult<ImageBitmap>>()
     private val _entries = mutableStateOf<LazyResult<List<Entry>>>(None())
     private val _totalEntries = mutableStateOf<LazyResult<Int>>(None())
 
     val source = mutableStateOf<Source>(Source.Unread)
     val offset = mutableIntStateOf(0)
+
     val categories: State<LazyResult<List<Category>>> = _categories
     val feeds: State<LazyResult<List<Feed>>> = _feeds
-    val feedCounters: State<LazyResult<FeedCountersResponse>> = _feedCounters
     val iconsById: Map<Int, LazyResult<ImageBitmap>> = _iconsById
     val entries: State<LazyResult<List<Entry>>> = _entries
     val totalEntries: State<LazyResult<Int>> = _totalEntries
@@ -86,12 +84,6 @@ class BrowseEntriesViewModel @Inject constructor(
                 origin = Origin.LocalThenRemote
             )
             decodeBitmap(icon.data).asImageBitmap()
-        }
-    }
-
-    suspend fun reloadFeedCounters() {
-        lazyLoad(_feedCounters) {
-            repository.getFeedCounters()
         }
     }
 
@@ -179,6 +171,62 @@ class BrowseEntriesViewModel @Inject constructor(
         repository.updateEntriesRead(
             ids = entryIds,
             read = true
+        )
+    }
+
+    suspend fun createCategory(
+        title: String
+    ): Int =
+        repository.createCategory(
+            title
+        ).id
+
+    suspend fun updateCategory(
+        id: Int,
+        title: String
+    ) {
+        repository.updateCategory(
+            id,
+            title
+        )
+    }
+
+    suspend fun deleteCategory(
+        id: Int
+    ) {
+        repository.deleteCategory(
+            id
+        )
+    }
+
+    suspend fun createFeed(
+        feedUrl: URL,
+        categoryId: Int,
+    ): Int =
+        repository.createFeed(
+            feedUrl,
+            categoryId
+        )
+
+    suspend fun updateFeed(
+        id: Int,
+        title: String,
+        feedUrl: URL,
+        categoryId: Int
+    ) {
+        repository.updateFeed(
+            id,
+            title,
+            feedUrl,
+            categoryId
+        )
+    }
+
+    suspend fun deleteFeed(
+        feedId: Int
+    ) {
+        repository.deleteFeed(
+            id = feedId
         )
     }
 }

@@ -2,7 +2,7 @@ package com.liuvil.versati.framework.throwable
 
 import retrofit2.HttpException
 
-val Throwable.detailedMessage: String?
+val Throwable.detailedMessage: String
     get() =
         when (this) {
             is HttpException ->
@@ -12,4 +12,4 @@ val Throwable.detailedMessage: String?
 
             else ->
                 message
-        }
+        } ?: "Unknown error"

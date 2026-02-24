@@ -10,109 +10,62 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.framework.throwable.detailedMessage
-import com.liuvil.versati.framework.viewmodel.viewOf
-import kotlinx.coroutines.launch
+import java.net.URL
 
-private sealed class State {
-    data object Loading: State()
-    data object Input: State()
-    data class Error(val exception: Exception): State()
-}
+internal data class SubmitData(
+    val title: String
+)
 
 @Composable
 internal fun AddCategoryDialog(
-    onSubmit: () -> Unit,
-    onDismiss: () -> Unit
-) = viewOf<AddCategoryDialogModel> { viewModel ->
-    var title by viewModel.title
+    onSubmit: (SubmitData) -> Unit,
+    onRespond: () -> Unit
+) {
+    var title by remember { mutableStateOf("") }
 
-    var state by remember { mutableStateOf<State>(State.Input) }
+    val isTitleError = title.isEmpty()
 
-    val coroutineScope = rememberCoroutineScope()
-
-    state.let {
-        when (it) {
-            is State.Loading -> {}
-
-            is State.Input -> {
-                val isTitleError = title.isEmpty()
-
-                AlertDialog(
-                    onDismissRequest = onDismiss,
-                    title = {
-                        Text("Add a category")
+    AlertDialog(
+        onDismissRequest = onRespond,
+        title = {
+            Text("Add a category")
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)
+            ) {
+                TextField(
+                    value = title,
+                    label = {
+                        Text("Title")
                     },
-                    text = {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)
-                        ) {
-                            TextField(
-                                value = title,
-                                label = {
-                                    Text("Title")
-                                },
-                                isError = isTitleError,
-                                onValueChange = { newValue ->
-                                    title = newValue
-                                }
-                            )
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(
-                            enabled = !isTitleError,
-                            onClick = {
-                                coroutineScope.launch {
-                                    state = State.Loading
-
-                                    try {
-                                        viewModel.createCategory()
-                                    } catch (exception: Exception) {
-                                        state = State.Error(exception)
-                                        return@launch
-                                    }
-
-                                    onSubmit()
-                                }
-                            }
-                        ) {
-                            Text("Add category")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(
-                            onClick = onDismiss
-                        ) {
-                            Text("Cancel")
-                        }
+                    isError = isTitleError,
+                    onValueChange = { newValue ->
+                        title = newValue
                     }
                 )
             }
-
-            is State.Error ->
-                AlertDialog(
-                    onDismissRequest = onDismiss,
-                    title = {
-                        Text("Error when creating category")
-                    },
-                    text = {
-                        Text("${it.exception.detailedMessage}")
-                    },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                state = State.Input
-                            }
-                        ) {
-                            Text("Back")
-                        }
-                    }
-                )
+        },
+        confirmButton = {
+            TextButton(
+                enabled = !isTitleError,
+                onClick = {
+                    onRespond()
+                    onSubmit(SubmitData(title))
+                }
+            ) {
+                Text("Add category")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onRespond
+            ) {
+                Text("Cancel")
+            }
         }
-    }
+    )
 }

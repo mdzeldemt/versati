@@ -7,158 +7,115 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.components.form.menu.DropdownMenuField
 import com.liuvil.versati.components.form.menu.DropdownMenuItem
-import com.liuvil.versati.framework.throwable.detailedMessage
 import com.liuvil.versati.framework.string.isValidURL
-import com.liuvil.versati.framework.viewmodel.viewOf
-import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import java.net.URL
 
-private sealed class State {
-    data object Loading: State()
-    data object Input: State()
-    data class Error(val exception: Exception): State()
-}
+internal data class Category(
+    val id: Int,
+    val title: String
+)
+
+internal data class SubmitData(
+    val title: String,
+    val feedUrl: URL,
+    val categoryId: Int
+)
 
 @Composable
 internal fun EditFeedDialog(
-    feedId: Int,
-    onSubmit: () -> Unit,
-    onDismiss: () -> Unit
-) = viewOf<InitData, EditFeedDialogModel>(
-    InitData(feedId)
-) { viewModel ->
-    var title by viewModel.title
-    var feedUrl by viewModel.feedUrl
-    var categoryId by viewModel.categoryId
-    val categories by viewModel.categories
+    initialTitle: String,
+    initialFeedUrl: URL,
+    initialCategoryId: Int,
+    categories: List<Category>,
+    onSubmit: (SubmitData) -> Unit,
+    onRespond: () -> Unit
+) {
+    var title by remember { mutableStateOf(initialTitle) }
+    var feedUrl by remember { mutableStateOf(initialFeedUrl.toString()) }
+    var categoryId by remember { mutableIntStateOf(initialCategoryId) }
 
-    var state by remember { mutableStateOf<State>(State.Input) }
+    val isTitleError = title.isEmpty()
+    val isFeedUrlError = !isValidURL(feedUrl)
 
-    val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
-        viewModel.loadFeedDetails()
-        viewModel.loadCategories()
-        state = State.Input
-    }
-
-    state.let {
-        when (it) {
-            is State.Loading -> {}
-
-            is State.Input -> {
-                val isTitleError = title.isEmpty()
-                val isFeedUrlError = !isValidURL(feedUrl)
-
-                AlertDialog(
-                    onDismissRequest = onDismiss,
-                    title = {
-                        Text("Update a feed")
+    AlertDialog(
+        onDismissRequest = onRespond,
+        title = {
+            Text("Edit a feed")
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)
+            ) {
+                TextField(
+                    value = title,
+                    label = {
+                        Text("Title")
                     },
-                    text = {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)
-                        ) {
-                            TextField(
-                                value = title,
-                                label = {
-                                    Text("Title")
-                                },
-                                isError = isTitleError,
-                                onValueChange = { newValue ->
-                                    title = newValue
-                                }
-                            )
+                    isError = isTitleError,
+                    onValueChange = { newValue ->
+                        title = newValue
+                    }
+                )
 
-                            TextField(
-                                value = feedUrl,
-                                label = {
-                                    Text("Feed URL")
-                                },
-                                isError = isFeedUrlError,
-                                onValueChange = { newValue ->
-                                    feedUrl = newValue
-                                }
-                            )
-
-                            DropdownMenuField(
-                                title = "Category",
-                                items = categories.map { category ->
-                                    DropdownMenuItem(
-                                        key = category.id,
-                                        title = category.title
-                                    )
-                                },
-                                selection = categoryId,
-                                onSelectionChanged = { newValue ->
-                                    categoryId = newValue
-                                }
-                            )
-                        }
+                TextField(
+                    value = feedUrl,
+                    label = {
+                        Text("Feed URL")
                     },
-                    confirmButton = {
-                        TextButton(
-                            enabled = !isTitleError && !isFeedUrlError,
-                            onClick = {
-                                coroutineScope.launch {
-                                    state = State.Loading
+                    isError = isFeedUrlError,
+                    onValueChange = { newValue ->
+                        feedUrl = newValue
+                    }
+                )
 
-                                    try {
-                                        viewModel.updateFeed()
-                                    } catch (exception: Exception) {
-                                        state = State.Error(
-                                            exception = exception
-                                        )
-                                        return@launch
-                                    }
-
-                                    onSubmit()
-                                }
-                            }
-                        ) {
-                            Text("Update feed")
-                        }
+                DropdownMenuField(
+                    title = "Category",
+                    items = categories.map { category ->
+                        DropdownMenuItem(
+                            key = category.id,
+                            title = category.title
+                        )
                     },
-                    dismissButton = {
-                        if (state is State.Input) {
-                            TextButton(
-                                onClick = onDismiss
-                            ) {
-                                Text("Cancel")
-                            }
-                        }
+                    selection = categoryId,
+                    onSelectionChanged = { newValue ->
+                        categoryId = newValue
                     }
                 )
             }
-
-            is State.Error ->
-                AlertDialog(
-                    onDismissRequest = onDismiss,
-                    title = {
-                        Text("Error when updating a feed")
-                    },
-                    text = {
-                        Text("${it.exception.detailedMessage}")
-                    },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                state = State.Input
-                            }
-                        ) {
-                            Text("Back")
-                        }
-                    }
-                )
+        },
+        confirmButton = {
+            TextButton(
+                enabled = !isTitleError && !isFeedUrlError,
+                onClick = {
+                    onRespond()
+                    onSubmit(
+                        SubmitData(
+                            title = title,
+                            feedUrl = feedUrl.toHttpUrl().toUrl(),
+                            categoryId = categoryId
+                        )
+                    )
+                }
+            ) {
+                Text("Update feed")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onRespond
+            ) {
+                Text("Cancel")
+            }
         }
-    }
+    )
 }

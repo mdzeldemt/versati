@@ -101,7 +101,7 @@ internal fun DrawerItemGroup(
     label: @Composable () -> Unit,
     selected: Boolean,
     expanded: Boolean,
-    badge: @Composable () -> Unit,
+    badge: (@Composable () -> Unit)? = null,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
     onToggle: () -> Unit,
@@ -130,7 +130,9 @@ internal fun DrawerItemGroup(
                 )
             },
             badge = {
-                badge()
+                if (badge != null) {
+                    badge()
+                }
             },
             selected = selected,
             onClick = onClick,
