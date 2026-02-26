@@ -217,7 +217,6 @@ fun BrowseEntriesView(
     val expandedCategories = remember { mutableStateMapOf<Int, Boolean>() }
 
     // Entry List View
-    val scrollState = rememberLazyListState()
     val isRefreshing by remember {
         derivedStateOf { entries is None || entries is Loading }
     }
@@ -279,7 +278,6 @@ fun BrowseEntriesView(
                                 coroutineScope.launch {
                                     drawerState.close()
                                     viewModel.reloadEntries()
-                                    scrollState.scrollToItem(0)
                                 }
                             }
                         )
@@ -299,7 +297,6 @@ fun BrowseEntriesView(
                                 coroutineScope.launch {
                                     drawerState.close()
                                     viewModel.reloadEntries()
-                                    scrollState.scrollToItem(0)
                                 }
                             }
                         )
@@ -335,7 +332,6 @@ fun BrowseEntriesView(
                                             coroutineScope.launch {
                                                 drawerState.close()
                                                 viewModel.reloadEntries()
-                                                scrollState.scrollToItem(0)
                                             }
                                         },
                                         onLongClick = {
@@ -369,7 +365,6 @@ fun BrowseEntriesView(
                                                     coroutineScope.launch {
                                                         drawerState.close()
                                                         viewModel.reloadEntries()
-                                                        scrollState.scrollToItem(0)
                                                     }
                                                 },
                                                 onLongClick = {
@@ -399,7 +394,6 @@ fun BrowseEntriesView(
                                 coroutineScope.launch {
                                     drawerState.close()
                                     viewModel.reloadEntries()
-                                    scrollState.scrollToItem(0)
                                 }
                             }
                         )
@@ -530,7 +524,6 @@ fun BrowseEntriesView(
                             ifSuccess { entries ->
                                 if (entries.isNotEmpty()) {
                                     LazyColumn(
-                                        state = scrollState,
                                         verticalArrangement = Arrangement.Top,
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         modifier = Modifier.fillMaxSize()
@@ -611,7 +604,6 @@ fun BrowseEntriesView(
 
                                                                 coroutineScope.launch {
                                                                     viewModel.reloadEntries()
-                                                                    scrollState.scrollToItem(0)
                                                                 }
                                                             }
                                                         },
@@ -646,7 +638,6 @@ fun BrowseEntriesView(
 
                                                                 coroutineScope.launch {
                                                                     viewModel.reloadEntries()
-                                                                    scrollState.scrollToItem(0)
                                                                 }
                                                             }
                                                         ) {
@@ -828,7 +819,6 @@ fun BrowseEntriesView(
                             source = Source.Category(id = categoryId)
                             offset = 0
                             viewModel.reloadEntries()
-                            scrollState.scrollToItem(0)
 
                             snackbarHostState.showSnackbar(
                                 message = getSnackbarMessage(Snackbar.AddedCategory)
@@ -926,7 +916,6 @@ fun BrowseEntriesView(
                                     viewModel.reloadCategories()
                                     viewModel.reloadFeeds()
                                     viewModel.reloadEntries()
-                                    scrollState.scrollToItem(0)
 
                                     snackbarHostState.showSnackbar(
                                         message = getSnackbarMessage(Snackbar.RemovedCategory)
@@ -990,7 +979,6 @@ fun BrowseEntriesView(
                                 source = Source.Feed(id = feedId)
                                 offset = 0
                                 viewModel.reloadEntries()
-                                scrollState.scrollToItem(0)
 
                                 snackbarHostState.showSnackbar(
                                     message = getSnackbarMessage(Snackbar.AddedFeed)
@@ -1136,7 +1124,6 @@ fun BrowseEntriesView(
                         coroutineScope.launch {
                             drawerState.close()
                             viewModel.reloadEntries()
-                            scrollState.scrollToItem(0)
                         }
                     },
                     onRespond = {
@@ -1153,7 +1140,6 @@ fun BrowseEntriesView(
 
                         coroutineScope.launch {
                             viewModel.reloadEntries()
-                            scrollState.scrollToItem(0)
                         }
                     },
                     onRespond = {
@@ -1180,7 +1166,6 @@ fun BrowseEntriesView(
 
                             coroutineScope.launch {
                                 viewModel.reloadEntries()
-                                scrollState.scrollToItem(0)
                             }
                         }
                     },
