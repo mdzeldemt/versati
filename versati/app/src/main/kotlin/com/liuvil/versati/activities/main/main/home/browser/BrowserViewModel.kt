@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.entry.browse
+package com.liuvil.versati.activities.main.main.home.browser
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,7 +40,7 @@ data class Entry(
 )
 
 @HiltViewModel
-class BrowseEntriesViewModel @Inject constructor(
+class BrowserViewModel @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ): BaseViewModel<Unit>() {
 

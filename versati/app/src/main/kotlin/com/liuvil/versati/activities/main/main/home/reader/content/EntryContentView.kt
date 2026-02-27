@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.entry.read.content
+package com.liuvil.versati.activities.main.main.home.reader.content
 
 import android.graphics.Color
 import android.webkit.WebView

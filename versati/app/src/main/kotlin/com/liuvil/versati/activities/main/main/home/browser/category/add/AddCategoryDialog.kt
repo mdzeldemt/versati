@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.category.add
+package com.liuvil.versati.activities.main.main.home.browser.category.add
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import java.net.URL
 
 internal data class SubmitData(
     val title: String

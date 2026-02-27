@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.feed.edit
+package com.liuvil.versati.activities.main.main.home.browser.feed.add
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,7 +8,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,47 +25,31 @@ internal data class Category(
 )
 
 internal data class SubmitData(
-    val title: String,
     val feedUrl: URL,
     val categoryId: Int
 )
 
 @Composable
-internal fun EditFeedDialog(
-    initialTitle: String,
-    initialFeedUrl: URL,
-    initialCategoryId: Int,
+internal fun AddFeedDialog(
     categories: List<Category>,
     onSubmit: (SubmitData) -> Unit,
     onRespond: () -> Unit
 ) {
-    var title by remember { mutableStateOf(initialTitle) }
-    var feedUrl by remember { mutableStateOf(initialFeedUrl.toString()) }
-    var categoryId by remember { mutableIntStateOf(initialCategoryId) }
+    var feedUrl by remember { mutableStateOf("") }
+    var categoryId by remember { mutableStateOf<Int?>(null) }
 
-    val isTitleError = title.isEmpty()
     val isFeedUrlError = !isValidURL(feedUrl)
+    val isCategoryIdError = categoryId == null
 
     AlertDialog(
         onDismissRequest = onRespond,
         title = {
-            Text("Edit a feed")
+            Text("Add a feed")
         },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)
             ) {
-                TextField(
-                    value = title,
-                    label = {
-                        Text("Title")
-                    },
-                    isError = isTitleError,
-                    onValueChange = { newValue ->
-                        title = newValue
-                    }
-                )
-
                 TextField(
                     value = feedUrl,
                     label = {
@@ -87,6 +70,7 @@ internal fun EditFeedDialog(
                         )
                     },
                     selection = categoryId,
+                    isError = isCategoryIdError,
                     onSelectionChanged = { newValue ->
                         categoryId = newValue
                     }
@@ -95,19 +79,18 @@ internal fun EditFeedDialog(
         },
         confirmButton = {
             TextButton(
-                enabled = !isTitleError && !isFeedUrlError,
+                enabled = !isFeedUrlError && !isCategoryIdError,
                 onClick = {
                     onRespond()
                     onSubmit(
                         SubmitData(
-                            title = title,
                             feedUrl = feedUrl.toHttpUrl().toUrl(),
-                            categoryId = categoryId
+                            categoryId = categoryId!!
                         )
                     )
                 }
             ) {
-                Text("Update feed")
+                Text("Add feed")
             }
         },
         dismissButton = {

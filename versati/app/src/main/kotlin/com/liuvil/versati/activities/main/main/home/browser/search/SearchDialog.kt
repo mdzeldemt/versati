@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.entry.browse.search
+package com.liuvil.versati.activities.main.main.home.browser.search
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text

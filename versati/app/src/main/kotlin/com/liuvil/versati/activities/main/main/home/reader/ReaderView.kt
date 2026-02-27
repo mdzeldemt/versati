@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.entry.read
+package com.liuvil.versati.activities.main.main.home.reader
 
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -49,7 +49,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.liuvil.versati.activities.main.main.home.entry.read.content.EntryContentView
+import com.liuvil.versati.activities.main.main.home.reader.content.EntryContentView
 import com.liuvil.versati.framework.android.openShareSheet
 import com.liuvil.versati.framework.android.openURLExternally
 import com.liuvil.versati.framework.date.formatHumanReadableLong
@@ -74,10 +74,10 @@ private sealed class Dialog {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReadEntryView(
+fun ReaderView(
     entryId: Int,
     onDismiss: () -> Unit
-) = viewOf<InitData, ReadEntryViewModel>(
+) = viewOf<InitData, ReaderViewModel>(
     InitData(entryId)
 ) { viewModel ->
     val entry by viewModel.entry

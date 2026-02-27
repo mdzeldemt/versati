@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.entry.browse.entry_tile
+package com.liuvil.versati.activities.main.main.home.browser.entry_tile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

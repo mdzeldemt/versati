@@ -5,18 +5,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.liuvil.versati.activities.main.main.home.entry.browse.BrowseEntriesView
-import com.liuvil.versati.activities.main.main.home.entry.read.ReadEntryView
+import com.liuvil.versati.activities.main.main.home.browser.BrowserView
+import com.liuvil.versati.activities.main.main.home.reader.ReaderView
 import com.liuvil.versati.framework.navigation.safePop
 import kotlinx.serialization.Serializable
 
 private object NavigationDestination {
     @Serializable
-    data object BrowseEntries
+    data object Browser
 
     @Serializable
-    data class ReadEntry(
-        val id: Int
+    data class Reader(
+        val entryId: Int
     )
 }
 
@@ -28,22 +28,22 @@ fun HomeView(
 
     NavHost(
         navController = navController,
-        startDestination = NavigationDestination.BrowseEntries
+        startDestination = NavigationDestination.Browser
     ) {
-        composable<NavigationDestination.BrowseEntries> {
-            BrowseEntriesView(
+        composable<NavigationDestination.Browser> {
+            BrowserView(
                 onEntryClicked = {
                     navController.navigate(
-                        NavigationDestination.ReadEntry(id = it)
+                        NavigationDestination.Reader(entryId = it)
                     )
                 },
                 onPreferencesClicked = onPreferencesClicked
             )
         }
 
-        composable<NavigationDestination.ReadEntry> {
-            ReadEntryView(
-                entryId = it.toRoute<NavigationDestination.ReadEntry>().id,
+        composable<NavigationDestination.Reader> {
+            ReaderView(
+                entryId = it.toRoute<NavigationDestination.Reader>().entryId,
                 onDismiss = {
                     navController.safePop()
                 }

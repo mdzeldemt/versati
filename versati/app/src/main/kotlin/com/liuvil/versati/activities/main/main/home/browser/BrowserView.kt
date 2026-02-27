@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.entry.browse
+package com.liuvil.versati.activities.main.main.home.browser
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -60,16 +59,16 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.activities.main.main.home.category.add.AddCategoryDialog
-import com.liuvil.versati.activities.main.main.home.category.edit.EditCategoryDialog
-import com.liuvil.versati.activities.main.main.home.category.remove.RemoveCategoryDialog
-import com.liuvil.versati.activities.main.main.home.entry.browse.entry_tile.EntryTile
-import com.liuvil.versati.activities.main.main.home.entry.browse.page.PageDialog
-import com.liuvil.versati.activities.main.main.home.entry.browse.search.SearchDialog
-import com.liuvil.versati.activities.main.main.home.feed.add.AddFeedDialog
-import com.liuvil.versati.activities.main.main.home.feed.add.Category
-import com.liuvil.versati.activities.main.main.home.feed.edit.EditFeedDialog
-import com.liuvil.versati.activities.main.main.home.feed.remove.RemoveFeedDialog
+import com.liuvil.versati.activities.main.main.home.browser.category.add.AddCategoryDialog
+import com.liuvil.versati.activities.main.main.home.browser.category.edit.EditCategoryDialog
+import com.liuvil.versati.activities.main.main.home.browser.category.remove.RemoveCategoryDialog
+import com.liuvil.versati.activities.main.main.home.browser.entry_tile.EntryTile
+import com.liuvil.versati.activities.main.main.home.browser.page.PageDialog
+import com.liuvil.versati.activities.main.main.home.browser.search.SearchDialog
+import com.liuvil.versati.activities.main.main.home.browser.feed.add.AddFeedDialog
+import com.liuvil.versati.activities.main.main.home.browser.feed.add.Category
+import com.liuvil.versati.activities.main.main.home.browser.feed.edit.EditFeedDialog
+import com.liuvil.versati.activities.main.main.home.browser.feed.remove.RemoveFeedDialog
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.BlockingDialog
 import com.liuvil.versati.components.ConfirmationDialog
@@ -184,10 +183,10 @@ sealed interface Source {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BrowseEntriesView(
+fun BrowserView(
     onEntryClicked: (Int) -> Unit,
     onPreferencesClicked: () -> Unit
-) = viewOf<BrowseEntriesViewModel> { viewModel ->
+) = viewOf<BrowserViewModel> { viewModel ->
     var source by viewModel.source
     var offset by viewModel.offset
     val categories by viewModel.categories
@@ -1014,7 +1013,7 @@ fun BrowseEntriesView(
                                 initialFeedUrl = feed.feedUrl,
                                 initialCategoryId = feed.categoryId,
                                 categories = categories.map {
-                                    com.liuvil.versati.activities.main.main.home.feed.edit.Category(
+                                    com.liuvil.versati.activities.main.main.home.browser.feed.edit.Category(
                                         id = it.id,
                                         title = it.title
                                     )

@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.entry.browse.page
+package com.liuvil.versati.activities.main.main.home.browser.page
 
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
