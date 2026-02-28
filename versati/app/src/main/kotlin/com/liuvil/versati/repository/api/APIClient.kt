@@ -12,6 +12,7 @@ import com.liuvil.versati.repository.api.data.EntryStatus
 import com.liuvil.versati.repository.api.data.Feed
 import com.liuvil.versati.repository.api.data.FeedCountersResponse
 import com.liuvil.versati.repository.api.data.Icon
+import com.liuvil.versati.repository.api.data.Version
 import com.liuvil.versati.repository.api.data.SortDirection
 import com.liuvil.versati.repository.api.data.UpdateCategoryRequest
 import com.liuvil.versati.repository.api.data.UpdateFeedRequest
@@ -127,4 +128,7 @@ interface APIClient {
     suspend fun getFeedIcon(
         @Path("id") id: Int
     ): Icon
+
+    @GET("/v1/version")
+    suspend fun getVersion(): Version
 }

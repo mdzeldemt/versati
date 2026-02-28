@@ -7,6 +7,7 @@ import com.liuvil.versati.repository.api.data.EntriesGetResponse
 import com.liuvil.versati.repository.api.data.EntriesUpdateRequest
 import com.liuvil.versati.repository.api.data.EntryStatus
 import com.liuvil.versati.repository.api.data.FeedCountersResponse
+import com.liuvil.versati.repository.api.data.Version
 import com.liuvil.versati.repository.api.data.SortDirection
 import com.liuvil.versati.repository.api.data.UpdateCategoryRequest
 import com.liuvil.versati.repository.api.data.UpdateFeedRequest
@@ -327,4 +328,8 @@ class Repository(
             iconCache.insertIcon(it)
         }
     ).provide(origin)
+
+    // Version
+    suspend fun getVersion(): Version =
+        apiClient.getVersion()
 }
