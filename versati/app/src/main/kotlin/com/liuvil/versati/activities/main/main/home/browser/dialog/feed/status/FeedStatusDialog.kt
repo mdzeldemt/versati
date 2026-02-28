@@ -59,10 +59,12 @@ private fun getFeedStatusText(
     }
     append(nextCheckAt.formatHumanReadableLong())
 
-    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-        append("\ntotal parsing errors: ")
+    if (parsingErrorCount > 0) {
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+            append("\ntotal parsing errors: ")
+        }
+        append("$parsingErrorCount")
     }
-    append("$parsingErrorCount")
 
     if (parsingErrorMessage != null) {
         withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
