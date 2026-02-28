@@ -19,18 +19,18 @@ fun MainView(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        onboardingState.ifSuccess {
-            when (it) {
-                is OnboardingState.Incomplete ->
-                    WelcomeView(
-                        onPreferencesClicked = onPreferencesClicked
-                    )
+        when (onboardingState) {
+            is OnboardingState.Loading -> {}
 
-                is OnboardingState.Complete ->
-                    HomeView(
-                        onPreferencesClicked = onPreferencesClicked
-                    )
-            }
+            is OnboardingState.Incomplete ->
+                WelcomeView(
+                    onPreferencesClicked = onPreferencesClicked
+                )
+
+            is OnboardingState.Complete ->
+                HomeView(
+                    onPreferencesClicked = onPreferencesClicked
+                )
         }
     }
 }

@@ -31,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,7 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil3.compose.AsyncImage
-import com.liuvil.versati.activities.main.main.home.reader.content.EntryContentView
 import com.liuvil.versati.framework.android.openShareSheet
 import com.liuvil.versati.framework.android.openURLExternally
 import com.liuvil.versati.framework.css.ENVIRONMENT_CSS_VARIABLES
@@ -61,8 +61,9 @@ import com.liuvil.versati.framework.css.buildCSSBlock
 import com.liuvil.versati.framework.css.getEnvironmentValue
 import com.liuvil.versati.framework.date.formatHumanReadableLong
 import com.liuvil.versati.framework.html.applyStylesheet
-import com.liuvil.versati.framework.lazy.Success
 import com.liuvil.versati.framework.preferences.entry.content.css.DEFAULT_ENTRY_CONTENT_STYLESHEET
+import com.liuvil.versati.framework.viewmodel.status.Status
+import com.liuvil.versati.framework.viewmodel.status.fold
 import com.liuvil.versati.framework.viewmodel.viewOf
 import kotlinx.coroutines.launch
 import java.net.URL
@@ -88,8 +89,11 @@ fun ReaderView(
 ) = viewOf<InitData, ReaderViewModel>(
     InitData(entryId)
 ) { viewModel ->
-    val entry by viewModel.entry
-    val starred by viewModel.starred
+    val entry by viewModel.entry.collectAsState()
+    val starred by viewModel.starred.collectAsState()
+
+    val getEntryStatus by viewModel.getEntryStatus.collectAsState()
+    val toggleStarredStatus by viewModel.toggleStarredStatus.collectAsState()
 
     var activeDialog by remember { mutableStateOf<Dialog?>(null) }
 
@@ -98,7 +102,7 @@ fun ReaderView(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.loadEntry()
+        viewModel.onLoadEntry()
     }
 
     Scaffold(
@@ -115,14 +119,12 @@ fun ReaderView(
                 },
                 actions = {
                     IconButton(
-                        enabled = entry is Success,
+                        enabled = getEntryStatus == Status.Success,
                         onClick = {
-                            entry.ifSuccess { entry ->
-                                context.openShareSheet(
-                                    title = "Share entry link",
-                                    content = entry.url.toString()
-                                )
-                            }
+                            context.openShareSheet(
+                                title = "Share entry link",
+                                content = entry!!.url.toString()
+                            )
                         }
                     ) {
                         Icon(
@@ -132,38 +134,37 @@ fun ReaderView(
                     }
 
                     IconButton(
-                        enabled = starred is Success,
+                        enabled = fold(
+                            getEntryStatus,
+                            toggleStarredStatus
+                        ) == Status.Success,
                         onClick = {
                             coroutineScope.launch {
-                                viewModel.toggleStarred()
+                                viewModel.onToggleStarred()
                             }
                         }
                     ) {
                         Icon(
                             imageVector =
-                                starred.ifSuccess { starred ->
-                                    if (starred)
-                                        Icons.Filled.Star
-                                    else
-                                        Icons.Outlined.StarOutline
-                                } ?: Icons.Filled.Star,
+                                if (starred)
+                                    Icons.Filled.Star
+                                else
+                                    Icons.Outlined.StarOutline,
                             contentDescription = null
                         )
                     }
 
                     IconButton(
-                        enabled = entry is Success,
+                        enabled = getEntryStatus == Status.Success,
                         onClick = {
-                            entry.ifSuccess {
-                                activeDialog = Dialog.Details(
-                                    id = entryId,
-                                    url = it.url,
-                                    author = it.author,
-                                    createdAt = it.createdAt,
-                                    publishedAt = it.publishedAt,
-                                    read = it.read
-                                )
-                            }
+                            activeDialog = Dialog.Details(
+                                id = entryId,
+                                url = entry!!.url,
+                                author = entry!!.author,
+                                createdAt = entry!!.createdAt,
+                                publishedAt = entry!!.publishedAt,
+                                read = entry!!.read
+                            )
                         }
                     ) {
                         Icon(
@@ -175,72 +176,81 @@ fun ReaderView(
             )
         }
     ) { padding ->
-        entry.ifSuccess {
-            val openURL: () -> Unit = remember {
-                {
-                    context.openURLExternally(
-                        Uri.parse(it.url.toString())
-                    )
+        when (getEntryStatus) {
+            is Status.Loading ->
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    CircularProgressIndicator()
                 }
-            }
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(padding)
-                    .padding(
-                        start = 16.dp,
-                        end = 16.dp,
-                        bottom = 16.dp
-                    )
-            ) {
-                Text(
-                    it.title,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(
-                            onClick = openURL,
-                            indication = null,
-                            interactionSource = null
+            is Status.Success -> {
+                val openURL: () -> Unit = remember {
+                    {
+                        context.openURLExternally(
+                            Uri.parse(entry!!.url.toString())
                         )
-                )
-
-                Text(
-                    getEntryShortDetailsText(
-                        it.feedTitle,
-                        it.author,
-                        it.publishedAt
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                it.imageURL?.let { enclosureUrl ->
-                    AsyncImage(
-                        model = enclosureUrl.toString(),
-                        contentDescription = null,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
+                    }
                 }
 
-                EntryContentView(
-                    it.content,
-                    DEFAULT_ENTRY_CONTENT_STYLESHEET
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(padding)
+                        .padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            bottom = 16.dp
+                        )
+                ) {
+                    Text(
+                        entry!!.title,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                onClick = openURL,
+                                indication = null,
+                                interactionSource = null
+                            )
+                    )
 
-                Button(onClick = openURL) {
-                    Text("Open in web browser")
+                    Text(
+                        getEntryShortDetailsText(
+                            entry!!.feedTitle,
+                            entry!!.author,
+                            entry!!.publishedAt
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    entry!!.imageURL?.let { enclosureUrl ->
+                        AsyncImage(
+                            model = enclosureUrl.toString(),
+                            contentDescription = null,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                    }
+
+                    EntryContentView(
+                        entry!!.content,
+                        DEFAULT_ENTRY_CONTENT_STYLESHEET
+                    )
+
+                    Button(onClick = openURL) {
+                        Text("Open in web browser")
+                    }
                 }
             }
-        } ?: Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            CircularProgressIndicator()
+
+            is Status.Failure -> {
+                // TODO: Add error message
+            }
         }
     }
 

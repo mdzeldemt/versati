@@ -1,21 +1,19 @@
 package com.liuvil.versati.activities.main.main.home.reader
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.viewModelScope
 import com.liuvil.versati.activities.main.main.home.RepositoryFactory
 import com.liuvil.versati.framework.html.extractImageURLs
-import com.liuvil.versati.framework.lazy.Failure
-import com.liuvil.versati.framework.lazy.LazyResult
-import com.liuvil.versati.framework.lazy.Loading
-import com.liuvil.versati.framework.lazy.None
-import com.liuvil.versati.framework.lazy.Success
-import com.liuvil.versati.framework.lazy.lazyLoad
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
+import com.liuvil.versati.framework.viewmodel.status.Status
 import com.liuvil.versati.repository.Origin
 import com.liuvil.versati.repository.Repository
 import com.liuvil.versati.repository.data.Enclosure
 import com.liuvil.versati.repository.data.Feed
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.jsoup.Jsoup
 import java.net.URL
 import java.time.OffsetDateTime
@@ -46,53 +44,57 @@ class ReaderViewModel @Inject constructor(
 
     private lateinit var repository: Repository
 
-    private val _entry = mutableStateOf<LazyResult<Entry>>(None())
-    private val _starred = mutableStateOf<LazyResult<Boolean>>(None())
+    private val _entry = MutableStateFlow<Entry?>(null)
+    private val _starred = MutableStateFlow(false)
 
-    val entry: State<LazyResult<Entry>> = _entry
-    val starred: State<LazyResult<Boolean>> = _starred
+    private val _getEntryStatus = MutableStateFlow<Status>(Status.Loading)
+    private val _toggleStarredStatus = MutableStateFlow<Status>(Status.Success)
+
+    val entry: StateFlow<Entry?> = _entry
+    val starred: StateFlow<Boolean> = _starred
+
+    val getEntryStatus: StateFlow<Status> = _getEntryStatus
+    val toggleStarredStatus: StateFlow<Status> = _toggleStarredStatus
 
     override suspend fun initialize(initData: InitData) {
         entryId = initData.entryId
         repository = repositoryFactory.create()
     }
 
-    suspend fun loadEntry() {
-        _entry.value = Loading()
-        _starred.value = Loading()
+    fun onLoadEntry() {
+        viewModelScope.launch {
+            _getEntryStatus.value = Status.Loading
 
-        val entry: com.liuvil.versati.repository.data.Entry
-        val feed: Feed
-        val enclosures: List<Enclosure>
-        try {
-            entry = repository.getEntryById(
-                id = entryId,
-                origin = Origin.LocalThenRemote
-            )
-            feed = repository.getFeedById(
-                id = entry.feedId,
-                origin = Origin.LocalThenRemote
-            )
-            enclosures = repository.getEnclosuresByEntryId(
-                entryId = entryId,
-                origin = Origin.LocalThenRemote
-            )
-        } catch (exception: Exception) {
-            _entry.value = Failure(exception)
-            _starred.value = Failure(exception)
-            return
-        }
-
-        val document = Jsoup.parse(entry.content)
-        val imageURL =
-            if (extractImageURLs(document).isEmpty()) {
-                enclosures.firstOrNull()?.url
-            } else {
-                null
+            val entry: com.liuvil.versati.repository.data.Entry
+            val feed: Feed
+            val enclosures: List<Enclosure>
+            try {
+                entry = repository.getEntryById(
+                    id = entryId,
+                    origin = Origin.LocalThenRemote
+                )
+                feed = repository.getFeedById(
+                    id = entry.feedId,
+                    origin = Origin.LocalThenRemote
+                )
+                enclosures = repository.getEnclosuresByEntryId(
+                    entryId = entryId,
+                    origin = Origin.LocalThenRemote
+                )
+            } catch (reason: Throwable) {
+                _getEntryStatus.value = Status.Failure(reason)
+                return@launch
             }
 
-        _entry.value = Success(
-            Entry(
+            val document = Jsoup.parse(entry.content)
+            val imageURL =
+                if (extractImageURLs(document).isEmpty()) {
+                    enclosures.firstOrNull()?.url
+                } else {
+                    null
+                }
+
+            _entry.value = Entry(
                 title = entry.title,
                 content = entry.content,
                 url = entry.url,
@@ -103,14 +105,25 @@ class ReaderViewModel @Inject constructor(
                 read = entry.read,
                 imageURL = imageURL
             )
-        )
-        _starred.value = Success(entry.starred)
+            _starred.value = entry.starred
+
+            _getEntryStatus.value = Status.Success
+        }
     }
 
-    suspend fun toggleStarred() {
-        lazyLoad(_starred) {
-            repository.toggleEntryStarred(entryId)
-            repository.getEntryById(entryId).starred
+    fun onToggleStarred() {
+        viewModelScope.launch {
+            _toggleStarredStatus.value = Status.Loading
+
+            runCatching {
+                repository.toggleEntryStarred(entryId)
+            }.onSuccess {
+                _starred.update { !it }
+
+                _toggleStarredStatus.value = Status.Success
+            }.onFailure { reason ->
+                _toggleStarredStatus.value = Status.Failure(reason)
+            }
         }
     }
 }

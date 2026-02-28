@@ -79,33 +79,35 @@ internal fun ConnectionPreferencesView(
             )
         },
     ) { padding ->
-        state.ifSuccess { state ->
-            LazyColumn(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
-                item {
-                    BaseURLTile(state.baseURL) {
-                        activeDialog = Dialog.BaseURLInput(
-                            initialValue = state.baseURL
-                        )
-                    }
-                }
-
-                item {
-                    AuthenticationTile(
-                        when (state.credentials) {
-                            is APIKeyCredentials -> CredentialType.API_KEY
-                            is BasicCredentials -> CredentialType.BASIC
-                            null -> null
+        state.let { state ->
+            if (state is ViewState.Ready) {
+                LazyColumn(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                ) {
+                    item {
+                        BaseURLTile(state.baseURL) {
+                            activeDialog = Dialog.BaseURLInput(
+                                initialValue = state.baseURL
+                            )
                         }
-                    ) {
-                        activeDialog = Dialog.CredentialsInput(
-                            initialValue = state.credentials
-                        )
+                    }
+
+                    item {
+                        AuthenticationTile(
+                            when (state.credentials) {
+                                is APIKeyCredentials -> CredentialType.API_KEY
+                                is BasicCredentials -> CredentialType.BASIC
+                                null -> null
+                            }
+                        ) {
+                            activeDialog = Dialog.CredentialsInput(
+                                initialValue = state.credentials
+                            )
+                        }
                     }
                 }
             }
