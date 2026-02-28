@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.liuvil.versati.repository.data.Feed
 import java.net.URL
+import java.time.OffsetDateTime
 
 @Entity(tableName = "feeds")
 data class Feed(
@@ -12,6 +13,8 @@ data class Feed(
     override val siteUrl: URL,
     override val title: String,
     override val description: String,
+    override val checkedAt: OffsetDateTime,
+    override val nextCheckAt: OffsetDateTime,
     override val categoryId: Int,
     override val hideGlobally: Boolean,
     override val iconId: Int,

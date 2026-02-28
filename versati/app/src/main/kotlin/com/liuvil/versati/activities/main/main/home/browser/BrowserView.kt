@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Refresh
@@ -83,6 +84,7 @@ import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.add.AddF
 import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.add.Category
 import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.edit.EditFeedDialog
 import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.remove.RemoveFeedDialog
+import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.status.FeedStatusDialog
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.components.ErrorDialog
@@ -142,6 +144,10 @@ private sealed class Dialog: Modal() {
         data class Confirmation(val id: Int): Dialog()
         data class Failure(val reason: Throwable): Dialog()
     }
+
+    data class FeedStatus(
+        val id: Int
+    ): Dialog()
 
     object AddFeed {
         data object Input: Dialog()
@@ -805,6 +811,15 @@ fun BrowserView(
                         ActionBottomSheetHeader(feed.title)
 
                         ActionBottomSheetItem(
+                            title = "View feed status",
+                            icon = Icons.Default.Info
+                        ) {
+                            activeModal = Dialog.FeedStatus(
+                                id = modal.id
+                            )
+                        }
+
+                        ActionBottomSheetItem(
                             title = "Edit feed",
                             icon = Icons.Default.Edit
                         ) {
@@ -894,6 +909,20 @@ fun BrowserView(
                         activeModal = null
                     }
                 )
+            
+            is Dialog.FeedStatus ->
+                feedsById[modal.id]?.let { feed ->
+                    FeedStatusDialog(
+                        checkedAt = feed.checkedAt,
+                        nextCheckAt = feed.nextCheckAt,
+                        parsingErrorCount = feed.parsingErrorCount,
+                        parsingErrorMessage = feed.parsingErrorMessage
+                            .takeIf { it.isNotBlank() },
+                        onDismiss = {
+                            activeModal = null
+                        }
+                    )
+                }
 
             is Dialog.AddFeed.Input ->
                 AddFeedDialog(
