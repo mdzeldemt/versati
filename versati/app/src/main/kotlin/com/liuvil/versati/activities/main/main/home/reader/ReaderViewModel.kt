@@ -12,6 +12,7 @@ import com.liuvil.versati.repository.data.Feed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jsoup.Jsoup
@@ -50,11 +51,11 @@ class ReaderViewModel @Inject constructor(
     private val _getEntryStatus = MutableStateFlow<Status>(Status.Loading)
     private val _toggleStarredStatus = MutableStateFlow<Status>(Status.Success)
 
-    val entry: StateFlow<Entry?> = _entry
-    val starred: StateFlow<Boolean> = _starred
+    val entry = _entry.asStateFlow()
+    val starred = _starred.asStateFlow()
 
-    val getEntryStatus: StateFlow<Status> = _getEntryStatus
-    val toggleStarredStatus: StateFlow<Status> = _toggleStarredStatus
+    val getEntryStatus = _getEntryStatus.asStateFlow()
+    val toggleStarredStatus = _toggleStarredStatus.asStateFlow()
 
     override suspend fun initialize(initData: InitData) {
         entryId = initData.entryId

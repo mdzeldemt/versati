@@ -30,6 +30,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -141,14 +143,14 @@ internal class BrowserViewModel @Inject constructor(
 
     private val _events = MutableSharedFlow<Event>()
 
-    val source: StateFlow<Source> = _source
-    val offset: StateFlow<Int> = _offset
+    val source = _source.asStateFlow()
+    val offset = _offset.asStateFlow()
 
-    val categoriesById: StateFlow<Map<Int, Category>> = _categoriesById
-    val feedsById: StateFlow<Map<Int, Feed>> = _feedsById
-    val iconsById: StateFlow<Map<Int, ImageBitmap>> = _iconsById
-    val entriesById: StateFlow<Map<Int, Entry>> = _entriesById
-    val totalEntries: StateFlow<Int> = _totalEntries
+    val categoriesById = _categoriesById.asStateFlow()
+    val feedsById = _feedsById.asStateFlow()
+    val iconsById = _iconsById.asStateFlow()
+    val entriesById = _entriesById.asStateFlow()
+    val totalEntries = _totalEntries.asStateFlow()
 
     val categoriesStatus = combine(
         _getCategoriesStatus,
@@ -183,7 +185,7 @@ internal class BrowserViewModel @Inject constructor(
             initialValue = Status.Loading
         )
 
-    val events: Flow<Event> = _events
+    val events = _events.asSharedFlow()
 
     fun onReloadAllCategories() {
         viewModelScope.launch {
