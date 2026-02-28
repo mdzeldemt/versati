@@ -133,7 +133,6 @@ internal class BrowserViewModel @Inject constructor(
     private val _editCategoryStatus = MutableStateFlow<Status>(Status.Success)
     private val _removeCategoryStatus = MutableStateFlow<Status>(Status.Success)
     private val _getFeedsStatus = MutableStateFlow<Status>(Status.Success)
-    private val _refreshFeedStatus = MutableStateFlow<Status>(Status.Success)
     private val _addFeedStatus = MutableStateFlow<Status>(Status.Success)
     private val _editFeedStatus = MutableStateFlow<Status>(Status.Success)
     private val _removeFeedStatus = MutableStateFlow<Status>(Status.Success)
@@ -166,7 +165,6 @@ internal class BrowserViewModel @Inject constructor(
 
     val feedsStatus = combine(
         _getFeedsStatus,
-        _refreshFeedStatus,
         _addFeedStatus,
         _editFeedStatus,
         _removeFeedStatus
@@ -416,17 +414,11 @@ internal class BrowserViewModel @Inject constructor(
         id: Int
     ) {
         viewModelScope.launch {
-            _refreshFeedStatus.value = Status.Loading
-
             refreshFeed(id)
                 .onSuccess {
-                    _refreshFeedStatus.value = Status.Success
-
                     _events.emit(Event.RefreshFeed.Success(id))
                 }
                 .onFailure { reason ->
-                    _refreshFeedStatus.value = Status.Failure(reason)
-
                     _events.emit(Event.RefreshFeed.Failure(reason))
                 }
 
