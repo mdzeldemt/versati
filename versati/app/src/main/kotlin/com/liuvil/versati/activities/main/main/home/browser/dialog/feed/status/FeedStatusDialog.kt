@@ -66,7 +66,7 @@ private fun getFeedStatusText(
 
     if (parsingErrorMessage != null) {
         withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-            append("\nparsing error message: ")
+            append("\nlatest parsing error: ")
         }
         append(parsingErrorMessage)
     }
