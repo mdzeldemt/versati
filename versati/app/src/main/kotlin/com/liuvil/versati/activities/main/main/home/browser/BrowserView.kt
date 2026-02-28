@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Refresh
@@ -87,6 +88,7 @@ import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.components.ErrorDialog
 import com.liuvil.versati.components.WrapperLayout
 import com.liuvil.versati.components.drawer.DrawerItem
+import com.liuvil.versati.components.drawer.DrawerItemBadge
 import com.liuvil.versati.components.drawer.DrawerItemGroup
 import com.liuvil.versati.components.drawer.DrawerItemIcon
 import com.liuvil.versati.components.drawer.DrawerItemLabel
@@ -400,6 +402,14 @@ fun BrowserView(
                                                     }
                                                 },
                                                 selected = source == Source.Feed(feed.id),
+                                                badge = {
+                                                    if (feed.parsingErrorCount > 0) {
+                                                        DrawerItemBadge(
+                                                            imageVector = Icons.Default.ErrorOutline,
+                                                            error = true
+                                                        )
+                                                    }
+                                                },
                                                 onClick = {
                                                     coroutineScope.launch {
                                                         drawerState.close()

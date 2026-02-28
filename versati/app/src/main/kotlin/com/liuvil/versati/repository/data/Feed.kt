@@ -11,4 +11,6 @@ interface Feed {
     val categoryId: Int
     val hideGlobally: Boolean
     val iconId: Int
+    val parsingErrorCount: Int
+    val parsingErrorMessage: String
 }

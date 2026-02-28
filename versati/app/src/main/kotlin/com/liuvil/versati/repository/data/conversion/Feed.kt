@@ -11,5 +11,7 @@ fun com.liuvil.versati.repository.api.data.Feed.toCache(): Feed =
         description = description,
         categoryId = category.id,
         iconId = icon.iconId,
-        hideGlobally = hideGlobally
+        hideGlobally = hideGlobally,
+        parsingErrorCount = parsingErrorCount,
+        parsingErrorMessage = parsingErrorMessage
     )

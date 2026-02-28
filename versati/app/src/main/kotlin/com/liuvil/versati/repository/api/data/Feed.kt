@@ -14,7 +14,9 @@ data class Feed(
     val nextCheckAt: OffsetDateTime,
     val category: Category,
     val icon: Icon,
-    val hideGlobally: Boolean
+    val hideGlobally: Boolean,
+    val parsingErrorCount: Int,
+    val parsingErrorMessage: String
 ) {
     data class Icon(
         val feedId: Int,

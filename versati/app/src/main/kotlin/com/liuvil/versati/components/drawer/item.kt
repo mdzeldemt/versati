@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -87,7 +88,11 @@ internal fun DrawerItem(
 
             label()
 
-            Spacer(Modifier.width(16.dp))
+            Spacer(
+                Modifier
+                    .weight(1f)
+                    .widthIn(min = 16.dp)
+            )
 
             if (badge != null) {
                 badge()
@@ -183,6 +188,26 @@ internal fun DrawerItemLabel(
         maxLines = 1,
         overflow = TextOverflow.Ellipsis
     )
+}
+
+@Composable
+internal fun DrawerItemBadge(
+    imageVector: ImageVector,
+    error: Boolean = false
+) {
+    Box(Modifier.size(DRAWER_ICON_SIZE)) {
+        Icon(
+            imageVector = imageVector,
+            tint =
+                if (error) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
 
 @Composable

@@ -15,4 +15,6 @@ data class Feed(
     override val categoryId: Int,
     override val hideGlobally: Boolean,
     override val iconId: Int,
+    override val parsingErrorCount: Int,
+    override val parsingErrorMessage: String
 ): Feed
