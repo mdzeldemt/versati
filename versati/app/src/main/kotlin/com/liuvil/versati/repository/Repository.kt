@@ -283,6 +283,12 @@ class Repository(
             CreateFeedRequest(feedUrl, categoryId)
         ).feedId
 
+    suspend fun refreshFeed(
+        id: Int
+    ) {
+        apiClient.refreshFeed(id)
+    }
+
     suspend fun updateFeed(
         id: Int,
         title: String,

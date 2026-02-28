@@ -10,8 +10,10 @@ import com.liuvil.versati.activities.main.main.home.browser.use_case.EditFeedUse
 import com.liuvil.versati.activities.main.main.home.browser.use_case.GetAllCategoriesUseCase
 import com.liuvil.versati.activities.main.main.home.browser.use_case.GetAllFeedsUseCase
 import com.liuvil.versati.activities.main.main.home.browser.use_case.GetEntriesUseCase
+import com.liuvil.versati.activities.main.main.home.browser.use_case.GetFeedUseCase
 import com.liuvil.versati.activities.main.main.home.browser.use_case.GetIconUseCase
 import com.liuvil.versati.activities.main.main.home.browser.use_case.MarkEntriesAsReadUseCase
+import com.liuvil.versati.activities.main.main.home.browser.use_case.RefreshFeedUseCase
 import com.liuvil.versati.activities.main.main.home.browser.use_case.RemoveCategoryUseCase
 import com.liuvil.versati.activities.main.main.home.browser.use_case.RemoveFeedUseCase
 import com.liuvil.versati.framework.api.decodeBitmap
@@ -76,6 +78,11 @@ internal sealed class Event {
         data class Failure(val reason: Throwable): Event()
     }
 
+    object RefreshFeed {
+        data class Success(val feedId: Int): Event()
+        data class Failure(val reason: Throwable): Event()
+    }
+
     object AddFeed {
         data class Success(val feedId: Int): Event()
         data class Failure(val reason: Throwable): Event()
@@ -103,6 +110,8 @@ internal class BrowserViewModel @Inject constructor(
     private val editCategory: EditCategoryUseCase,
     private val removeCategory: RemoveCategoryUseCase,
     private val getAllFeeds: GetAllFeedsUseCase,
+    private val getFeed: GetFeedUseCase,
+    private val refreshFeed: RefreshFeedUseCase,
     private val addFeed: AddFeedUseCase,
     private val editFeed: EditFeedUseCase,
     private val removeFeed: RemoveFeedUseCase,
@@ -124,6 +133,7 @@ internal class BrowserViewModel @Inject constructor(
     private val _editCategoryStatus = MutableStateFlow<Status>(Status.Success)
     private val _removeCategoryStatus = MutableStateFlow<Status>(Status.Success)
     private val _getFeedsStatus = MutableStateFlow<Status>(Status.Success)
+    private val _refreshFeedStatus = MutableStateFlow<Status>(Status.Success)
     private val _addFeedStatus = MutableStateFlow<Status>(Status.Success)
     private val _editFeedStatus = MutableStateFlow<Status>(Status.Success)
     private val _removeFeedStatus = MutableStateFlow<Status>(Status.Success)
@@ -156,6 +166,7 @@ internal class BrowserViewModel @Inject constructor(
 
     val feedsStatus = combine(
         _getFeedsStatus,
+        _refreshFeedStatus,
         _addFeedStatus,
         _editFeedStatus,
         _removeFeedStatus
@@ -397,6 +408,31 @@ internal class BrowserViewModel @Inject constructor(
                     _removeCategoryStatus.value = Status.Failure(reason)
 
                     _events.emit(Event.RemoveCategory.Failure(reason))
+                }
+        }
+    }
+
+    fun onRefreshFeed(
+        id: Int
+    ) {
+        viewModelScope.launch {
+            _refreshFeedStatus.value = Status.Loading
+
+            refreshFeed(id)
+                .onSuccess {
+                    _refreshFeedStatus.value = Status.Success
+
+                    _events.emit(Event.RefreshFeed.Success(id))
+                }
+                .onFailure { reason ->
+                    _refreshFeedStatus.value = Status.Failure(reason)
+
+                    _events.emit(Event.RefreshFeed.Failure(reason))
+                }
+
+            getFeed(id)
+                .onSuccess { feed ->
+                    _feedsById.update { it + (id to feed) }
                 }
         }
     }

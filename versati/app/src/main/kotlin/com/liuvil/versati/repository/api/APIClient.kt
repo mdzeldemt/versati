@@ -104,6 +104,11 @@ interface APIClient {
         @Body request: CreateFeedRequest
     ): CreateFeedResponse
 
+    @PUT("/v1/feeds/{id}/refresh")
+    suspend fun refreshFeed(
+        @Path("id") id: Int
+    )
+
     @PUT("/v1/feeds/{id}")
     suspend fun updateFeed(
         @Path("id") id: Int,

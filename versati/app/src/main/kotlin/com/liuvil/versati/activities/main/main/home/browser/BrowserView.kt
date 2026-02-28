@@ -149,6 +149,11 @@ private sealed class Dialog: Modal() {
         val id: Int
     ): Dialog()
 
+    object RefreshFeed {
+        data class Confirmation(val id: Int): Dialog()
+        data class Failure(val reason: Throwable): Dialog()
+    }
+
     object AddFeed {
         data object Input: Dialog()
         data class Failure(val reason: Throwable): Dialog()
@@ -256,6 +261,17 @@ fun BrowserView(
                 is Event.RemoveCategory.Failure ->
                     snackbarHostState.showSnackbar("Failed to remove category", "Details") {
                         activeModal = Dialog.RemoveCategory.Failure(event.reason)
+                    }
+
+                is Event.RefreshFeed.Success -> {
+                    drawerState.close()
+                    viewModel.onSelectSource(Source.Feed(id = event.feedId))
+                    snackbarHostState.showSnackbar("Feed successfully refreshed")
+                }
+
+                is Event.RefreshFeed.Failure ->
+                    snackbarHostState.showSnackbar("Failed to refresh feed", "Details") {
+                        activeModal = Dialog.RefreshFeed.Failure(event.reason)
                     }
 
                 is Event.AddFeed.Success -> {
@@ -820,6 +836,15 @@ fun BrowserView(
                         }
 
                         ActionBottomSheetItem(
+                            title = "Refresh feed",
+                            icon = Icons.Default.Refresh
+                        ) {
+                            activeModal = Dialog.RefreshFeed.Confirmation(
+                                id = modal.id
+                            )
+                        }
+
+                        ActionBottomSheetItem(
                             title = "Edit feed",
                             icon = Icons.Default.Edit
                         ) {
@@ -923,6 +948,31 @@ fun BrowserView(
                         }
                     )
                 }
+
+            is Dialog.RefreshFeed.Confirmation ->
+                feedsById[modal.id]?.let { feed ->
+                    ConfirmationDialog(
+                        titleText = "Refresh feed",
+                        bodyText = "Are you sure you want to refresh the feed '${feed.title}'?",
+                        confirmText = "Refresh",
+                        dismissText = "Cancel",
+                        onConfirm = {
+                            viewModel.onRefreshFeed(modal.id)
+                        },
+                        onRespond = {
+                            activeModal = null
+                        }
+                    )
+                }
+
+            is Dialog.RefreshFeed.Failure ->
+                ErrorDialog(
+                    titleText = "Failed to refresh feed",
+                    bodyText = modal.reason.detailedMessage,
+                    onConfirm = {
+                        activeModal = null
+                    }
+                )
 
             is Dialog.AddFeed.Input ->
                 AddFeedDialog(
