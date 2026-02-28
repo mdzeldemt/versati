@@ -60,7 +60,7 @@ internal data class Entry(
     val publishedAt: OffsetDateTime
 )
 
-internal abstract class Event {
+internal sealed class Event {
     object AddCategory {
         data class Success(val categoryId: Int): Event()
         data class Failure(val reason: Throwable): Event()
@@ -89,6 +89,10 @@ internal abstract class Event {
     object RemoveFeed {
         data class Success(val feedId: Int): Event()
         data class Failure(val reason: Throwable): Event()
+    }
+
+    object LoadEntries {
+        data object Start: Event()
     }
 }
 
@@ -220,6 +224,8 @@ internal class BrowserViewModel @Inject constructor(
         viewModelScope.launch {
             _getEntriesStatus.value = Status.Loading
 
+            _events.emit(Event.LoadEntries.Start)
+
             getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
                 .onSuccess { (entries, total) ->
                     _entriesById.value = entries.associateBy { it.id }
@@ -241,6 +247,8 @@ internal class BrowserViewModel @Inject constructor(
 
             _getEntriesStatus.value = Status.Loading
 
+            _events.emit(Event.LoadEntries.Start)
+
             getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
                 .onSuccess { (entries, total) ->
                     _entriesById.value = entries.associateBy { it.id }
@@ -261,6 +269,8 @@ internal class BrowserViewModel @Inject constructor(
 
             _getEntriesStatus.value = Status.Loading
 
+            _events.emit(Event.LoadEntries.Start)
+
             getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
                 .onSuccess { (entries, total) ->
                     _entriesById.value = entries.associateBy { it.id }
@@ -279,6 +289,8 @@ internal class BrowserViewModel @Inject constructor(
 
             _getEntriesStatus.value = Status.Loading
 
+            _events.emit(Event.LoadEntries.Start)
+
             getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
                 .onSuccess { (entries, total) ->
                     _entriesById.value = entries.associateBy { it.id }
@@ -296,6 +308,8 @@ internal class BrowserViewModel @Inject constructor(
             _offset.update { it + PAGE_ENTRY_COUNT }
 
             _getEntriesStatus.value = Status.Loading
+
+            _events.emit(Event.LoadEntries.Start)
 
             getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
                 .onSuccess { (entries, total) ->

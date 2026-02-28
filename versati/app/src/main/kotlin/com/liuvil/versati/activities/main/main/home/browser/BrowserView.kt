@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -94,6 +95,7 @@ import com.liuvil.versati.components.drawer.DrawerSectionHeaderButton
 import com.liuvil.versati.components.sheet.ActionBottomSheet
 import com.liuvil.versati.components.sheet.ActionBottomSheetHeader
 import com.liuvil.versati.components.sheet.ActionBottomSheetItem
+import com.liuvil.versati.framework.compose.scrollToStart
 import com.liuvil.versati.framework.compose.showSnackbar
 import com.liuvil.versati.framework.date.formatHumanReadable
 import com.liuvil.versati.framework.kotlin.runIf
@@ -191,6 +193,9 @@ fun BrowserView(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val expandedCategories = remember { mutableStateMapOf<Int, Boolean>() }
 
+    // Entry List
+    val entryListState = rememberLazyListState()
+
     // Dialogs and Menus
     var activeModal by remember { mutableStateOf<Modal?>(null) }
 
@@ -274,6 +279,9 @@ fun BrowserView(
                     snackbarHostState.showSnackbar("Failed to remove feed", "Details") {
                         activeModal = Dialog.RemoveFeed.Failure(event.reason)
                     }
+
+                is Event.LoadEntries.Start ->
+                    entryListState.scrollToStart()
             }
         }
     }
@@ -550,6 +558,7 @@ fun BrowserView(
 
                                     if (entries.isNotEmpty()) {
                                         LazyColumn(
+                                            state = entryListState,
                                             verticalArrangement = Arrangement.Top,
                                             horizontalAlignment = Alignment.CenterHorizontally,
                                             modifier = Modifier.fillMaxSize()
