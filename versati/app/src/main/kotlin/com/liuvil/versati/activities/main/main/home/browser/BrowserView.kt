@@ -205,9 +205,11 @@ fun BrowserView(
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        viewModel.onReloadAllCategories()
-        viewModel.onReloadAllFeedsAndIcons()
-        viewModel.onReloadAllEntries()
+        if (entriesById.isEmpty()) {
+            viewModel.onReloadAllCategories()
+            viewModel.onReloadAllFeedsAndIcons()
+            viewModel.onReloadAllEntries()
+        }
     }
 
     LaunchedEffect(Unit) {
