@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.browser.search
+package com.liuvil.versati.activities.main.main.home.browser.dialog.entry.search
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -13,7 +13,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 
 @Composable
-fun SearchDialog(
+fun SearchEntriesDialog(
     initialTerm: String,
     onSubmit: (String) -> Unit,
     onRespond: () -> Unit

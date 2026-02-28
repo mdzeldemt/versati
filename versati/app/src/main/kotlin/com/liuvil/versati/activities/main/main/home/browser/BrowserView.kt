@@ -1,17 +1,21 @@
 package com.liuvil.versati.activities.main.main.home.browser
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -22,6 +26,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.BrokenImage
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
@@ -46,7 +51,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -55,24 +60,31 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.liuvil.versati.activities.main.main.home.browser.category.add.AddCategoryDialog
-import com.liuvil.versati.activities.main.main.home.browser.category.edit.EditCategoryDialog
-import com.liuvil.versati.activities.main.main.home.browser.category.remove.RemoveCategoryDialog
-import com.liuvil.versati.activities.main.main.home.browser.entry_tile.EntryTile
-import com.liuvil.versati.activities.main.main.home.browser.page.PageDialog
-import com.liuvil.versati.activities.main.main.home.browser.search.SearchDialog
-import com.liuvil.versati.activities.main.main.home.browser.feed.add.AddFeedDialog
-import com.liuvil.versati.activities.main.main.home.browser.feed.add.Category
-import com.liuvil.versati.activities.main.main.home.browser.feed.edit.EditFeedDialog
-import com.liuvil.versati.activities.main.main.home.browser.feed.remove.RemoveFeedDialog
+import coil3.compose.SubcomposeAsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.liuvil.versati.activities.main.main.home.browser.dialog.category.add.AddCategoryDialog
+import com.liuvil.versati.activities.main.main.home.browser.dialog.category.edit.EditCategoryDialog
+import com.liuvil.versati.activities.main.main.home.browser.dialog.category.remove.RemoveCategoryDialog
+import com.liuvil.versati.activities.main.main.home.browser.dialog.entry.page.GoToPageDialog
+import com.liuvil.versati.activities.main.main.home.browser.dialog.entry.search.SearchEntriesDialog
+import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.add.AddFeedDialog
+import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.add.Category
+import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.edit.EditFeedDialog
+import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.remove.RemoveFeedDialog
 import com.liuvil.versati.components.BlockingBox
-import com.liuvil.versati.components.BlockingDialog
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.components.ErrorDialog
+import com.liuvil.versati.components.WrapperLayout
 import com.liuvil.versati.components.drawer.DrawerItem
 import com.liuvil.versati.components.drawer.DrawerItemGroup
 import com.liuvil.versati.components.drawer.DrawerItemIcon
@@ -82,20 +94,20 @@ import com.liuvil.versati.components.drawer.DrawerSectionHeaderButton
 import com.liuvil.versati.components.sheet.ActionBottomSheet
 import com.liuvil.versati.components.sheet.ActionBottomSheetHeader
 import com.liuvil.versati.components.sheet.ActionBottomSheetItem
+import com.liuvil.versati.framework.compose.showSnackbar
 import com.liuvil.versati.framework.date.formatHumanReadable
-import com.liuvil.versati.framework.lazy.Loading
-import com.liuvil.versati.framework.lazy.None
+import com.liuvil.versati.framework.kotlin.runIf
 import com.liuvil.versati.framework.throwable.detailedMessage
+import com.liuvil.versati.framework.time.toHumanReadable
+import com.liuvil.versati.framework.viewmodel.status.Status
+import com.liuvil.versati.framework.viewmodel.status.fold
 import com.liuvil.versati.framework.viewmodel.viewOf
 import kotlinx.coroutines.launch
+import java.net.URL
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import kotlin.math.ceil
-import kotlin.math.max
-
-// TODO: Make configurable
-const val PAGE_ENTRY_COUNT = 10
 
 private sealed class Modal
 
@@ -112,39 +124,33 @@ private sealed class Menu: Modal() {
 }
 
 private sealed class Dialog: Modal() {
-    sealed class AddCategory {
+    object AddCategory {
         data object Input: Dialog()
-        data object Loading: Dialog()
         data class Failure(val reason: Throwable): Dialog()
     }
 
-    sealed class EditCategory {
+    object EditCategory {
         data class Input(val id: Int): Dialog()
-        data object Loading: Dialog()
         data class Failure(val reason: Throwable): Dialog()
     }
 
-    sealed class RemoveCategory {
+    object RemoveCategory {
         data class Confirmation(val id: Int): Dialog()
-        data object Loading: Dialog()
         data class Failure(val reason: Throwable): Dialog()
     }
 
-    sealed class AddFeed {
+    object AddFeed {
         data object Input: Dialog()
-        data object Loading: Dialog()
         data class Failure(val reason: Throwable): Dialog()
     }
 
-    sealed class EditFeed {
+    object EditFeed {
         data class Input(val id: Int): Dialog()
-        data object Loading: Dialog()
         data class Failure(val reason: Throwable): Dialog()
     }
 
-    sealed class RemoveFeed {
+    object RemoveFeed {
         data class Confirmation(val id: Int): Dialog()
-        data object Loading: Dialog()
         data class Failure(val reason: Throwable): Dialog()
     }
 
@@ -157,28 +163,10 @@ private sealed class Dialog: Modal() {
         val totalPages: Int
     ): Dialog()
 
-    sealed class MarkEntriesAsRead {
+    object MarkEntriesAsRead {
         data class Confirmation(val entryIds: List<Int>): Dialog()
         data class Failure(val reason: Throwable): Dialog()
     }
-}
-
-private sealed class Snackbar {
-    data object AddedCategory: Snackbar()
-    data object EditedCategory: Snackbar()
-    data object RemovedCategory: Snackbar()
-    data object AddedFeed: Snackbar()
-    data object EditedFeed: Snackbar()
-    data object RemovedFeed: Snackbar()
-}
-
-sealed interface Source {
-    data object Unread: Source
-    data object History: Source
-    data object Starred: Source
-    data class Category(val id: Int): Source
-    data class Feed(val id: Int): Source
-    data class Search(val term: String): Source
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -187,38 +175,21 @@ fun BrowserView(
     onEntryClicked: (Int) -> Unit,
     onPreferencesClicked: () -> Unit
 ) = viewOf<BrowserViewModel> { viewModel ->
-    var source by viewModel.source
-    var offset by viewModel.offset
-    val categories by viewModel.categories
-    val feeds by viewModel.feeds
-    val iconsById = viewModel.iconsById
-    val entries by viewModel.entries
-    val totalEntries by viewModel.totalEntries
+    val source by viewModel.source.collectAsState()
+    val offset by viewModel.offset.collectAsState()
+    val categoriesById by viewModel.categoriesById.collectAsState()
+    val feedsById by viewModel.feedsById.collectAsState()
+    val iconsById by viewModel.iconsById.collectAsState()
+    val entriesById by viewModel.entriesById.collectAsState()
+    val totalEntries by viewModel.totalEntries.collectAsState()
 
-    val categoriesById by remember {
-        derivedStateOf {
-            categories.map { categories ->
-                categories.associateBy { it.id }
-            }
-        }
-    }
-
-    val feedsById by remember {
-        derivedStateOf {
-            feeds.map { feeds ->
-                feeds.associateBy { it.id }
-            }
-        }
-    }
+    val categoriesStatus by viewModel.categoriesStatus.collectAsState()
+    val feedsStatus by viewModel.feedsStatus.collectAsState()
+    val entriesStatus by viewModel.entriesStatus.collectAsState()
 
     // Drawer
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val expandedCategories = remember { mutableStateMapOf<Int, Boolean>() }
-
-    // Entry List View
-    val isRefreshing by remember {
-        derivedStateOf { entries is None || entries is Loading }
-    }
 
     // Dialogs and Menus
     var activeModal by remember { mutableStateOf<Modal?>(null) }
@@ -229,22 +200,81 @@ fun BrowserView(
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        categories.ifNone {
-            viewModel.reloadCategories()
-        }
+        viewModel.onReloadAllCategories()
+        viewModel.onReloadAllFeedsAndIcons()
+        viewModel.onReloadAllEntries()
+    }
 
-        feeds.ifNone {
-            viewModel.reloadFeeds()
-        }
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is Event.AddCategory.Success -> {
+                    drawerState.close()
+                    viewModel.onSelectSource(Source.Category(id = event.categoryId))
+                    snackbarHostState.showSnackbar("Category successfully added")
+                }
 
-        feeds.ifSuccess { feeds ->
-            feeds.forEach { feed ->
-                viewModel.reloadIcon(feed.iconId)
+                is Event.AddCategory.Failure ->
+                    snackbarHostState.showSnackbar("Failed to add category", "Details") {
+                        activeModal = Dialog.AddCategory.Failure(event.reason)
+                    }
+
+                is Event.EditCategory.Success ->
+                    viewModel.onSelectSource(Source.Category(id = event.categoryId))
+
+                is Event.EditCategory.Failure ->
+                    snackbarHostState.showSnackbar("Failed to edit category", "Details") {
+                        activeModal = Dialog.EditCategory.Failure(event.reason)
+                    }
+
+                is Event.RemoveCategory.Success -> {
+                    source.let { source ->
+                        if (source == Source.Category(id = event.categoryId)
+                            || source is Source.Feed && feedsById[source.id]?.categoryId == event.categoryId) {
+                            viewModel.onSelectSource(Source.Unread)
+                        }
+                    }
+
+                    snackbarHostState.showSnackbar("Category successfully removed")
+                }
+
+                is Event.RemoveCategory.Failure ->
+                    snackbarHostState.showSnackbar("Failed to remove category", "Details") {
+                        activeModal = Dialog.RemoveCategory.Failure(event.reason)
+                    }
+
+                is Event.AddFeed.Success -> {
+                    drawerState.close()
+                    viewModel.onSelectSource(Source.Feed(id = event.feedId))
+                    snackbarHostState.showSnackbar("Feed successfully added")
+                }
+
+                is Event.AddFeed.Failure ->
+                    snackbarHostState.showSnackbar("Failed to add feed", "Details") {
+                        activeModal = Dialog.AddFeed.Failure(event.reason)
+                    }
+
+                is Event.EditFeed.Success ->
+                    viewModel.onSelectSource(Source.Feed(id = event.feedId))
+
+                is Event.EditFeed.Failure ->
+                    snackbarHostState.showSnackbar("Failed to edit feed", "Details") {
+                        activeModal = Dialog.EditFeed.Failure(event.reason)
+                    }
+
+                is Event.RemoveFeed.Success -> {
+                    if (source == Source.Feed(id = event.feedId)) {
+                        viewModel.onSelectSource(Source.Unread)
+                    }
+
+                    snackbarHostState.showSnackbar("Feed successfully removed")
+                }
+
+                is Event.RemoveFeed.Failure ->
+                    snackbarHostState.showSnackbar("Failed to remove feed", "Details") {
+                        activeModal = Dialog.RemoveFeed.Failure(event.reason)
+                    }
             }
-        }
-
-        entries.ifNone {
-            viewModel.reloadEntries()
         }
     }
 
@@ -271,13 +301,11 @@ fun BrowserView(
                             },
                             selected = source == Source.Unread,
                             onClick = {
-                                source = Source.Unread
-                                offset = 0
-
                                 coroutineScope.launch {
                                     drawerState.close()
-                                    viewModel.reloadEntries()
                                 }
+
+                                viewModel.onSelectSource(Source.Unread)
                             }
                         )
 
@@ -290,13 +318,11 @@ fun BrowserView(
                             },
                             selected = source == Source.Starred,
                             onClick = {
-                                source = Source.Starred
-                                offset = 0
-
                                 coroutineScope.launch {
                                     drawerState.close()
-                                    viewModel.reloadEntries()
                                 }
+
+                                viewModel.onSelectSource(Source.Starred)
                             }
                         )
 
@@ -312,9 +338,20 @@ fun BrowserView(
                             }
                         )
 
-                        categories.ifSuccess { categories ->
-                            feeds.ifSuccess { feeds ->
-                                val feedsByCategoryId = feeds.groupBy { it.categoryId }
+                        when (fold(categoriesStatus, feedsStatus)) {
+                            is Status.Loading ->
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+
+                            else -> {
+                                val categories = categoriesById.values.sortedBy { it.title }
+                                val feedsByCategoryId = feedsById.values
+                                    .sortedBy { it.title }
+                                    .groupBy { it.categoryId }
 
                                 categories.forEach { category ->
                                     val expanded = expandedCategories.getOrDefault(category.id, false)
@@ -325,13 +362,11 @@ fun BrowserView(
                                         expanded = expanded,
                                         selected = source == Source.Category(category.id),
                                         onClick = {
-                                            source = Source.Category(category.id)
-                                            offset = 0
-
                                             coroutineScope.launch {
                                                 drawerState.close()
-                                                viewModel.reloadEntries()
                                             }
+
+                                            viewModel.onSelectSource(Source.Category(category.id))
                                         },
                                         onLongClick = {
                                             activeModal = Menu.Category(category.id)
@@ -350,21 +385,17 @@ fun BrowserView(
                                                     DrawerItemLabel(feed.title)
                                                 },
                                                 icon = {
-                                                    iconsById[feed.iconId]?.let { icon ->
-                                                        icon.ifSuccess {
-                                                            DrawerItemIcon(it)
-                                                        }
-                                                    } ?: Text("${iconsById.size}")
+                                                    iconsById[feed.iconId]?.let {
+                                                        DrawerItemIcon(it)
+                                                    }
                                                 },
                                                 selected = source == Source.Feed(feed.id),
                                                 onClick = {
-                                                    source = Source.Feed(feed.id)
-                                                    offset = 0
-
                                                     coroutineScope.launch {
                                                         drawerState.close()
-                                                        viewModel.reloadEntries()
                                                     }
+
+                                                    viewModel.onSelectSource(Source.Feed(feed.id))
                                                 },
                                                 onLongClick = {
                                                     activeModal = Menu.Feed(feed.id)
@@ -387,13 +418,11 @@ fun BrowserView(
                             },
                             selected = source == Source.History,
                             onClick = {
-                                source = Source.History
-                                offset = 0
-
                                 coroutineScope.launch {
                                     drawerState.close()
-                                    viewModel.reloadEntries()
                                 }
+
+                                viewModel.onSelectSource(Source.History)
                             }
                         )
 
@@ -433,17 +462,12 @@ fun BrowserView(
                                     is Source.Unread -> "Unread"
                                     is Source.History -> "History"
                                     is Source.Starred -> "Starred"
-                                    is Source.Category ->
-                                        categoriesById.ifSuccess { categoriesById ->
-                                            categoriesById[source.id]?.title
-                                        }
-                                    is Source.Feed ->
-                                        feedsById.ifSuccess { feedsById ->
-                                            feedsById[source.id]?.title
-                                        }
+                                    is Source.Category -> categoriesById[source.id]?.title
+                                    is Source.Feed -> feedsById[source.id]?.title
                                     is Source.Search -> "Search '${source.term}'"
                                 }
                             }
+
                             title?.let {
                                 Text(
                                     text = it,
@@ -505,10 +529,10 @@ fun BrowserView(
                 }
             ) { padding ->
                 PullToRefreshBox(
-                    isRefreshing = isRefreshing,
+                    isRefreshing = entriesStatus == Status.Loading,
                     onRefresh = {
                         coroutineScope.launch {
-                            viewModel.reloadEntries()
+                            viewModel.onReloadAllEntries()
                         }
                     },
                     contentAlignment = Alignment.Center,
@@ -517,105 +541,99 @@ fun BrowserView(
                         .fillMaxSize()
                 ) {
                     BlockingBox(
-                        isBlocking = isRefreshing
+                        isBlocking = entriesStatus == Status.Loading
                     ) {
-                        entries.apply {
-                            ifSuccess { entries ->
-                                if (entries.isNotEmpty()) {
-                                    LazyColumn(
-                                        verticalArrangement = Arrangement.Top,
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier.fillMaxSize()
-                                    ) {
-                                        item {
-                                            entries
-                                                .groupBy {
-                                                    it.publishedAt
-                                                        .atZoneSameInstant(ZoneId.systemDefault())
-                                                        .toLocalDate()
-                                                }
-                                                .forEach { (date, entries) ->
-                                                    Text(
-                                                        text = date.formatHumanReadable(),
-                                                        color = MaterialTheme.colorScheme.primary,
-                                                        fontWeight = FontWeight.Bold,
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .padding(
-                                                                start = 10.dp,
-                                                                top = 10.dp,
-                                                                end = 10.dp
-                                                            )
-                                                    )
+                        entriesStatus.let { entriesStatus ->
+                            when (entriesStatus) {
+                                is Status.Success, is Status.Loading -> {
+                                    val entries = entriesById.values.sortedByDescending { it.publishedAt }
 
-                                                    Column (
-                                                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                                    ) {
-                                                        entries.forEach { entry ->
-                                                            EntryTile(
-                                                                title = entry.title,
-                                                                feedTitle = feedsById.ifSuccess {
-                                                                    it[entry.feedID]?.title
-                                                                } ?: "...",
-                                                                timeSincePublished = Duration.between(
-                                                                    entry.publishedAt,
-                                                                    OffsetDateTime.now()
-                                                                ),
-                                                                content = entry.text,
-                                                                imageURL = entry.imageURL,
-                                                                isRead = entry.isRead,
-                                                                onClick = {
-                                                                    onEntryClicked(entry.id)
-                                                                }
-                                                            )
-                                                        }
+                                    if (entries.isNotEmpty()) {
+                                        LazyColumn(
+                                            verticalArrangement = Arrangement.Top,
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.fillMaxSize()
+                                        ) {
+                                            item {
+                                                entries
+                                                    .groupBy {
+                                                        it.publishedAt
+                                                            .atZoneSameInstant(ZoneId.systemDefault())
+                                                            .toLocalDate()
                                                     }
-                                                }
-                                        }
-
-                                        item {
-                                            Row(Modifier.padding(12.dp)) {
-                                                if (entries.any { !it.isRead }) {
-                                                    Button(
-                                                        onClick = {
-                                                            activeModal = Dialog.MarkEntriesAsRead.Confirmation(
-                                                                entryIds = entries.map {
-                                                                    it.id
-                                                                }
-                                                            )
-                                                        }
-                                                    ) {
-                                                        Text("Mark all as read")
-                                                    }
-                                                }
-
-                                                Spacer(Modifier.weight(1f))
-
-                                                if (offset > 0) {
-                                                    IconButton(
-                                                        onClick = {
-                                                            coroutineScope.launch {
-                                                                offset = max(
-                                                                    offset - PAGE_ENTRY_COUNT,
-                                                                    0
+                                                    .forEach { (date, entries) ->
+                                                        Text(
+                                                            text = date.formatHumanReadable(),
+                                                            color = MaterialTheme.colorScheme.primary,
+                                                            fontWeight = FontWeight.Bold,
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .padding(
+                                                                    start = 10.dp,
+                                                                    top = 10.dp,
+                                                                    end = 10.dp
                                                                 )
-
-                                                                coroutineScope.launch {
-                                                                    viewModel.reloadEntries()
-                                                                }
-                                                            }
-                                                        },
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                                            tint = MaterialTheme.colorScheme.primary,
-                                                            contentDescription = null
                                                         )
-                                                    }
-                                                }
 
-                                                totalEntries.ifSuccess { totalEntries ->
+                                                        Column (
+                                                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                                        ) {
+                                                            entries.forEach { entry ->
+                                                                EntryTile(
+                                                                    title = entry.title,
+                                                                    feedTitle = feedsById[entry.feedID]?.title ?: "...",
+                                                                    timeSincePublished = Duration.between(
+                                                                        entry.publishedAt,
+                                                                        OffsetDateTime.now()
+                                                                    ),
+                                                                    content = entry.text,
+                                                                    imageURL = entry.imageURL,
+                                                                    isRead = entry.isRead,
+                                                                    onClick = {
+                                                                        onEntryClicked(entry.id)
+                                                                    }
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                            }
+
+                                            item {
+                                                Row(Modifier.padding(12.dp)) {
+                                                    if (entries.any { !it.isRead }) {
+                                                        Button(
+                                                            onClick = {
+                                                                activeModal = Dialog.MarkEntriesAsRead.Confirmation(
+                                                                    entryIds = entries.map {
+                                                                        it.id
+                                                                    }
+                                                                )
+                                                            }
+                                                        ) {
+                                                            Text("Mark all as read")
+                                                        }
+                                                    }
+
+                                                    Spacer(Modifier.weight(1f))
+
+                                                    if (offset > 0) {
+                                                        IconButton(
+                                                            onClick = {
+                                                                coroutineScope.launch {
+                                                                    viewModel.onGoToPreviousPage()
+                                                                }
+                                                            },
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                                                tint = MaterialTheme.colorScheme.primary,
+                                                                contentDescription = null
+                                                            )
+                                                        }
+                                                    }
+
+
                                                     val currentPage = offset / PAGE_ENTRY_COUNT + 1
                                                     val totalPages = ceil(totalEntries.toFloat() / PAGE_ENTRY_COUNT).toInt()
 
@@ -633,11 +651,7 @@ fun BrowserView(
                                                     if (offset < totalEntries - PAGE_ENTRY_COUNT) {
                                                         IconButton(
                                                             onClick = {
-                                                                offset += PAGE_ENTRY_COUNT
-
-                                                                coroutineScope.launch {
-                                                                    viewModel.reloadEntries()
-                                                                }
+                                                                viewModel.onGoToNextPage()
                                                             }
                                                         ) {
                                                             Icon(
@@ -650,39 +664,38 @@ fun BrowserView(
                                                 }
                                             }
                                         }
+                                    } else if (entriesStatus == Status.Success) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .verticalScroll(rememberScrollState())
+                                        ) {
+                                            Text("No entries found.")
+                                        }
                                     }
-                                } else {
+                                }
+
+                                is Status.Failure ->
                                     Box(
                                         contentAlignment = Alignment.Center,
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .verticalScroll(rememberScrollState())
                                     ) {
-                                        Text("No entries found.")
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = "Failed to load entries",
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                text = entriesStatus.reason.detailedMessage,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
                                     }
-                                }
-                            }
-
-                            ifFailure { exception ->
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .verticalScroll(rememberScrollState())
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            text = "Failed to load entries",
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = exception.detailedMessage,
-                                            textAlign = TextAlign.Center
-                                        )
-                                    }
-                                }
                             }
                         }
                     }
@@ -711,8 +724,8 @@ fun BrowserView(
                         activeModal = null
 
                         coroutineScope.launch {
-                            viewModel.reloadCategories()
-                            viewModel.reloadFeeds()
+                            viewModel.onReloadAllCategories()
+                            viewModel.onReloadAllFeedsAndIcons()
                         }
                     }
 
@@ -732,66 +745,61 @@ fun BrowserView(
                 }
 
             is Menu.Category ->
-                categoriesById
-                    .ifSuccess { categoriesById ->
-                        categoriesById[modal.id]?.let { category ->
-                            ActionBottomSheet(
-                                onDismiss = {
-                                    activeModal = null
-                                }
-                            ) {
-                                ActionBottomSheetHeader(category.title)
+                categoriesById[modal.id]?.let { category ->
+                    ActionBottomSheet(
+                        onDismiss = {
+                            activeModal = null
+                        }
+                    ) {
+                        ActionBottomSheetHeader(category.title)
 
-                                ActionBottomSheetItem(
-                                    title = "Edit category",
-                                    icon = Icons.Default.Edit
-                                ) {
-                                    activeModal = Dialog.EditCategory.Input(
-                                        id = modal.id
-                                    )
-                                }
+                        ActionBottomSheetItem(
+                            title = "Edit category",
+                            icon = Icons.Default.Edit
+                        ) {
+                            activeModal = Dialog.EditCategory.Input(
+                                id = modal.id
+                            )
+                        }
 
-                                ActionBottomSheetItem(
-                                    title = "Remove category",
-                                    icon = Icons.Default.Delete,
-                                    destructive = true
-                                ) {
-                                    activeModal = Dialog.RemoveCategory.Confirmation(
-                                        id = modal.id
-                                    )
-                                }
-                            }
+                        ActionBottomSheetItem(
+                            title = "Remove category",
+                            icon = Icons.Default.Delete,
+                            destructive = true
+                        ) {
+                            activeModal = Dialog.RemoveCategory.Confirmation(
+                                id = modal.id
+                            )
                         }
                     }
+                }
 
             is Menu.Feed ->
-                feedsById.ifSuccess { feedsById ->
-                    feedsById[modal.id]?.let { feed ->
-                        ActionBottomSheet(
-                            onDismiss = {
-                                activeModal = null
-                            }
+                feedsById[modal.id]?.let { feed ->
+                    ActionBottomSheet(
+                        onDismiss = {
+                            activeModal = null
+                        }
+                    ) {
+                        ActionBottomSheetHeader(feed.title)
+
+                        ActionBottomSheetItem(
+                            title = "Edit feed",
+                            icon = Icons.Default.Edit
                         ) {
-                            ActionBottomSheetHeader(feed.title)
+                            activeModal = Dialog.EditFeed.Input(
+                                id = modal.id
+                            )
+                        }
 
-                            ActionBottomSheetItem(
-                                title = "Edit feed",
-                                icon = Icons.Default.Edit
-                            ) {
-                                activeModal = Dialog.EditFeed.Input(
-                                    id = modal.id
-                                )
-                            }
-
-                            ActionBottomSheetItem(
-                                title = "Remove feed",
-                                icon = Icons.Default.Delete,
-                                destructive = true
-                            ) {
-                                activeModal = Dialog.RemoveFeed.Confirmation(
-                                    id = modal.id
-                                )
-                            }
+                        ActionBottomSheetItem(
+                            title = "Remove feed",
+                            icon = Icons.Default.Delete,
+                            destructive = true
+                        ) {
+                            activeModal = Dialog.RemoveFeed.Confirmation(
+                                id = modal.id
+                            )
                         }
                     }
                 }
@@ -799,40 +807,14 @@ fun BrowserView(
             is Dialog.AddCategory.Input ->
                 AddCategoryDialog(
                     onSubmit = {
-                        coroutineScope.launch {
-                            activeModal = Dialog.AddCategory.Loading
-
-                            val categoryId = try {
-                                viewModel.createCategory(
-                                    title = it.title
-                                )
-                            } catch (reason: Throwable) {
-                                activeModal = Dialog.AddCategory.Failure(reason)
-                                return@launch
-                            }
-
-                            activeModal = null
-
-                            viewModel.reloadCategories()
-
-                            source = Source.Category(id = categoryId)
-                            offset = 0
-                            viewModel.reloadEntries()
-
-                            snackbarHostState.showSnackbar(
-                                message = getSnackbarMessage(Snackbar.AddedCategory)
-                            )
-                        }
+                        viewModel.onAddCategory(
+                            title = it.title
+                        )
                     },
                     onRespond = {
                         activeModal = null
                     }
                 )
-
-            is Dialog.AddCategory.Loading ->
-                BlockingDialog {
-                    CircularProgressIndicator()
-                }
 
             is Dialog.AddCategory.Failure ->
                 ErrorDialog(
@@ -844,43 +826,19 @@ fun BrowserView(
                 )
 
             is Dialog.EditCategory.Input ->
-                categoriesById.ifSuccess { categoriesById ->
-                    categoriesById[modal.id]?.let { category ->
-                        EditCategoryDialog(
-                            initialTitle = category.title,
-                            onSubmit = {
-                                activeModal = Dialog.EditCategory.Loading
-
-                                coroutineScope.launch {
-                                    try {
-                                        viewModel.updateCategory(
-                                            id = modal.id,
-                                            title = it.title
-                                        )
-                                    } catch (reason: Throwable) {
-                                        activeModal = Dialog.EditCategory.Failure(reason)
-                                        return@launch
-                                    }
-
-                                    activeModal = null
-
-                                    viewModel.reloadCategories()
-                                    viewModel.reloadEntries()
-                                    snackbarHostState.showSnackbar(
-                                        message = getSnackbarMessage(Snackbar.EditedCategory)
-                                    )
-                                }
-                            },
-                            onRespond = {
-                                activeModal = null
-                            }
-                        )
-                    }
-                }
-
-            is Dialog.EditCategory.Loading ->
-                BlockingDialog {
-                    CircularProgressIndicator()
+                categoriesById[modal.id]?.let { category ->
+                    EditCategoryDialog(
+                        initialTitle = category.title,
+                        onSubmit = {
+                            viewModel.onEditCategory(
+                                id = modal.id,
+                                title = it.title
+                            )
+                        },
+                        onRespond = {
+                            activeModal = null
+                        }
+                    )
                 }
 
             is Dialog.EditCategory.Failure ->
@@ -893,44 +851,18 @@ fun BrowserView(
                 )
 
             is Dialog.RemoveCategory.Confirmation ->
-                categoriesById.ifSuccess { categoriesById ->
-                    categoriesById[modal.id]?.let { category ->
-                        RemoveCategoryDialog(
-                            title = category.title,
-                            onConfirm = {
-                                activeModal = Dialog.RemoveCategory.Loading
-
-                                coroutineScope.launch {
-                                    try {
-                                        viewModel.deleteCategory(
-                                            id = modal.id
-                                        )
-                                    } catch (reason: Throwable) {
-                                        activeModal = Dialog.RemoveCategory.Failure(reason)
-                                        return@launch
-                                    }
-
-                                    activeModal = null
-
-                                    viewModel.reloadCategories()
-                                    viewModel.reloadFeeds()
-                                    viewModel.reloadEntries()
-
-                                    snackbarHostState.showSnackbar(
-                                        message = getSnackbarMessage(Snackbar.RemovedCategory)
-                                    )
-                                }
-                            },
-                            onRespond = {
-                                activeModal = null
-                            }
-                        )
-                    }
-                }
-
-            is Dialog.RemoveCategory.Loading ->
-                BlockingDialog {
-                    CircularProgressIndicator()
+                categoriesById[modal.id]?.let { category ->
+                    RemoveCategoryDialog(
+                        title = category.title,
+                        onConfirm = {
+                            viewModel.onRemoveCategory(
+                                id = modal.id
+                            )
+                        },
+                        onRespond = {
+                            activeModal = null
+                        }
+                    )
                 }
 
             is Dialog.RemoveCategory.Failure ->
@@ -943,57 +875,25 @@ fun BrowserView(
                 )
 
             is Dialog.AddFeed.Input ->
-                categories.ifSuccess { categories ->
-                    AddFeedDialog(
-                        categories = categories.map {
+                AddFeedDialog(
+                    categories = categoriesById.values
+                        .sortedBy { it.title }
+                        .map {
                             Category(
                                 id = it.id,
                                 title = it.title
                             )
                         },
-                        onSubmit = {
-                            activeModal = Dialog.AddFeed.Loading
-
-                            coroutineScope.launch {
-                                val feedId = try {
-                                    viewModel.createFeed(
-                                        feedUrl = it.feedUrl,
-                                        categoryId = it.categoryId
-                                    )
-                                } catch (reason: Throwable) {
-                                    activeModal = Dialog.AddFeed.Failure(reason)
-                                    return@launch
-                                }
-
-                                activeModal = null
-
-                                viewModel.reloadFeeds()
-
-                                feedsById.ifSuccess { feedsById ->
-                                    feedsById[feedId]?.let { feed ->
-                                        viewModel.reloadIcon(id = feed.iconId)
-                                    }
-                                }
-
-                                source = Source.Feed(id = feedId)
-                                offset = 0
-                                viewModel.reloadEntries()
-
-                                snackbarHostState.showSnackbar(
-                                    message = getSnackbarMessage(Snackbar.AddedFeed)
-                                )
-                            }
-                        },
-                        onRespond = {
-                            activeModal = null
-                        }
-                    )
-                }
-
-            is Dialog.AddFeed.Loading ->
-                BlockingDialog {
-                    CircularProgressIndicator()
-                }
+                    onSubmit = {
+                        viewModel.onAddFeed(
+                            feedUrl = it.feedUrl,
+                            categoryId = it.categoryId
+                        )
+                    },
+                    onRespond = {
+                        activeModal = null
+                    }
+                )
 
             is Dialog.AddFeed.Failure ->
                 ErrorDialog(
@@ -1005,55 +905,31 @@ fun BrowserView(
                 )
 
             is Dialog.EditFeed.Input ->
-                categories.ifSuccess { categories ->
-                    feedsById.ifSuccess { feedsById ->
-                        feedsById[modal.id]?.let { feed ->
-                            EditFeedDialog(
-                                initialTitle = feed.title,
-                                initialFeedUrl = feed.feedUrl,
-                                initialCategoryId = feed.categoryId,
-                                categories = categories.map {
-                                    com.liuvil.versati.activities.main.main.home.browser.feed.edit.Category(
-                                        id = it.id,
-                                        title = it.title
-                                    )
-                                },
-                                onSubmit = {
-                                    activeModal = Dialog.EditFeed.Loading
-
-                                    coroutineScope.launch {
-                                        try {
-                                            viewModel.updateFeed(
-                                                id = modal.id,
-                                                title = it.title,
-                                                feedUrl = it.feedUrl,
-                                                categoryId = it.categoryId
-                                            )
-                                        } catch (reason: Throwable) {
-                                            activeModal = Dialog.EditFeed.Failure(reason)
-                                            return@launch
-                                        }
-
-                                        activeModal = null
-
-                                        viewModel.reloadFeeds()
-                                        viewModel.reloadEntries()
-                                        snackbarHostState.showSnackbar(
-                                            message = getSnackbarMessage(Snackbar.EditedFeed)
-                                        )
-                                    }
-                                },
-                                onRespond = {
-                                    activeModal = null
-                                }
+                feedsById[modal.id]?.let { feed ->
+                    EditFeedDialog(
+                        initialTitle = feed.title,
+                        initialFeedUrl = feed.feedUrl,
+                        initialCategoryId = feed.categoryId,
+                        categories = categoriesById.values
+                            .sortedBy { it.title }
+                            .map {
+                                com.liuvil.versati.activities.main.main.home.browser.dialog.feed.edit.Category(
+                                    id = it.id,
+                                    title = it.title
+                                )
+                            },
+                        onSubmit = {
+                            viewModel.onEditFeed(
+                                id = modal.id,
+                                title = it.title,
+                                feedUrl = it.feedUrl,
+                                categoryId = it.categoryId
                             )
+                        },
+                        onRespond = {
+                            activeModal = null
                         }
-                    }
-                }
-
-            is Dialog.EditFeed.Loading ->
-                BlockingDialog {
-                    CircularProgressIndicator()
+                    )
                 }
 
             is Dialog.EditFeed.Failure ->
@@ -1066,42 +942,18 @@ fun BrowserView(
                 )
 
             is Dialog.RemoveFeed.Confirmation ->
-                feedsById.ifSuccess { feedsById ->
-                    feedsById[modal.id]?.let { feed ->
-                        RemoveFeedDialog(
-                            title = feed.title,
-                            onConfirm = {
-                                activeModal = Dialog.RemoveFeed.Loading
-
-                                coroutineScope.launch {
-                                    try {
-                                        viewModel.deleteFeed(
-                                            feedId = modal.id
-                                        )
-                                    } catch (reason: Throwable) {
-                                        activeModal = Dialog.RemoveFeed.Failure(reason)
-                                        return@launch
-                                    }
-
-                                    activeModal = null
-
-                                    viewModel.reloadFeeds()
-                                    viewModel.reloadEntries()
-                                    snackbarHostState.showSnackbar(
-                                        message = getSnackbarMessage(Snackbar.RemovedFeed)
-                                    )
-                                }
-                            },
-                            onRespond = {
-                                activeModal = null
-                            }
-                        )
-                    }
-                }
-
-            is Dialog.RemoveFeed.Loading ->
-                BlockingDialog {
-                    CircularProgressIndicator()
+                feedsById[modal.id]?.let { feed ->
+                    RemoveFeedDialog(
+                        title = feed.title,
+                        onConfirm = {
+                            viewModel.onRemoveFeed(
+                                id = modal.id
+                            )
+                        },
+                        onRespond = {
+                            activeModal = null
+                        }
+                    )
                 }
 
             is Dialog.RemoveFeed.Failure ->
@@ -1114,16 +966,14 @@ fun BrowserView(
                 )
 
             is Dialog.SearchEntries ->
-                SearchDialog(
+                SearchEntriesDialog(
                     initialTerm = modal.initialTerm,
                     onSubmit = { searchTerm ->
-                        source = Source.Search(searchTerm)
-                        offset = 0
-
                         coroutineScope.launch {
                             drawerState.close()
-                            viewModel.reloadEntries()
                         }
+
+                        viewModel.onSelectSource(Source.Search(searchTerm))
                     },
                     onRespond = {
                         activeModal = null
@@ -1131,15 +981,11 @@ fun BrowserView(
                 )
 
             is Dialog.GoToPage ->
-                PageDialog(
+                GoToPageDialog(
                     initialValue = modal.currentPage,
                     totalPages = modal.totalPages,
-                    onSubmit = {
-                        offset = (it - 1) * PAGE_ENTRY_COUNT
-
-                        coroutineScope.launch {
-                            viewModel.reloadEntries()
-                        }
+                    onSubmit = { page ->
+                        viewModel.onGoToPage(page)
                     },
                     onRespond = {
                         activeModal = null
@@ -1153,20 +999,7 @@ fun BrowserView(
                     confirmText = "Mark as read",
                     dismissText = "Cancel",
                     onConfirm = {
-                        coroutineScope.launch {
-                            try {
-                                viewModel.markAsRead(
-                                    entryIds = modal.entryIds
-                                )
-                            } catch (reason: Throwable) {
-                                activeModal = Dialog.MarkEntriesAsRead.Failure(reason)
-                                return@launch
-                            }
-
-                            coroutineScope.launch {
-                                viewModel.reloadEntries()
-                            }
-                        }
+                        viewModel.onMarkAllEntriesAsRead()
                     },
                     onRespond = {
                         activeModal = null
@@ -1185,25 +1018,95 @@ fun BrowserView(
     }
 }
 
-private fun getSnackbarMessage(
-    snackbar: Snackbar
-) =
-    when (snackbar) {
-        is Snackbar.AddedCategory ->
-            "Category successfully added"
+@Composable
+private fun EntryTile(
+    title: String,
+    feedTitle: String,
+    timeSincePublished: Duration,
+    content: String,
+    imageURL: URL? = null,
+    isRead: Boolean,
+    onClick: () -> Unit
+) {
+    val text = @Composable {
+        Text(
+            text = title,
+            fontWeight = FontWeight.Bold,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis
+        )
 
-        is Snackbar.EditedCategory ->
-            "Category successfully edited"
+        Spacer(Modifier.height(4.dp))
 
-        is Snackbar.RemovedCategory ->
-            "Category successfully removed"
+        Text(
+            text = "$feedTitle / ${toHumanReadable(timeSincePublished)}"
+        )
 
-        is Snackbar.AddedFeed ->
-            "Feed successfully added"
+        content.trim().let {
+            if (it.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
 
-        is Snackbar.EditedFeed ->
-            "Feed successfully edited"
-
-        is Snackbar.RemovedFeed ->
-            "Feed successfully removed"
+                Text(
+                    text = it,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
     }
+
+    Box(
+        Modifier
+            .clickable { onClick() }
+            .fillMaxWidth()
+            .padding(10.dp)
+            .runIf(isRead) {
+                alpha(0.5f)
+            }
+    ) {
+        imageURL?.let {
+            WrapperLayout(
+                pivotSize = 100.dp,
+                pivotContent = {
+                    EntryImage(it)
+                },
+                wrapperContent = { text() }
+            )
+        } ?: Column(content = { text() })
+    }
+}
+
+@Composable
+private fun EntryImage(
+    imageUrl: URL
+) {
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(imageUrl.toString())
+            .crossfade(true)
+            .build(),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .aspectRatio(1.2f)
+            .padding(start = 8.dp, bottom = 8.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant
+                    .copy(alpha = 0.25f)
+            ),
+        error = {
+            Box(
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.BrokenImage,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .alpha(0.5f),
+                )
+            }
+        }
+    )
+}

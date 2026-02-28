@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.browser.feed.remove
+package com.liuvil.versati.activities.main.main.home.browser.dialog.feed.remove
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults

@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.browser.feed.edit
+package com.liuvil.versati.activities.main.main.home.browser.dialog.feed.edit
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

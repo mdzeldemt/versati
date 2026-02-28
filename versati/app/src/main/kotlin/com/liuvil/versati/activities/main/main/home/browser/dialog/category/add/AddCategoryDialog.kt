@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.browser.category.add
+package com.liuvil.versati.activities.main.main.home.browser.dialog.category.add
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

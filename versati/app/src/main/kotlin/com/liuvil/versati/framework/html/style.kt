@@ -1,5 +1,6 @@
 package com.liuvil.versati.framework.html
 
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
 fun buildStyleElement(
@@ -8,3 +9,11 @@ fun buildStyleElement(
     Element("style")
         .attr("type", "text/css")
         .html(content)
+
+fun applyStylesheet(
+    content: String,
+    stylesheet: String
+): String =
+    Jsoup.parse(content)
+        .appendChild(buildStyleElement(stylesheet))
+        .html()

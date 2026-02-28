@@ -1,4 +1,4 @@
-package com.liuvil.versati.activities.main.main.home.browser.page
+package com.liuvil.versati.activities.main.main.home.browser.dialog.entry.page
 
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -16,7 +16,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.core.text.isDigitsOnly
 
 @Composable
-fun PageDialog(
+fun GoToPageDialog(
     initialValue: Int,
     totalPages: Int,
     onSubmit: (Int) -> Unit,

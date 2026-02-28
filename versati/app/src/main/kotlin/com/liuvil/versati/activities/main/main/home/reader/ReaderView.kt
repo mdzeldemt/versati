@@ -1,6 +1,8 @@
 package com.liuvil.versati.activities.main.main.home.reader
 
+import android.graphics.Color
 import android.net.Uri
+import android.webkit.WebView
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +24,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,11 +51,16 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import coil3.compose.AsyncImage
 import com.liuvil.versati.activities.main.main.home.reader.content.EntryContentView
 import com.liuvil.versati.framework.android.openShareSheet
 import com.liuvil.versati.framework.android.openURLExternally
+import com.liuvil.versati.framework.css.ENVIRONMENT_CSS_VARIABLES
+import com.liuvil.versati.framework.css.buildCSSBlock
+import com.liuvil.versati.framework.css.getEnvironmentValue
 import com.liuvil.versati.framework.date.formatHumanReadableLong
+import com.liuvil.versati.framework.html.applyStylesheet
 import com.liuvil.versati.framework.lazy.Success
 import com.liuvil.versati.framework.preferences.entry.content.css.DEFAULT_ENTRY_CONTENT_STYLESHEET
 import com.liuvil.versati.framework.viewmodel.viewOf
@@ -263,6 +271,48 @@ fun ReaderView(
                     }
                 )
         }
+    }
+}
+
+@Composable
+private fun EntryContentView(
+    content: String,
+    stylesheet: String
+) {
+    val rootStylesheet = MaterialTheme.colorScheme.let { colorScheme ->
+        buildCSSBlock(
+            ":root",
+            ENVIRONMENT_CSS_VARIABLES
+                .associateWith { getEnvironmentValue(it, colorScheme) }
+        )
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AndroidView(
+            factory = { context ->
+                WebView(context).apply {
+                    clipToOutline = true
+
+                    setBackgroundColor(Color.TRANSPARENT)
+
+                    settings.apply {
+                        standardFontFamily = "sans"
+                    }
+
+                    loadData(
+                        listOf(rootStylesheet, stylesheet)
+                            .fold(content) { it, stylesheet ->
+                                applyStylesheet(it, stylesheet)
+                            },
+                        "text/html",
+                        "UTF-8"
+                    )
+                }
+            }
+        )
     }
 }
 
