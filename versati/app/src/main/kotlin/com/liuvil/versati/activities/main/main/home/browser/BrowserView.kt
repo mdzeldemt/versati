@@ -96,6 +96,8 @@ import com.liuvil.versati.components.drawer.DrawerItemIcon
 import com.liuvil.versati.components.drawer.DrawerItemLabel
 import com.liuvil.versati.components.drawer.DrawerSectionHeader
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderButton
+import com.liuvil.versati.components.drawer.DrawerSectionHeaderErrorLabel
+import com.liuvil.versati.components.drawer.DrawerSectionHeaderTitleLabel
 import com.liuvil.versati.components.sheet.ActionBottomSheet
 import com.liuvil.versati.components.sheet.ActionBottomSheetHeader
 import com.liuvil.versati.components.sheet.ActionBottomSheetItem
@@ -361,8 +363,20 @@ fun BrowserView(
                         )
 
                         DrawerSectionHeader(
-                            title = "Categories and feeds",
-                            buttons = {
+                            leadingContent = {
+                                DrawerSectionHeaderTitleLabel("Categories and feeds")
+
+                                if (feedsStatus == Status.Success) {
+                                    val totalFailingFeeds = feedsById.values
+                                        .count { it.parsingErrorCount > 0 }
+                                    if (totalFailingFeeds > 0) {
+                                        DrawerSectionHeaderErrorLabel(
+                                            "($totalFailingFeeds)"
+                                        )
+                                    }
+                                }
+                            },
+                            trailingContent = {
                                 DrawerSectionHeaderButton(
                                     icon = Icons.Default.MoreHoriz,
                                     onClick = {

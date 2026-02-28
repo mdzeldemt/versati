@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
@@ -212,29 +213,55 @@ internal fun DrawerItemBadge(
 
 @Composable
 internal fun DrawerSectionHeader(
-    title: String,
-    buttons: (@Composable () -> Unit)? = null
+    leadingContent: @Composable () -> Unit,
+    trailingContent: (@Composable () -> Unit)? = null
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text(
-            text = title,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.Start),
             modifier = Modifier.padding(HEADER_PADDING)
-        )
+        ) {
+            leadingContent()
+        }
 
-        if (buttons != null) {
+        if (trailingContent != null) {
             Row {
-                buttons()
+                trailingContent()
             }
         }
     }
+}
+
+@Composable
+internal fun DrawerSectionHeaderTitleLabel(
+    text: String
+) {
+    Text(
+        text = text,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+internal fun DrawerSectionHeaderErrorLabel(
+    text: String
+) {
+    Text(
+        text = text,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        style = MaterialTheme.typography.labelLarge.copy(
+            fontWeight = FontWeight.Normal
+        ),
+        color = MaterialTheme.colorScheme.error
+    )
 }
 
 @Composable
