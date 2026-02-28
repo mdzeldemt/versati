@@ -90,13 +90,14 @@ import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.components.ErrorDialog
 import com.liuvil.versati.components.WrapperLayout
 import com.liuvil.versati.components.drawer.DrawerItem
-import com.liuvil.versati.components.drawer.DrawerItemBadge
+import com.liuvil.versati.components.drawer.DrawerErrorLabel
 import com.liuvil.versati.components.drawer.DrawerItemGroup
 import com.liuvil.versati.components.drawer.DrawerItemIcon
-import com.liuvil.versati.components.drawer.DrawerItemLabel
+import com.liuvil.versati.components.drawer.DrawerItemTitleLabel
 import com.liuvil.versati.components.drawer.DrawerSectionHeader
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderButton
-import com.liuvil.versati.components.drawer.DrawerSectionHeaderErrorLabel
+import com.liuvil.versati.components.drawer.DrawerErrorLabel
+import com.liuvil.versati.components.drawer.DrawerItemBadge
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderTitleLabel
 import com.liuvil.versati.components.sheet.ActionBottomSheet
 import com.liuvil.versati.components.sheet.ActionBottomSheetHeader
@@ -330,7 +331,7 @@ fun BrowserView(
                     ) {
                         DrawerItem(
                             label = {
-                                DrawerItemLabel("Unread")
+                                DrawerItemTitleLabel("Unread")
                             },
                             icon = {
                                 DrawerItemIcon(Icons.Outlined.Today)
@@ -347,7 +348,7 @@ fun BrowserView(
 
                         DrawerItem(
                             label = {
-                                DrawerItemLabel("Starred")
+                                DrawerItemTitleLabel("Starred")
                             },
                             icon = {
                                 DrawerItemIcon(Icons.Outlined.StarOutline)
@@ -370,7 +371,7 @@ fun BrowserView(
                                     val totalFailingFeeds = feedsById.values
                                         .count { it.parsingErrorCount > 0 }
                                     if (totalFailingFeeds > 0) {
-                                        DrawerSectionHeaderErrorLabel(
+                                        DrawerErrorLabel(
                                             "($totalFailingFeeds)"
                                         )
                                     }
@@ -405,10 +406,20 @@ fun BrowserView(
                                     val expanded = expandedCategories.getOrDefault(category.id, false)
                                     DrawerItemGroup(
                                         label = {
-                                            DrawerItemLabel(category.title)
+                                            DrawerItemTitleLabel(category.title)
                                         },
                                         expanded = expanded,
                                         selected = source == Source.Category(category.id),
+                                        badge = {
+                                            val categoryFailingFeeds = feedsById.values
+                                                .filter { it.categoryId == category.id }
+                                                .count { it.parsingErrorCount > 0 }
+                                            if (categoryFailingFeeds > 0) {
+                                                DrawerErrorLabel(
+                                                    "(${categoryFailingFeeds})"
+                                                )
+                                            }
+                                        },
                                         onClick = {
                                             coroutineScope.launch {
                                                 drawerState.close()
@@ -430,7 +441,7 @@ fun BrowserView(
                                         feedsByCategoryId.getOrDefault(category.id, emptyList()).forEach { feed ->
                                             DrawerItem(
                                                 label = {
-                                                    DrawerItemLabel(feed.title)
+                                                    DrawerItemTitleLabel(feed.title)
                                                 },
                                                 icon = {
                                                     iconsById[feed.iconId]?.let {
@@ -467,7 +478,7 @@ fun BrowserView(
 
                         DrawerItem(
                             label = {
-                                DrawerItemLabel("History")
+                                DrawerItemTitleLabel("History")
                             },
                             icon = {
                                 DrawerItemIcon(Icons.Outlined.History)
@@ -484,7 +495,7 @@ fun BrowserView(
 
                         DrawerItem(
                             label = {
-                                DrawerItemLabel("Search")
+                                DrawerItemTitleLabel("Search")
                             },
                             icon = {
                                 DrawerItemIcon(Icons.Outlined.Search)

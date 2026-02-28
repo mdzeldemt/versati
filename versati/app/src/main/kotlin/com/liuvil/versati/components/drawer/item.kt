@@ -181,7 +181,7 @@ internal fun DrawerItemIcon(
 }
 
 @Composable
-internal fun DrawerItemLabel(
+internal fun DrawerItemTitleLabel(
     text: String
 ) {
     Text(
@@ -250,21 +250,6 @@ internal fun DrawerSectionHeaderTitleLabel(
 }
 
 @Composable
-internal fun DrawerSectionHeaderErrorLabel(
-    text: String
-) {
-    Text(
-        text = text,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        style = MaterialTheme.typography.labelLarge.copy(
-            fontWeight = FontWeight.Normal
-        ),
-        color = MaterialTheme.colorScheme.error
-    )
-}
-
-@Composable
 internal fun DrawerSectionHeaderButton(
     icon: ImageVector,
     onClick: () -> Unit
@@ -280,4 +265,19 @@ internal fun DrawerSectionHeaderButton(
                 .size(20.dp)
         )
     }
+}
+
+@Composable
+internal fun DrawerErrorLabel(
+    text: String
+) {
+    Text(
+        text = text,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        style = MaterialTheme.typography.labelLarge.copy(
+            fontWeight = FontWeight.Normal
+        ),
+        color = MaterialTheme.colorScheme.error
+    )
 }
