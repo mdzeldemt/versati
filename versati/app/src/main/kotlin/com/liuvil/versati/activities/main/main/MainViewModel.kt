@@ -21,10 +21,10 @@ internal class MainViewModel @Inject constructor(
 ): BaseViewModel<Unit>() {
     val onboardingState =
         combine(
-            preferenceStore.baseURL,
+            preferenceStore.baseUrl,
             preferenceStore.credentials
-        ) { baseURL, credentials ->
-            if (baseURL != null && credentials != null) {
+        ) { baseUrl, credentials ->
+            if (baseUrl != null && credentials != null) {
                 OnboardingState.Complete
             } else {
                 OnboardingState.Incomplete

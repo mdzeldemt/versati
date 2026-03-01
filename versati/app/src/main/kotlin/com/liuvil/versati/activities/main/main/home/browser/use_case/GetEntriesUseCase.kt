@@ -3,7 +3,7 @@ package com.liuvil.versati.activities.main.main.home.browser.use_case
 import com.liuvil.versati.activities.main.main.home.RepositoryFactory
 import com.liuvil.versati.activities.main.main.home.browser.Entry
 import com.liuvil.versati.activities.main.main.home.browser.Source
-import com.liuvil.versati.framework.html.extractImageURLs
+import com.liuvil.versati.framework.html.extractImageUrls
 import com.liuvil.versati.repository.api.data.EntryStatus
 import org.jsoup.Jsoup
 import javax.inject.Inject
@@ -69,18 +69,18 @@ internal class GetEntriesUseCase @Inject constructor(
             val mapped = response.entries.map { entry ->
                 val document = Jsoup.parse(entry.content)
                 val text = document.text()
-                val imageURL =
-                    extractImageURLs(document).firstOrNull()
+                val imageUrl =
+                    extractImageUrls(document).firstOrNull()
                         ?: entry.enclosures.firstOrNull()?.url
 
                 Entry(
                     id = entry.id,
                     title = entry.title,
                     url = entry.url,
-                    feedID = entry.feedId,
+                    feedId = entry.feedId,
                     isRead = entry.status == EntryStatus.READ,
                     text = text,
-                    imageURL = imageURL,
+                    imageUrl = imageUrl,
                     publishedAt = entry.publishedAt
                 )
             }

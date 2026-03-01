@@ -55,9 +55,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.android.openShareSheet
-import com.liuvil.versati.framework.android.openURLExternally
+import com.liuvil.versati.framework.android.openUrlExternally
 import com.liuvil.versati.framework.css.ENVIRONMENT_CSS_VARIABLES
-import com.liuvil.versati.framework.css.buildCSSBlock
+import com.liuvil.versati.framework.css.buildCssBlock
 import com.liuvil.versati.framework.css.getEnvironmentValue
 import com.liuvil.versati.framework.date.formatHumanReadableLong
 import com.liuvil.versati.framework.html.applyStylesheet
@@ -186,9 +186,9 @@ fun ReaderView(
                 }
 
             is Status.Success -> {
-                val openURL: () -> Unit = remember {
+                val openUrl: () -> Unit = remember {
                     {
-                        context.openURLExternally(
+                        context.openUrlExternally(
                             Uri.parse(entry!!.url.toString())
                         )
                     }
@@ -214,7 +214,7 @@ fun ReaderView(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable(
-                                onClick = openURL,
+                                onClick = openUrl,
                                 indication = null,
                                 interactionSource = null
                             )
@@ -229,7 +229,7 @@ fun ReaderView(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    entry!!.imageURL?.let { enclosureUrl ->
+                    entry!!.imageUrl?.let { enclosureUrl ->
                         AsyncImage(
                             model = enclosureUrl.toString(),
                             contentDescription = null,
@@ -242,7 +242,7 @@ fun ReaderView(
                         DEFAULT_ENTRY_CONTENT_STYLESHEET
                     )
 
-                    Button(onClick = openURL) {
+                    Button(onClick = openUrl) {
                         Text("Open in web browser")
                     }
                 }
@@ -290,7 +290,7 @@ private fun EntryContentView(
     stylesheet: String
 ) {
     val rootStylesheet = MaterialTheme.colorScheme.let { colorScheme ->
-        buildCSSBlock(
+        buildCssBlock(
             ":root",
             ENVIRONMENT_CSS_VARIABLES
                 .associateWith { getEnvironmentValue(it, colorScheme) }

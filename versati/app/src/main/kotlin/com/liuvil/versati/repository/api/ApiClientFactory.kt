@@ -9,13 +9,13 @@ import retrofit2.Retrofit
 import java.net.URL
 import javax.inject.Inject
 
-class APIClientFactory @Inject constructor() {
+class ApiClientFactory @Inject constructor() {
     fun create(
-        baseURL: URL,
+        baseUrl: URL,
         credentials: Credentials
-    ): APIClient =
+    ): ApiClient =
         Retrofit.Builder()
-            .baseUrl(baseURL)
+            .baseUrl(baseUrl)
             .client(
                 OkHttpClient.Builder()
                     .addInterceptor(
@@ -26,5 +26,5 @@ class APIClientFactory @Inject constructor() {
             .addConverterFactory(BodyConverterFactory.create())
             .addConverterFactory(QueryParamConverterFactory())
             .build()
-            .create(APIClient::class.java)
+            .create(ApiClient::class.java)
 }

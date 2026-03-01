@@ -1,6 +1,6 @@
 package com.liuvil.versati.repository.api.di
 
-import com.liuvil.versati.repository.api.APIClient
+import com.liuvil.versati.repository.api.ApiClient
 import com.liuvil.versati.repository.api.auth.AuthInterceptor
 import com.liuvil.versati.repository.api.converter.BodyConverterFactory
 import com.liuvil.versati.repository.api.converter.QueryParamConverterFactory
@@ -14,22 +14,22 @@ import java.net.URL
 
 @Module
 @InstallIn(SingletonComponent::class)
-class APIClientModule {
+class ApiClientModule {
 
     @Provides
-    fun provideAPIClient(
-        baseURL: URL,
+    fun provideApiClient(
+        baseUrl: URL,
         authInterceptor: AuthInterceptor
-    ): APIClient =
+    ): ApiClient =
         Retrofit.Builder()
-            .baseUrl(baseURL)
+            .baseUrl(baseUrl)
             .client(
                 OkHttpClient.Builder()
                     .addInterceptor(authInterceptor)
                     .build()
             )
-            .addConverterFactory(BodyConverterFactory.Companion.create())
+            .addConverterFactory(BodyConverterFactory.create())
             .addConverterFactory(QueryParamConverterFactory())
             .build()
-            .create(APIClient::class.java)
+            .create(ApiClient::class.java)
 }

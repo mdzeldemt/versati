@@ -1,6 +1,6 @@
 package com.liuvil.versati.repository.api.auth
 
-import com.liuvil.versati.preferences.APIKeyCredentials
+import com.liuvil.versati.preferences.ApiKeyCredentials
 import com.liuvil.versati.preferences.BasicCredentials
 import com.liuvil.versati.preferences.Credentials
 import okhttp3.Interceptor
@@ -31,7 +31,7 @@ class AuthInterceptor @Inject constructor(
                         }"
                     )
 
-                    is APIKeyCredentials -> add(
+                    is ApiKeyCredentials -> add(
                         "X-Auth-Token", credentials.apiKey
                     )
                 }

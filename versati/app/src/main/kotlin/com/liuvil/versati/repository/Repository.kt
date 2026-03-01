@@ -1,6 +1,6 @@
 package com.liuvil.versati.repository
 
-import com.liuvil.versati.repository.api.APIClient
+import com.liuvil.versati.repository.api.ApiClient
 import com.liuvil.versati.repository.api.data.CreateCategoryRequest
 import com.liuvil.versati.repository.api.data.CreateFeedRequest
 import com.liuvil.versati.repository.api.data.EntriesGetResponse
@@ -21,7 +21,7 @@ import com.liuvil.versati.repository.data.conversion.toCache
 import java.net.URL
 
 class Repository(
-    private val apiClient: APIClient,
+    private val apiClient: ApiClient,
     cacheDatabase: CacheDatabase
 ) {
     private val categoryCache = cacheDatabase.categoryCache()

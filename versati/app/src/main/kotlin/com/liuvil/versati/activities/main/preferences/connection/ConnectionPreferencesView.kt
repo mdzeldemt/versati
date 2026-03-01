@@ -40,11 +40,11 @@ import com.liuvil.versati.components.form.action.SimpleActionTile
 import com.liuvil.versati.components.form.radio.RadioInput
 import com.liuvil.versati.components.scaffold.action.BackButton
 import com.liuvil.versati.framework.date.formatHumanReadableLong
-import com.liuvil.versati.framework.string.isValidURL
+import com.liuvil.versati.framework.string.isValidUrl
 import com.liuvil.versati.framework.throwable.detailedMessage
 import com.liuvil.versati.framework.viewmodel.status.Status
 import com.liuvil.versati.framework.viewmodel.viewOf
-import com.liuvil.versati.preferences.APIKeyCredentials
+import com.liuvil.versati.preferences.ApiKeyCredentials
 import com.liuvil.versati.preferences.BasicCredentials
 import com.liuvil.versati.preferences.Credentials
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -52,7 +52,7 @@ import java.net.URL
 import java.time.OffsetDateTime
 
 private sealed class Dialog {
-    data object BaseURLInput: Dialog()
+    data object BaseUrlInput: Dialog()
     data object CredentialsInput: Dialog()
 
     object Details {
@@ -109,7 +109,7 @@ internal fun ConnectionPreferencesView(
                 },
                 actions = {
                     if (preferencesStatus == Status.Success
-                        && preferences.baseURL != null && preferences.credentials != null) {
+                        && preferences.baseUrl != null && preferences.credentials != null) {
                         IconButton(
                             enabled = detailsStatus != Status.Loading,
                             onClick = {
@@ -145,15 +145,15 @@ internal fun ConnectionPreferencesView(
                             .padding(padding)
                     ) {
                         item {
-                            BaseURLTile(preferences.baseURL) {
-                                activeDialog = Dialog.BaseURLInput
+                            BaseUrlTile(preferences.baseUrl) {
+                                activeDialog = Dialog.BaseUrlInput
                             }
                         }
 
                         item {
                             AuthenticationTile(
                                 when (preferences.credentials) {
-                                    is APIKeyCredentials -> CredentialType.API_KEY
+                                    is ApiKeyCredentials -> CredentialType.API_KEY
                                     is BasicCredentials -> CredentialType.BASIC
                                     null -> null
                                 }
@@ -172,11 +172,11 @@ internal fun ConnectionPreferencesView(
 
     activeDialog?.let { dialog ->
         when (dialog) {
-            is Dialog.BaseURLInput ->
-                BaseURLInputDialog(
-                    initialValue = preferences.baseURL,
+            is Dialog.BaseUrlInput ->
+                BaseUrlInputDialog(
+                    initialValue = preferences.baseUrl,
                     onSubmit = { value ->
-                        viewModel.onUpdateBaseURL(value)
+                        viewModel.onUpdateBaseUrl(value)
                     },
                     onResponse = {
                         activeDialog = null
@@ -235,7 +235,7 @@ internal fun ConnectionPreferencesView(
 }
 
 @Composable
-private fun BaseURLTile(
+private fun BaseUrlTile(
     value: URL?,
     onClick: () -> Unit
 ) {
@@ -264,7 +264,7 @@ private fun AuthenticationTile(
 }
 
 @Composable
-private fun BaseURLInputDialog(
+private fun BaseUrlInputDialog(
     initialValue: URL?,
     onSubmit: (URL?) -> Unit,
     onResponse: () -> Unit
@@ -275,7 +275,7 @@ private fun BaseURLInputDialog(
 
     val isError by remember {
         derivedStateOf {
-            value.isNotEmpty() && !isValidURL(value)
+            value.isNotEmpty() && !isValidUrl(value)
         }
     }
 
@@ -331,7 +331,7 @@ private fun CredentialsInputDialog(
     var credentialType by remember {
         mutableStateOf(
             when (initialValue) {
-                is APIKeyCredentials -> CredentialType.API_KEY
+                is ApiKeyCredentials -> CredentialType.API_KEY
                 is BasicCredentials -> CredentialType.BASIC
                 null -> null
             }
@@ -340,7 +340,7 @@ private fun CredentialsInputDialog(
 
     var apiKey by remember {
         mutableStateOf(
-            if (initialValue is APIKeyCredentials) {
+            if (initialValue is ApiKeyCredentials) {
                 initialValue.apiKey
             } else ""
         )
@@ -468,7 +468,7 @@ private fun CredentialsInputDialog(
                     onSubmit(
                         when (credentialType) {
                             CredentialType.API_KEY ->
-                                APIKeyCredentials(
+                                ApiKeyCredentials(
                                     apiKey = apiKey
                                 )
 

@@ -96,7 +96,6 @@ import com.liuvil.versati.components.drawer.DrawerItemIcon
 import com.liuvil.versati.components.drawer.DrawerItemTitleLabel
 import com.liuvil.versati.components.drawer.DrawerSectionHeader
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderButton
-import com.liuvil.versati.components.drawer.DrawerErrorLabel
 import com.liuvil.versati.components.drawer.DrawerItemBadge
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderTitleLabel
 import com.liuvil.versati.components.sheet.ActionBottomSheet
@@ -650,13 +649,13 @@ fun BrowserView(
                                                             entries.forEach { entry ->
                                                                 EntryTile(
                                                                     title = entry.title,
-                                                                    feedTitle = feedsById[entry.feedID]?.title ?: "...",
+                                                                    feedTitle = feedsById[entry.feedId]?.title ?: "...",
                                                                     timeSincePublished = Duration.between(
                                                                         entry.publishedAt,
                                                                         OffsetDateTime.now()
                                                                     ),
                                                                     content = entry.text,
-                                                                    imageURL = entry.imageURL,
+                                                                    imageUrl = entry.imageUrl,
                                                                     isRead = entry.isRead,
                                                                     onClick = {
                                                                         onEntryClicked(entry.id)
@@ -1149,7 +1148,7 @@ private fun EntryTile(
     feedTitle: String,
     timeSincePublished: Duration,
     content: String,
-    imageURL: URL? = null,
+    imageUrl: URL? = null,
     isRead: Boolean,
     onClick: () -> Unit
 ) {
@@ -1189,7 +1188,7 @@ private fun EntryTile(
                 alpha(0.5f)
             }
     ) {
-        imageURL?.let {
+        imageUrl?.let {
             WrapperLayout(
                 pivotSize = 100.dp,
                 pivotContent = {

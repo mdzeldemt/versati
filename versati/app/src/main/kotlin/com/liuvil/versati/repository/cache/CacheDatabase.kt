@@ -4,7 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.liuvil.versati.framework.database.type_converter.OffsetDateTimeTypeConverter
-import com.liuvil.versati.framework.database.type_converter.URLTypeConverter
+import com.liuvil.versati.framework.database.type_converter.UrlTypeConverter
 import com.liuvil.versati.repository.cache.dao.CategoryCache
 import com.liuvil.versati.repository.cache.dao.EnclosureCache
 import com.liuvil.versati.repository.cache.dao.EntryCache
@@ -27,7 +27,7 @@ import com.liuvil.versati.repository.cache.data.Icon
     version = 1,
     exportSchema = false
 )
-@TypeConverters(OffsetDateTimeTypeConverter::class, URLTypeConverter::class)
+@TypeConverters(OffsetDateTimeTypeConverter::class, UrlTypeConverter::class)
 abstract class CacheDatabase: RoomDatabase() {
     abstract fun categoryCache(): CategoryCache
     abstract fun enclosureCache(): EnclosureCache

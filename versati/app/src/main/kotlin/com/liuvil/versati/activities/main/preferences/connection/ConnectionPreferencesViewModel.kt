@@ -20,7 +20,7 @@ import java.time.OffsetDateTime
 import javax.inject.Inject
 
 internal data class Preferences(
-    val baseURL: URL?,
+    val baseUrl: URL?,
     val credentials: Credentials?
 )
 
@@ -49,7 +49,7 @@ internal class ConnectionPreferencesViewModel @Inject constructor(
     private val getDetails: GetDetailsUseCase,
 ): BaseViewModel<Unit>() {
 
-    private val _preferences = MutableStateFlow(Preferences(baseURL = null, credentials = null))
+    private val _preferences = MutableStateFlow(Preferences(baseUrl = null, credentials = null))
     private val _details = MutableStateFlow<Details?>(null)
 
     private val _preferencesStatus = MutableStateFlow<Status>(Status.Loading)
@@ -98,7 +98,7 @@ internal class ConnectionPreferencesViewModel @Inject constructor(
         }
     }
 
-    fun onUpdateBaseURL(
+    fun onUpdateBaseUrl(
         value: URL?
     ) {
         viewModelScope.launch {
@@ -108,7 +108,7 @@ internal class ConnectionPreferencesViewModel @Inject constructor(
                 .onSuccess {
                     _preferences.update {
                         it.copy(
-                            baseURL = value
+                            baseUrl = value
                         )
                     }
 

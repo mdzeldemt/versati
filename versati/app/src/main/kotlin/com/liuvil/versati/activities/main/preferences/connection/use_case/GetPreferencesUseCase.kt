@@ -10,11 +10,11 @@ internal class GetPreferencesUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(): Result<Preferences> {
         return runCatching {
-            val baseURL = preferencesStore.baseURL.first()
+            val baseUrl = preferencesStore.baseUrl.first()
             val credentials = preferencesStore.credentials.first()
 
             Preferences(
-                baseURL = baseURL,
+                baseUrl = baseUrl,
                 credentials = credentials
             )
         }

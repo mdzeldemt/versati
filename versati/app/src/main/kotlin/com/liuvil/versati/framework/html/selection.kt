@@ -3,7 +3,7 @@ package com.liuvil.versati.framework.html
 import org.jsoup.nodes.Document
 import java.net.URL
 
-fun extractImageURLs(
+fun extractImageUrls(
     document: Document
 ): List<URL> {
     // TODO: Make configurable

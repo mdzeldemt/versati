@@ -25,11 +25,9 @@ import com.liuvil.versati.repository.data.Feed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -57,9 +55,9 @@ internal data class Entry(
     val id: Int,
     val title: String,
     val url: URL,
-    val feedID: Int,
+    val feedId: Int,
     val text: String,
-    val imageURL: URL?,
+    val imageUrl: URL?,
     val isRead: Boolean,
     val publishedAt: OffsetDateTime
 )

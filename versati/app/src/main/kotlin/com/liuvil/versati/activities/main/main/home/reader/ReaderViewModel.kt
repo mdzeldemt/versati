@@ -2,7 +2,7 @@ package com.liuvil.versati.activities.main.main.home.reader
 
 import androidx.lifecycle.viewModelScope
 import com.liuvil.versati.activities.main.main.home.RepositoryFactory
-import com.liuvil.versati.framework.html.extractImageURLs
+import com.liuvil.versati.framework.html.extractImageUrls
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import com.liuvil.versati.framework.viewmodel.status.Status
 import com.liuvil.versati.repository.Origin
@@ -11,7 +11,6 @@ import com.liuvil.versati.repository.data.Enclosure
 import com.liuvil.versati.repository.data.Feed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -33,7 +32,7 @@ data class Entry(
     val createdAt: OffsetDateTime,
     val publishedAt: OffsetDateTime,
     val read: Boolean,
-    val imageURL: URL?
+    val imageUrl: URL?
 )
 
 @HiltViewModel
@@ -88,8 +87,8 @@ class ReaderViewModel @Inject constructor(
             }
 
             val document = Jsoup.parse(entry.content)
-            val imageURL =
-                if (extractImageURLs(document).isEmpty()) {
+            val imageUrl =
+                if (extractImageUrls(document).isEmpty()) {
                     enclosures.firstOrNull()?.url
                 } else {
                     null
@@ -104,7 +103,7 @@ class ReaderViewModel @Inject constructor(
                 createdAt = entry.createdAt,
                 publishedAt = entry.publishedAt,
                 read = entry.read,
-                imageURL = imageURL
+                imageUrl = imageUrl
             )
             _starred.value = entry.starred
 

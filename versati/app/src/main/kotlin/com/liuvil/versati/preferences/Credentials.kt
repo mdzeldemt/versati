@@ -7,6 +7,6 @@ data class BasicCredentials(
     val password: String
 ): Credentials
 
-data class APIKeyCredentials(
+data class ApiKeyCredentials(
     val apiKey: String
 ): Credentials

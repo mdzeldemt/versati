@@ -24,7 +24,7 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-interface APIClient {
+interface ApiClient {
 
     @GET("/v1/categories")
     suspend fun getCategories(): List<Category>

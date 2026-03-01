@@ -52,12 +52,12 @@ private enum class CredentialType {
 class PreferenceStore @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    val baseURL = getURL(PreferenceKey.BASE_URL)
+    val baseUrl = getUrl(PreferenceKey.BASE_URL)
 
-    suspend fun setBaseURL(
+    suspend fun setBaseUrl(
         value: URL?
     ) {
-        setURL(PreferenceKey.BASE_URL, value)
+        setUrl(PreferenceKey.BASE_URL, value)
     }
 
     private val credentialType: Flow<CredentialType?> =
@@ -88,7 +88,7 @@ class PreferenceStore @Inject constructor(
                 CredentialType.API_KEY ->
                     apiKey
                         .flatMap { apiKey ->
-                            APIKeyCredentials(
+                            ApiKeyCredentials(
                                 apiKey = apiKey
                             )
                         }
@@ -111,8 +111,8 @@ class PreferenceStore @Inject constructor(
         value: Credentials?
     ) {
         when (value) {
-            is APIKeyCredentials -> {
-                setAPIKey(value.apiKey)
+            is ApiKeyCredentials -> {
+                setApiKey(value.apiKey)
                 setUsername(null)
                 setPassword(null)
                 setCredentialType(CredentialType.API_KEY)
@@ -121,13 +121,13 @@ class PreferenceStore @Inject constructor(
             is BasicCredentials -> {
                 setUsername(value.username)
                 setPassword(value.password)
-                setAPIKey(null)
+                setApiKey(null)
                 setCredentialType(CredentialType.BASIC)
             }
 
             null -> {
                 setCredentialType(null)
-                setAPIKey(null)
+                setApiKey(null)
                 setUsername(null)
                 setPassword(null)
             }
@@ -140,7 +140,7 @@ class PreferenceStore @Inject constructor(
         setString(PreferenceKey.CREDENTIAL_TYPE, value?.name)
     }
 
-    private suspend fun setAPIKey(
+    private suspend fun setApiKey(
         value: String?
     ) {
         setSecret(
@@ -227,7 +227,7 @@ class PreferenceStore @Inject constructor(
         getString(key)
             .flatMap { Base64.decode(it, Base64.NO_WRAP) }
 
-    private fun getURL(
+    private fun getUrl(
         key: Preferences.Key<String>
     ): Flow<URL?> =
         getString(key)
@@ -252,7 +252,7 @@ class PreferenceStore @Inject constructor(
         )
     }
 
-    private suspend fun setURL(
+    private suspend fun setUrl(
         key: Preferences.Key<String>,
         value: URL?
     ) {

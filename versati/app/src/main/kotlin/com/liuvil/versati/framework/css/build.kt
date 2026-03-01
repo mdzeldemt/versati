@@ -1,6 +1,6 @@
 package com.liuvil.versati.framework.css
 
-fun buildCSSBlock(
+fun buildCssBlock(
     selector: String,
     attributes: Map<String, String>
 ): String =

@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.components.form.menu.DropdownMenuField
 import com.liuvil.versati.components.form.menu.DropdownMenuItem
-import com.liuvil.versati.framework.string.isValidURL
+import com.liuvil.versati.framework.string.isValidUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.net.URL
 
@@ -38,7 +38,7 @@ internal fun AddFeedDialog(
     var feedUrl by remember { mutableStateOf("") }
     var categoryId by remember { mutableStateOf<Int?>(null) }
 
-    val isFeedUrlError = !isValidURL(feedUrl)
+    val isFeedUrlError = !isValidUrl(feedUrl)
     val isCategoryIdError = categoryId == null
 
     AlertDialog(

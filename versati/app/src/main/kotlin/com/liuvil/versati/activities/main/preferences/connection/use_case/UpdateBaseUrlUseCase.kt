@@ -11,7 +11,7 @@ internal class UpdateBaseUrlUseCase @Inject constructor(
         value: URL?
     ): Result<Unit> {
         return runCatching {
-            preferencesStore.setBaseURL(value)
+            preferencesStore.setBaseUrl(value)
         }
     }
 }

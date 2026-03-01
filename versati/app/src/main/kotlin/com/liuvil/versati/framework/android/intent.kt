@@ -19,7 +19,7 @@ fun Context.openShareSheet(
     )
 }
 
-fun Context.openURLExternally(
+fun Context.openUrlExternally(
     uri: Uri
 ) {
     val intent = Intent(Intent.ACTION_VIEW, uri)
