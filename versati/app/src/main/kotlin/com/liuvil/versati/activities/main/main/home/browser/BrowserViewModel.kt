@@ -99,7 +99,7 @@ internal sealed class Event {
     }
 
     object LoadEntries {
-        data object Start: Event()
+        data object End: Event()
     }
 }
 
@@ -233,8 +233,6 @@ internal class BrowserViewModel @Inject constructor(
         viewModelScope.launch {
             _getEntriesStatus.value = Status.Loading
 
-            _events.emit(Event.LoadEntries.Start)
-
             getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
                 .onSuccess { (entries, total) ->
                     _entriesById.value = entries.associateBy { it.id }
@@ -244,6 +242,8 @@ internal class BrowserViewModel @Inject constructor(
                 .onFailure {
                     _getEntriesStatus.value = Status.Failure(it)
                 }
+
+            _events.emit(Event.LoadEntries.End)
         }
     }
 
@@ -256,8 +256,6 @@ internal class BrowserViewModel @Inject constructor(
 
             _getEntriesStatus.value = Status.Loading
 
-            _events.emit(Event.LoadEntries.Start)
-
             getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
                 .onSuccess { (entries, total) ->
                     _entriesById.value = entries.associateBy { it.id }
@@ -267,6 +265,8 @@ internal class BrowserViewModel @Inject constructor(
                 .onFailure {
                     _getEntriesStatus.value = Status.Failure(it)
                 }
+
+            _events.emit(Event.LoadEntries.End)
         }
     }
 
@@ -278,8 +278,6 @@ internal class BrowserViewModel @Inject constructor(
 
             _getEntriesStatus.value = Status.Loading
 
-            _events.emit(Event.LoadEntries.Start)
-
             getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
                 .onSuccess { (entries, total) ->
                     _entriesById.value = entries.associateBy { it.id }
@@ -289,6 +287,8 @@ internal class BrowserViewModel @Inject constructor(
                 .onFailure {
                     _getEntriesStatus.value = Status.Failure(it)
                 }
+
+            _events.emit(Event.LoadEntries.End)
         }
     }
 
@@ -298,8 +298,6 @@ internal class BrowserViewModel @Inject constructor(
 
             _getEntriesStatus.value = Status.Loading
 
-            _events.emit(Event.LoadEntries.Start)
-
             getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
                 .onSuccess { (entries, total) ->
                     _entriesById.value = entries.associateBy { it.id }
@@ -309,6 +307,8 @@ internal class BrowserViewModel @Inject constructor(
                 .onFailure {
                     _getEntriesStatus.value = Status.Failure(it)
                 }
+
+            _events.emit(Event.LoadEntries.End)
         }
     }
 
@@ -318,8 +318,6 @@ internal class BrowserViewModel @Inject constructor(
 
             _getEntriesStatus.value = Status.Loading
 
-            _events.emit(Event.LoadEntries.Start)
-
             getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
                 .onSuccess { (entries, total) ->
                     _entriesById.value = entries.associateBy { it.id }
@@ -329,6 +327,8 @@ internal class BrowserViewModel @Inject constructor(
                 .onFailure {
                     _getEntriesStatus.value = Status.Failure(it)
                 }
+
+            _events.emit(Event.LoadEntries.End)
         }
     }
 
@@ -343,8 +343,6 @@ internal class BrowserViewModel @Inject constructor(
 
                     _getEntriesStatus.value = Status.Loading
 
-                    _events.emit(Event.LoadEntries.Start)
-
                     getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
                         .onSuccess { (entries, total) ->
                             _entriesById.value = entries.associateBy { it.id }
@@ -354,6 +352,8 @@ internal class BrowserViewModel @Inject constructor(
                         .onFailure {
                             _getEntriesStatus.value = Status.Failure(it)
                         }
+
+                    _events.emit(Event.LoadEntries.End)
                 }.onFailure {
                     _markEntriesAsReadStatus.value = Status.Failure(it)
                 }

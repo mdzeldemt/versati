@@ -309,7 +309,7 @@ fun BrowserView(
                         activeModal = Dialog.RemoveFeed.Failure(event.reason)
                     }
 
-                is Event.LoadEntries.Start ->
+                is Event.LoadEntries.End ->
                     entryListState.scrollToStart()
             }
         }
