@@ -39,6 +39,8 @@ private object PreferenceKey {
 
     val CREDENTIAL_API_KEY_CIPHERTEXT = stringPreferencesKey("credential_api_key_ciphertext")
     val CREDENTIAL_API_KEY_IV = stringPreferencesKey("credential_api_key_iv")
+
+    val COLOR_SCHEME = stringPreferencesKey("color_scheme")
 }
 
 private enum class CredentialType {
@@ -135,7 +137,7 @@ class PreferenceStore @Inject constructor(
     private suspend fun setCredentialType(
         value: CredentialType?
     ) {
-        setString(PreferenceKey.CREDENTIAL_TYPE, value?.toString())
+        setString(PreferenceKey.CREDENTIAL_TYPE, value?.name)
     }
 
     private suspend fun setAPIKey(
@@ -166,6 +168,22 @@ class PreferenceStore @Inject constructor(
             PreferenceKey.CREDENTIAL_PASSWORD_IV,
             value?.encodeToByteArray()
         )
+    }
+
+    val colorScheme: Flow<ColorScheme> =
+        getString(PreferenceKey.COLOR_SCHEME)
+            .map {
+                if (it != null) {
+                    ColorScheme.valueOf(it)
+                } else {
+                    ColorScheme.SYSTEM
+                }
+            }
+
+    suspend fun setColorScheme(
+        value: ColorScheme
+    ) {
+        setString(PreferenceKey.COLOR_SCHEME, value.name)
     }
 
     private fun getSecret(

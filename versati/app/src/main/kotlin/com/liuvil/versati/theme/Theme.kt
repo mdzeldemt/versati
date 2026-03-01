@@ -6,24 +6,30 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-
-private val LIGHT_COLOR_SCHEME = lightColorScheme()
-private val DARK_COLOR_SCHEME = darkColorScheme()
+import com.liuvil.versati.preferences.ColorScheme
 
 private val TYPOGRAPHY = Typography()
 
 @Composable
 fun Theme(
+    colorScheme: ColorScheme,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme =
-        if (isSystemInDarkTheme())
-            DARK_COLOR_SCHEME
-        else
-            LIGHT_COLOR_SCHEME
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme =
+            when (colorScheme) {
+                ColorScheme.SYSTEM ->
+                    if (isSystemInDarkTheme())
+                        darkColorScheme()
+                    else
+                        lightColorScheme()
+
+                ColorScheme.DARK ->
+                    darkColorScheme()
+
+                ColorScheme.LIGHT ->
+                    lightColorScheme()
+            },
         typography = TYPOGRAPHY,
         content = content
     )

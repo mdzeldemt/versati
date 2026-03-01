@@ -1,23 +1,18 @@
 package com.liuvil.versati.activities.main.preferences.connection
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,6 +37,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.liuvil.versati.components.ErrorDialog
 import com.liuvil.versati.components.form.action.SimpleActionTile
+import com.liuvil.versati.components.form.radio.RadioInput
 import com.liuvil.versati.components.scaffold.action.BackButton
 import com.liuvil.versati.framework.date.formatHumanReadableLong
 import com.liuvil.versati.framework.string.isValidURL
@@ -304,13 +300,13 @@ private fun BaseURLInputDialog(
             TextButton(
                 enabled = !isError,
                 onClick = {
+                    onResponse()
+
                     if (value.isNotEmpty()) {
                         onSubmit(value.toHttpUrl().toUrl())
                     } else {
                         onSubmit(null)
                     }
-
-                    onResponse()
                 }
             ) {
                 Text("OK")
@@ -398,27 +394,18 @@ private fun CredentialsInputDialog(
                 ) {
                     listOf(null, CredentialType.API_KEY, CredentialType.BASIC)
                         .forEach {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.Start),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        credentialType = it
-                                    }
-                            ) {
-                                RadioButton(
-                                    selected = (it == credentialType),
-                                    onClick = null
-                                )
-                                Text(
+                            RadioInput(
+                                title =
                                     when (it) {
                                         null -> "None"
                                         CredentialType.API_KEY -> "API key"
                                         CredentialType.BASIC -> "Basic"
-                                    }
-                                )
-                            }
+                                    },
+                                selected = (it == credentialType),
+                                onClick = {
+                                    credentialType = it
+                                }
+                            )
                         }
                 }
 
@@ -477,6 +464,7 @@ private fun CredentialsInputDialog(
                         null -> true
                     },
                 onClick = {
+                    onResponse()
                     onSubmit(
                         when (credentialType) {
                             CredentialType.API_KEY ->
@@ -493,7 +481,6 @@ private fun CredentialsInputDialog(
                             null -> null
                         }
                     )
-                    onResponse()
                 }
             ) {
                 Text("OK")
