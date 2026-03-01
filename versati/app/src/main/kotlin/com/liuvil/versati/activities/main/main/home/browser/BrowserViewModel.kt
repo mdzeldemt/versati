@@ -340,6 +340,20 @@ internal class BrowserViewModel @Inject constructor(
             markEntriesAsRead(entryIds)
                 .onSuccess {
                     _markEntriesAsReadStatus.value = Status.Success
+
+                    _getEntriesStatus.value = Status.Loading
+
+                    _events.emit(Event.LoadEntries.Start)
+
+                    getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
+                        .onSuccess { (entries, total) ->
+                            _entriesById.value = entries.associateBy { it.id }
+                            _totalEntries.value = total
+                            _getEntriesStatus.value = Status.Success
+                        }
+                        .onFailure {
+                            _getEntriesStatus.value = Status.Failure(it)
+                        }
                 }.onFailure {
                     _markEntriesAsReadStatus.value = Status.Failure(it)
                 }
