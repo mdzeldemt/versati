@@ -6,13 +6,9 @@ import com.liuvil.versati.framework.viewmodel.status.Status
 import com.liuvil.versati.preferences.ColorScheme
 import com.liuvil.versati.preferences.PreferenceStore
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,7 +17,6 @@ internal sealed class ViewState {
     data class Ready(val colorScheme: ColorScheme): ViewState()
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 internal class MiscellaneousPreferencesViewModel @Inject constructor(
     private val preferenceStore: PreferenceStore
@@ -34,18 +29,6 @@ internal class MiscellaneousPreferencesViewModel @Inject constructor(
     val colorScheme = _colorScheme.asStateFlow()
 
     val colorSchemeStatus = _colorSchemeStatus.asStateFlow()
-
-    val state = preferenceStore.colorScheme
-        .mapLatest {
-            ViewState.Ready(
-                colorScheme = it
-            )
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(),
-            initialValue = ViewState.Loading
-        )
 
     fun onLoadPreferences() {
         viewModelScope.launch {
