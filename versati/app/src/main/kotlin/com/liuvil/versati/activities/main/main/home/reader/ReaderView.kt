@@ -1,8 +1,6 @@
 package com.liuvil.versati.activities.main.main.home.reader
 
-import android.graphics.Color
 import android.net.Uri
-import android.webkit.WebView
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,7 +23,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -52,16 +50,12 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.android.openShareSheet
 import com.liuvil.versati.framework.android.openUrlExternally
-import com.liuvil.versati.framework.css.ENVIRONMENT_CSS_VARIABLES
-import com.liuvil.versati.framework.css.buildCssBlock
-import com.liuvil.versati.framework.css.getEnvironmentValue
 import com.liuvil.versati.framework.date.formatHumanReadableLong
-import com.liuvil.versati.framework.html.applyStylesheet
-import com.liuvil.versati.framework.preferences.entry.content.css.DEFAULT_ENTRY_CONTENT_STYLESHEET
+import com.liuvil.versati.framework.html.parse.HtmlDocument
+import com.liuvil.versati.framework.html.view.HtmlElement
 import com.liuvil.versati.framework.viewmodel.status.Status
 import com.liuvil.versati.framework.viewmodel.status.fold
 import com.liuvil.versati.framework.viewmodel.viewOf
@@ -238,8 +232,7 @@ fun ReaderView(
                     }
 
                     EntryContentView(
-                        entry!!.content,
-                        DEFAULT_ENTRY_CONTENT_STYLESHEET
+                        entry!!.document
                     )
 
                     Button(onClick = openUrl) {
@@ -286,43 +279,17 @@ fun ReaderView(
 
 @Composable
 private fun EntryContentView(
-    content: String,
-    stylesheet: String
+    document: HtmlDocument
 ) {
-    val rootStylesheet = MaterialTheme.colorScheme.let { colorScheme ->
-        buildCssBlock(
-            ":root",
-            ENVIRONMENT_CSS_VARIABLES
-                .associateWith { getEnvironmentValue(it, colorScheme) }
-        )
-    }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        AndroidView(
-            factory = { context ->
-                WebView(context).apply {
-                    clipToOutline = true
-
-                    setBackgroundColor(Color.TRANSPARENT)
-
-                    settings.apply {
-                        standardFontFamily = "sans"
-                    }
-
-                    loadData(
-                        listOf(rootStylesheet, stylesheet)
-                            .fold(content) { it, stylesheet ->
-                                applyStylesheet(it, stylesheet)
-                            },
-                        "text/html",
-                        "UTF-8"
-                    )
-                }
+    SelectionContainer {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top)
+        ) {
+            document.content.forEach { block ->
+                HtmlElement(block)
             }
-        )
+        }
     }
 }
 

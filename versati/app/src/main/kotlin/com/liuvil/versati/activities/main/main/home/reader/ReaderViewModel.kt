@@ -2,7 +2,10 @@ package com.liuvil.versati.activities.main.main.home.reader
 
 import androidx.lifecycle.viewModelScope
 import com.liuvil.versati.activities.main.main.home.RepositoryFactory
-import com.liuvil.versati.framework.html.extractImageUrls
+import com.liuvil.versati.framework.html.parse.HtmlBlock
+import com.liuvil.versati.framework.html.parse.HtmlDocument
+import com.liuvil.versati.framework.html.parse.descendants
+import com.liuvil.versati.framework.html.parse.parseDocument
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import com.liuvil.versati.framework.viewmodel.status.Status
 import com.liuvil.versati.repository.Origin
@@ -14,7 +17,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jsoup.Jsoup
 import java.net.URL
 import java.time.OffsetDateTime
 import javax.inject.Inject
@@ -25,7 +27,7 @@ data class InitData(
 
 data class Entry(
     val title: String,
-    val content: String,
+    val document: HtmlDocument,
     val url: URL,
     val feedTitle: String,
     val author: String?,
@@ -86,9 +88,9 @@ class ReaderViewModel @Inject constructor(
                 return@launch
             }
 
-            val document = Jsoup.parse(entry.content)
+            val document = parseDocument(entry.content)
             val imageUrl =
-                if (extractImageUrls(document).isEmpty()) {
+                if (document.descendants().none { it is HtmlBlock.Image }) {
                     enclosures.firstOrNull()?.url
                 } else {
                     null
@@ -96,7 +98,7 @@ class ReaderViewModel @Inject constructor(
 
             _entry.value = Entry(
                 title = entry.title,
-                content = entry.content,
+                document = document,
                 url = entry.url,
                 feedTitle = feed.title,
                 author = entry.author.takeIf { it.isNotEmpty() },

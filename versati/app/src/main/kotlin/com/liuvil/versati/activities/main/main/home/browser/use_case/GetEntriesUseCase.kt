@@ -3,9 +3,11 @@ package com.liuvil.versati.activities.main.main.home.browser.use_case
 import com.liuvil.versati.activities.main.main.home.RepositoryFactory
 import com.liuvil.versati.activities.main.main.home.browser.Entry
 import com.liuvil.versati.activities.main.main.home.browser.Source
-import com.liuvil.versati.framework.html.extractImageUrls
+import com.liuvil.versati.framework.html.parse.HtmlBlock
+import com.liuvil.versati.framework.html.parse.descendants
+import com.liuvil.versati.framework.html.parse.parseDocument
 import com.liuvil.versati.repository.api.data.EntryStatus
-import org.jsoup.Jsoup
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import javax.inject.Inject
 
 internal class GetEntriesUseCase @Inject constructor(
@@ -67,11 +69,11 @@ internal class GetEntriesUseCase @Inject constructor(
             }
 
             val mapped = response.entries.map { entry ->
-                val document = Jsoup.parse(entry.content)
-                val text = document.text()
-                val imageUrl =
-                    extractImageUrls(document).firstOrNull()
-                        ?: entry.enclosures.firstOrNull()?.url
+                val content = parseDocument(entry.content).descendants()
+                val text = content.filterIsInstance<HtmlBlock.Paragraph>()
+                    .joinToString(separator = "\n") { it.text.toString() }
+                val imageUrl = content.filterIsInstance<HtmlBlock.Image>().firstOrNull()?.url?.toHttpUrl()?.toUrl()
+                    ?: entry.enclosures.firstOrNull()?.url
 
                 Entry(
                     id = entry.id,
