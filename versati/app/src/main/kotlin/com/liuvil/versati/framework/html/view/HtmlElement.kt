@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.html.parse.HtmlBlock
@@ -64,6 +65,7 @@ private fun HtmlImage(
 ) {
     AsyncImage(
         model = block.url,
+        contentScale = ContentScale.FillWidth,
         contentDescription = null,
         modifier = Modifier
             .fillMaxWidth()

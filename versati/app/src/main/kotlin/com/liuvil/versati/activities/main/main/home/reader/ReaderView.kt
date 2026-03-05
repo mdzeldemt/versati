@@ -223,9 +223,9 @@ fun ReaderView(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    entry!!.imageUrl?.let { enclosureUrl ->
+                    entry!!.imageUrl?.let { imageUrl ->
                         AsyncImage(
-                            model = enclosureUrl.toString(),
+                            model = imageUrl.toString(),
                             contentDescription = null,
                             modifier = Modifier.padding(horizontal = 8.dp)
                         )
