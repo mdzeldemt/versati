@@ -38,15 +38,15 @@ private fun parseBlocks(
     parentLinkUrl: String? = null
 ): List<HtmlBlock> {
     val blocks = mutableListOf<HtmlBlock>()
-    val textBuffer = StringBuilder()
+    val buffer = StringBuilder()
 
     fun flushBuffer() {
-        val text = textBuffer.toString().trim()
+        val text = buffer.toString().trim()
         val annotated = parseSpanned(text).toAnnotatedString().trimLineBreaks()
         if (annotated.isNotEmpty()) {
             blocks.add(HtmlBlock.Paragraph(annotated))
         }
-        textBuffer.setLength(0)
+        buffer.clear()
     }
 
     fun traverse(
@@ -83,8 +83,7 @@ private fun parseBlocks(
 
                 element.select("> li")
                     .forEachIndexed { index, li ->
-                        val children =
-                            parseBlocks(li, activeLinkUrl)
+                        val children = parseBlocks(li, activeLinkUrl)
                         if (element.tagName() == "ol") {
                             blocks.add(HtmlBlock.OrderedItem(children, index + 1))
                         } else {
@@ -106,31 +105,32 @@ private fun parseBlocks(
             }
 
             "p", "div", "section", "figure" -> {
-                if (textBuffer.isNotEmpty()) {
+                if (buffer.isNotEmpty()) {
                     flushBuffer()
                 }
 
                 element.childNodes()
                     .forEach { node ->
                         if (node is Element) traverse(node, activeLinkUrl)
-                        else if (node is TextNode) textBuffer.append(node.outerHtml())
+                        else if (node is TextNode) buffer.append(node.outerHtml())
                     }
 
                 flushBuffer()
             }
-            "br" -> textBuffer.append("<br>")
+
+            "br" -> buffer.append("<br>")
 
             else -> {
                 if (element.childrenSize() > 0) {
-                    textBuffer.append("<${element.tagName()}${element.attributes().html()}>")
+                    buffer.append("<${element.tagName()}${element.attributes().html()}>")
                     element.childNodes()
                         .forEach { node ->
                             if (node is Element) traverse(node, activeLinkUrl)
-                            else if (node is TextNode) textBuffer.append(node.outerHtml())
+                            else if (node is TextNode) buffer.append(node.outerHtml())
                         }
-                    textBuffer.append("</${element.tagName()}>")
+                    buffer.append("</${element.tagName()}>")
                 } else {
-                    textBuffer.append(element.outerHtml())
+                    buffer.append(element.outerHtml())
                 }
             }
         }
@@ -139,7 +139,7 @@ private fun parseBlocks(
     element.childNodes()
         .forEach { node ->
             if (node is Element) traverse(node, parentLinkUrl)
-            else if (node is TextNode) textBuffer.append(node.outerHtml())
+            else if (node is TextNode) buffer.append(node.outerHtml())
         }
 
     flushBuffer()
