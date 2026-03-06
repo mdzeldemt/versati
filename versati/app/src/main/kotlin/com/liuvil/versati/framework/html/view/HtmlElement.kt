@@ -107,7 +107,6 @@ private fun HtmlTable(
                                 HtmlElement(child)
                             }
                         }
-
                     }
                 }
             }

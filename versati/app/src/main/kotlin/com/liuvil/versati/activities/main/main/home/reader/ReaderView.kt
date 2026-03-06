@@ -23,6 +23,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,10 +50,11 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.liuvil.versati.framework.android.openShareSheet
 import com.liuvil.versati.framework.android.openUrlExternally
+import com.liuvil.versati.framework.compose.bold
+import com.liuvil.versati.framework.compose.scaledTo
 import com.liuvil.versati.framework.date.formatHumanReadableLong
 import com.liuvil.versati.framework.html.parse.HtmlDocument
 import com.liuvil.versati.framework.html.view.HtmlElement
@@ -63,6 +65,10 @@ import kotlinx.coroutines.launch
 import java.net.URL
 import java.time.OffsetDateTime
 import java.time.ZoneId
+
+private const val HEADING_LARGE_FONT_SIZE_FACTOR = 5f / 4
+private const val HEADING_MEDIUM_FONT_SIZE_FACTOR = 4.5f / 4
+private const val HEADING_SMALL_FONT_SIZE_FACTOR = 4f / 4
 
 private sealed class Dialog {
     data class Details(
@@ -170,79 +176,95 @@ fun ReaderView(
             )
         }
     ) { padding ->
-        when (getEntryStatus) {
-            is Status.Loading ->
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    CircularProgressIndicator()
-                }
-
-            is Status.Success -> {
-                val openUrl: () -> Unit = remember {
-                    {
-                        context.openUrlExternally(
-                            Uri.parse(entry!!.url.toString())
-                        )
+        MaterialTheme(
+            typography = MaterialTheme.typography
+                .copy(
+                    headlineLarge = MaterialTheme.typography.bodyLarge
+                        .scaledTo(HEADING_LARGE_FONT_SIZE_FACTOR)
+                        .bold(),
+                    headlineMedium = MaterialTheme.typography.bodyLarge
+                        .scaledTo(HEADING_MEDIUM_FONT_SIZE_FACTOR)
+                        .bold(),
+                    headlineSmall = MaterialTheme.typography.bodyLarge
+                        .scaledTo(HEADING_SMALL_FONT_SIZE_FACTOR)
+                        .bold()
+                )
+        ) {
+            when (getEntryStatus) {
+                is Status.Loading ->
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        CircularProgressIndicator()
                     }
-                }
 
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(padding)
-                        .padding(
-                            start = 16.dp,
-                            end = 16.dp,
-                            bottom = 16.dp
-                        )
-                ) {
-                    Text(
-                        entry!!.title,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                onClick = openUrl,
-                                indication = null,
-                                interactionSource = null
+                is Status.Success -> {
+                    val openUrl: () -> Unit = remember {
+                        {
+                            context.openUrlExternally(
+                                Uri.parse(entry!!.url.toString())
                             )
-                    )
-
-                    Text(
-                        getEntryShortDetailsText(
-                            entry!!.feedTitle,
-                            entry!!.author,
-                            entry!!.publishedAt
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    entry!!.imageUrl?.let { imageUrl ->
-                        AsyncImage(
-                            model = imageUrl.toString(),
-                            contentDescription = null,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
+                        }
                     }
 
-                    EntryContentView(
-                        entry!!.document
-                    )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(padding)
+                            .padding(
+                                start = 16.dp,
+                                end = 16.dp,
+                                bottom = 16.dp
+                            )
+                    ) {
+                        Text(
+                            text = entry!!.title,
+                            style = MaterialTheme.typography.headlineLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    onClick = openUrl,
+                                    indication = null,
+                                    interactionSource = null
+                                )
+                        )
 
-                    Button(onClick = openUrl) {
-                        Text("Open in web browser")
+                        Text(
+                            getEntryShortDetailsText(
+                                entry!!.feedTitle,
+                                entry!!.author,
+                                entry!!.publishedAt
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        entry!!.imageUrl?.let { imageUrl ->
+                            AsyncImage(
+                                model = imageUrl.toString(),
+                                contentDescription = null,
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                        }
+
+                        SelectionContainer {
+                            EntryContentView(
+                                entry!!.document
+                            )
+                        }
+
+                        Button(onClick = openUrl) {
+                            Text("Open in web browser")
+                        }
                     }
                 }
-            }
 
-            is Status.Failure -> {
-                // TODO: Add error message
+                is Status.Failure -> {
+                    // TODO: Add error message
+                }
             }
         }
     }
@@ -281,14 +303,12 @@ fun ReaderView(
 private fun EntryContentView(
     document: HtmlDocument
 ) {
-    SelectionContainer {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top)
-        ) {
-            document.content.forEach { block ->
-                HtmlElement(block)
-            }
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top)
+    ) {
+        document.content.forEach { block ->
+            HtmlElement(block)
         }
     }
 }
