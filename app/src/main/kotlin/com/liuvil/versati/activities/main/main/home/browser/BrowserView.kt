@@ -98,8 +98,8 @@ import com.liuvil.versati.components.drawer.DrawerItemTitleLabel
 import com.liuvil.versati.components.drawer.DrawerSectionHeader
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderButton
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderTitleLabel
-import com.liuvil.versati.components.fab.LargeSimpleFloatingActionButton
-import com.liuvil.versati.components.fab.SmallSimpleFloatingActionButton
+import com.liuvil.versati.components.LargeActionButton
+import com.liuvil.versati.components.SmallActionButton
 import com.liuvil.versati.components.sheet.ActionBottomSheet
 import com.liuvil.versati.components.sheet.ActionBottomSheetHeader
 import com.liuvil.versati.components.sheet.ActionBottomSheetItem
@@ -689,7 +689,7 @@ fun BrowserView(
                                                         .padding(12.dp)
                                                 ) {
                                                     if (entries.any { !it.isRead }) {
-                                                        LargeSimpleFloatingActionButton(
+                                                        LargeActionButton(
                                                             text = {
                                                                 Text("Mark all as read")
                                                             },
@@ -712,7 +712,7 @@ fun BrowserView(
                                                     Spacer(Modifier.weight(1f))
 
                                                     if (offset > 0) {
-                                                        SmallSimpleFloatingActionButton(
+                                                        SmallActionButton(
                                                             icon = {
                                                                 Icon(
                                                                     imageVector = Icons.AutoMirrored.Default.ArrowBack,
@@ -728,7 +728,7 @@ fun BrowserView(
                                                     }
 
                                                     if (offset + entriesById.size < totalEntries) {
-                                                        SmallSimpleFloatingActionButton(
+                                                        SmallActionButton(
                                                             icon = {
                                                                 Icon(
                                                                     imageVector = Icons.AutoMirrored.Default.ArrowForward,

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -18,7 +19,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -51,6 +51,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.liuvil.versati.components.LargeActionButton
 import com.liuvil.versati.framework.android.openShareSheet
 import com.liuvil.versati.framework.android.openUrlExternally
 import com.liuvil.versati.framework.compose.bold
@@ -69,6 +70,7 @@ import java.time.ZoneId
 private const val HEADING_LARGE_FONT_SIZE_FACTOR = 5f / 4
 private const val HEADING_MEDIUM_FONT_SIZE_FACTOR = 4.5f / 4
 private const val HEADING_SMALL_FONT_SIZE_FACTOR = 4f / 4
+private val FAB_BAR_HEIGHT = 76.dp
 
 private sealed class Dialog {
     data class Details(
@@ -208,56 +210,68 @@ fun ReaderView(
                         }
                     }
 
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                    Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
+                            .fillMaxWidth()
                             .padding(padding)
-                            .padding(
-                                start = 16.dp,
-                                end = 16.dp,
-                                bottom = 16.dp
-                            )
+                            .padding(horizontal = 16.dp)
                     ) {
-                        Text(
-                            text = entry!!.title,
-                            style = MaterialTheme.typography.headlineLarge,
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(
-                                    onClick = openUrl,
-                                    indication = null,
-                                    interactionSource = null
+                                .verticalScroll(rememberScrollState())
+                                .padding(bottom = FAB_BAR_HEIGHT)
+                        ) {
+                            Text(
+                                text = entry!!.title,
+                                style = MaterialTheme.typography.headlineLarge,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(
+                                        onClick = openUrl,
+                                        indication = null,
+                                        interactionSource = null
+                                    )
+                            )
+
+                            Text(
+                                getEntryShortDetailsText(
+                                    entry!!.feedTitle,
+                                    entry!!.author,
+                                    entry!!.publishedAt
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            entry!!.imageUrl?.let { imageUrl ->
+                                AsyncImage(
+                                    model = imageUrl.toString(),
+                                    contentDescription = null,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
                                 )
-                        )
+                            }
 
-                        Text(
-                            getEntryShortDetailsText(
-                                entry!!.feedTitle,
-                                entry!!.author,
-                                entry!!.publishedAt
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        entry!!.imageUrl?.let { imageUrl ->
-                            AsyncImage(
-                                model = imageUrl.toString(),
-                                contentDescription = null,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
+                            SelectionContainer {
+                                EntryContentView(
+                                    entry!!.document
+                                )
+                            }
                         }
 
-                        SelectionContainer {
-                            EntryContentView(
-                                entry!!.document
+                        Box(
+                            modifier = Modifier
+                                .height(FAB_BAR_HEIGHT)
+                                .padding(16.dp)
+                                .align(Alignment.BottomCenter)
+                        ) {
+                            LargeActionButton(
+                                text = {
+                                    Text("Open in web browser")
+                                },
+                                onClick = openUrl
                             )
-                        }
-
-                        Button(onClick = openUrl) {
-                            Text("Open in web browser")
                         }
                     }
                 }

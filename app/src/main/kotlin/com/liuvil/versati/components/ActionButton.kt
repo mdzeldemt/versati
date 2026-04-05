@@ -1,4 +1,4 @@
-package com.liuvil.versati.components.fab
+package com.liuvil.versati.components
 
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.MaterialTheme
@@ -6,7 +6,7 @@ import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.runtime.Composable
 
 @Composable
-fun SmallSimpleFloatingActionButton(
+fun SmallActionButton(
     icon: @Composable () -> Unit,
     onClick: () -> Unit
 ) {
@@ -20,14 +20,22 @@ fun SmallSimpleFloatingActionButton(
 }
 
 @Composable
-fun LargeSimpleFloatingActionButton(
-    text: @Composable () -> Unit,
-    icon: @Composable () -> Unit,
+fun LargeActionButton(
+    text: (@Composable () -> Unit)? = null,
+    icon: (@Composable () -> Unit)? = null,
     onClick: () -> Unit
 ) {
     ExtendedFloatingActionButton(
-        text = text,
-        icon = icon,
+        text = {
+            if (text != null) {
+                text()
+            }
+        },
+        icon = {
+            if (icon != null) {
+                icon()
+            }
+        },
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
         onClick = onClick
