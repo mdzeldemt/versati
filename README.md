@@ -8,10 +8,10 @@ Keep in mind this is a work in progress and a personal project which I work on i
 At the moment, the following features are supported:
 - Light and dark themes
 - Basic and API-key authentication
-- Searching articles
+- Searching entries
 - Adding, removing and editing categories and feeds
 - Refreshing feeds
-- Bookmarking articles
+- Bookmarking entries
 - Looking up bookmarks and reading history
 - Caching
 
