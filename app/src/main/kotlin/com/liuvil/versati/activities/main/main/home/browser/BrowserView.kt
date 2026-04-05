@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
@@ -36,7 +38,6 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.outlined.Today
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,7 +50,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
@@ -79,7 +79,6 @@ import coil3.request.crossfade
 import com.liuvil.versati.activities.main.main.home.browser.dialog.category.add.AddCategoryDialog
 import com.liuvil.versati.activities.main.main.home.browser.dialog.category.edit.EditCategoryDialog
 import com.liuvil.versati.activities.main.main.home.browser.dialog.category.remove.RemoveCategoryDialog
-import com.liuvil.versati.activities.main.main.home.browser.dialog.entry.page.GoToPageDialog
 import com.liuvil.versati.activities.main.main.home.browser.dialog.entry.search.SearchEntriesDialog
 import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.add.AddFeedDialog
 import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.add.Category
@@ -90,15 +89,17 @@ import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.components.ErrorDialog
 import com.liuvil.versati.components.WrapperLayout
-import com.liuvil.versati.components.drawer.DrawerItem
 import com.liuvil.versati.components.drawer.DrawerErrorLabel
+import com.liuvil.versati.components.drawer.DrawerItem
+import com.liuvil.versati.components.drawer.DrawerItemBadge
 import com.liuvil.versati.components.drawer.DrawerItemGroup
 import com.liuvil.versati.components.drawer.DrawerItemIcon
 import com.liuvil.versati.components.drawer.DrawerItemTitleLabel
 import com.liuvil.versati.components.drawer.DrawerSectionHeader
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderButton
-import com.liuvil.versati.components.drawer.DrawerItemBadge
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderTitleLabel
+import com.liuvil.versati.components.fab.LargeSimpleFloatingActionButton
+import com.liuvil.versati.components.fab.SmallSimpleFloatingActionButton
 import com.liuvil.versati.components.sheet.ActionBottomSheet
 import com.liuvil.versati.components.sheet.ActionBottomSheetHeader
 import com.liuvil.versati.components.sheet.ActionBottomSheetItem
@@ -116,7 +117,8 @@ import java.net.URL
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.time.ZoneId
-import kotlin.math.ceil
+
+private val FAB_BAR_HEIGHT = 72.dp
 
 private sealed class Modal
 
@@ -174,11 +176,6 @@ private sealed class Dialog: Modal() {
 
     data class SearchEntries(
         val initialTerm: String
-    ): Dialog()
-
-    data class GoToPage(
-        val currentPage: Int,
-        val totalPages: Int
     ): Dialog()
 
     object MarkEntriesAsRead {
@@ -524,46 +521,57 @@ fun BrowserView(
                 topBar = {
                     TopAppBar(
                         title = {
-                            val title = source.let { source ->
-                                when (source) {
-                                    is Source.Unread -> "Unread"
-                                    is Source.History -> "History"
-                                    is Source.Starred -> "Starred"
-                                    is Source.Category -> categoriesById[source.id]?.title
-                                    is Source.Feed -> feedsById[source.id]?.title
-                                    is Source.Search -> "Search '${source.term}'"
+                            Column {
+                                val title = source.let { source ->
+                                    when (source) {
+                                        is Source.Unread -> "Unread"
+                                        is Source.History -> "History"
+                                        is Source.Starred -> "Starred"
+                                        is Source.Category -> categoriesById[source.id]?.title
+                                        is Source.Feed -> feedsById[source.id]?.title
+                                        is Source.Search -> "Search '${source.term}'"
+                                    }
                                 }
-                            }
 
-                            title?.let {
-                                Text(
-                                    text = it,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable(
-                                            onClick = {
-                                                source.let { source ->
-                                                    when (source) {
-                                                        is Source.Category ->
-                                                            activeModal = Menu.Category(
-                                                                id = source.id
-                                                            )
-                                                        is Source.Feed ->
-                                                            activeModal = Menu.Feed(
-                                                                id = source.id
-                                                            )
-                                                        is Source.Search ->
-                                                            activeModal = Dialog.SearchEntries(
-                                                                initialTerm = source.term
-                                                            )
-                                                        else -> {}
+                                title?.let {
+                                    Text(
+                                        text = it,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable(
+                                                onClick = {
+                                                    source.let { source ->
+                                                        when (source) {
+                                                            is Source.Category ->
+                                                                activeModal = Menu.Category(
+                                                                    id = source.id
+                                                                )
+                                                            is Source.Feed ->
+                                                                activeModal = Menu.Feed(
+                                                                    id = source.id
+                                                                )
+                                                            is Source.Search ->
+                                                                activeModal = Dialog.SearchEntries(
+                                                                    initialTerm = source.term
+                                                                )
+                                                            else -> {}
+                                                        }
                                                     }
-                                                }
-                                            },
-                                            interactionSource = null,
-                                            indication = null
-                                        )
-                                )
+                                                },
+                                                interactionSource = null,
+                                                indication = null
+                                            )
+                                    )
+                                }
+
+                                if ((entriesStatus is Status.Success || entriesStatus is Status.Loading)
+                                        && entriesById.isNotEmpty()) {
+                                    Text(
+                                        text = "${offset + 1} - ${offset + entriesById.size} of $totalEntries",
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                }
                             }
                         },
                         navigationIcon = {
@@ -614,15 +622,17 @@ fun BrowserView(
                             when (entriesStatus) {
                                 is Status.Success, is Status.Loading -> {
                                     val entries = entriesById.values.sortedByDescending { it.publishedAt }
-
                                     if (entries.isNotEmpty()) {
-                                        LazyColumn(
-                                            state = entryListState,
-                                            verticalArrangement = Arrangement.Top,
-                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                        Box(
                                             modifier = Modifier.fillMaxSize()
                                         ) {
-                                            item {
+                                            LazyColumn(
+                                                state = entryListState,
+                                                verticalArrangement = Arrangement.Top,
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                contentPadding = PaddingValues(bottom = FAB_BAR_HEIGHT),
+                                                modifier = Modifier.fillMaxSize()
+                                            ) {
                                                 entries
                                                     .groupBy {
                                                         it.publishedAt
@@ -630,24 +640,23 @@ fun BrowserView(
                                                             .toLocalDate()
                                                     }
                                                     .forEach { (date, entries) ->
-                                                        Text(
-                                                            text = date.formatHumanReadable(),
-                                                            color = MaterialTheme.colorScheme.primary,
-                                                            fontWeight = FontWeight.Bold,
-                                                            modifier = Modifier
-                                                                .fillMaxWidth()
-                                                                .padding(
-                                                                    start = 10.dp,
-                                                                    top = 10.dp,
-                                                                    end = 10.dp
-                                                                )
-                                                        )
+                                                        item {
+                                                            Text(
+                                                                text = date.formatHumanReadable(),
+                                                                color = MaterialTheme.colorScheme.primary,
+                                                                fontWeight = FontWeight.Bold,
+                                                                modifier = Modifier
+                                                                    .fillMaxWidth()
+                                                                    .padding(
+                                                                        start = 10.dp,
+                                                                        top = 10.dp,
+                                                                        end = 10.dp
+                                                                    )
+                                                            )
+                                                        }
 
-                                                        Column (
-                                                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                                        ) {
-                                                            entries.forEach { entry ->
+                                                        entries.forEach { entry ->
+                                                            item {
                                                                 EntryTile(
                                                                     title = entry.title,
                                                                     feedTitle = feedsById[entry.feedId]?.title ?: "...",
@@ -667,10 +676,29 @@ fun BrowserView(
                                                     }
                                             }
 
-                                            item {
-                                                Row(Modifier.padding(12.dp)) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .height(FAB_BAR_HEIGHT)
+                                                    .align(Alignment.BottomCenter)
+                                            ) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(12.dp)
+                                                ) {
                                                     if (entries.any { !it.isRead }) {
-                                                        Button(
+                                                        LargeSimpleFloatingActionButton(
+                                                            text = {
+                                                                Text("Mark all as read")
+                                                            },
+                                                            icon = {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Check,
+                                                                    contentDescription = "Confirm"
+                                                                )
+                                                            },
                                                             onClick = {
                                                                 activeModal = Dialog.MarkEntriesAsRead.Confirmation(
                                                                     entryIds = entries.map {
@@ -678,56 +706,41 @@ fun BrowserView(
                                                                     }
                                                                 )
                                                             }
-                                                        ) {
-                                                            Text("Mark all as read")
-                                                        }
+                                                        )
                                                     }
 
                                                     Spacer(Modifier.weight(1f))
 
                                                     if (offset > 0) {
-                                                        IconButton(
+                                                        SmallSimpleFloatingActionButton(
+                                                            icon = {
+                                                                Icon(
+                                                                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                                                    contentDescription = null
+                                                                )
+                                                            },
                                                             onClick = {
                                                                 coroutineScope.launch {
                                                                     viewModel.onGoToPreviousPage()
                                                                 }
-                                                            },
-                                                        ) {
-                                                            Icon(
-                                                                imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                                                tint = MaterialTheme.colorScheme.primary,
-                                                                contentDescription = null
-                                                            )
-                                                        }
-                                                    }
-
-
-                                                    val currentPage = offset / PAGE_ENTRY_COUNT + 1
-                                                    val totalPages = ceil(totalEntries.toFloat() / PAGE_ENTRY_COUNT).toInt()
-
-                                                    TextButton(
-                                                        onClick = {
-                                                            activeModal = Dialog.GoToPage(
-                                                                currentPage = currentPage,
-                                                                totalPages = totalPages
-                                                            )
-                                                        }
-                                                    ) {
-                                                        Text("$currentPage / $totalPages")
-                                                    }
-
-                                                    if (offset < totalEntries - PAGE_ENTRY_COUNT) {
-                                                        IconButton(
-                                                            onClick = {
-                                                                viewModel.onGoToNextPage()
                                                             }
-                                                        ) {
-                                                            Icon(
-                                                                imageVector = Icons.AutoMirrored.Default.ArrowForward,
-                                                                tint = MaterialTheme.colorScheme.primary,
-                                                                contentDescription = null
-                                                            )
-                                                        }
+                                                        )
+                                                    }
+
+                                                    if (offset + entriesById.size < totalEntries) {
+                                                        SmallSimpleFloatingActionButton(
+                                                            icon = {
+                                                                Icon(
+                                                                    imageVector = Icons.AutoMirrored.Default.ArrowForward,
+                                                                    contentDescription = null
+                                                                )
+                                                            },
+                                                            onClick = {
+                                                                coroutineScope.launch {
+                                                                    viewModel.onGoToNextPage()
+                                                                }
+                                                            }
+                                                        )
                                                     }
                                                 }
                                             }
@@ -1101,18 +1114,6 @@ fun BrowserView(
                         }
 
                         viewModel.onSelectSource(Source.Search(searchTerm))
-                    },
-                    onRespond = {
-                        activeModal = null
-                    }
-                )
-
-            is Dialog.GoToPage ->
-                GoToPageDialog(
-                    initialValue = modal.currentPage,
-                    totalPages = modal.totalPages,
-                    onSubmit = { page ->
-                        viewModel.onGoToPage(page)
                     },
                     onRespond = {
                         activeModal = null

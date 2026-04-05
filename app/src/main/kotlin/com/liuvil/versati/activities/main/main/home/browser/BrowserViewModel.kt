@@ -270,28 +270,6 @@ internal class BrowserViewModel @Inject constructor(
         }
     }
 
-    fun onGoToPage(
-        page: Int
-    ) {
-        viewModelScope.launch {
-            _offset.value = (page - 1) * PAGE_ENTRY_COUNT
-
-            _getEntriesStatus.value = Status.Loading
-
-            getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
-                .onSuccess { (entries, total) ->
-                    _entriesById.value = entries.associateBy { it.id }
-                    _totalEntries.value = total
-                    _getEntriesStatus.value = Status.Success
-                }
-                .onFailure {
-                    _getEntriesStatus.value = Status.Failure(it)
-                }
-
-            _events.emit(Event.LoadEntries.End)
-        }
-    }
-
     fun onGoToPreviousPage() {
         viewModelScope.launch {
             _offset.update { max(it - PAGE_ENTRY_COUNT, 0) }
