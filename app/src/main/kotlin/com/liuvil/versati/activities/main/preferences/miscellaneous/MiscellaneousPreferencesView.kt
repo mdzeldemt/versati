@@ -112,7 +112,7 @@ private fun ColorSchemeTile(
         title = "Color scheme",
         subtitle =
             when (value) {
-                ColorScheme.SYSTEM -> "Follow system settings"
+                ColorScheme.SYSTEM -> "Follow system preferences"
                 ColorScheme.DARK -> "Dark"
                 ColorScheme.LIGHT -> "Light"
             },
