@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Base64
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.liuvil.versati.framework.encryption.Secret
@@ -25,6 +26,9 @@ import javax.inject.Inject
 
 private const val PREFERENCES_DATA_STORE_NAME = "preferences"
 
+private const val DEFAULT_ENTRIES_PER_PAGE = 10
+private val DEFAULT_COLOR_SCHEME = ColorScheme.SYSTEM
+
 private val Context.dataStore by preferencesDataStore(name = PREFERENCES_DATA_STORE_NAME)
 
 private object PreferenceKey {
@@ -39,6 +43,8 @@ private object PreferenceKey {
 
     val CREDENTIAL_API_KEY_CIPHERTEXT = stringPreferencesKey("credential_api_key_ciphertext")
     val CREDENTIAL_API_KEY_IV = stringPreferencesKey("credential_api_key_iv")
+
+    val ENTRIES_PER_PAGE = intPreferencesKey("entries_per_page")
 
     val COLOR_SCHEME = stringPreferencesKey("color_scheme")
 }
@@ -170,13 +176,25 @@ class PreferenceStore @Inject constructor(
         )
     }
 
+    val entriesPerPage: Flow<Int> =
+        getInt(PreferenceKey.ENTRIES_PER_PAGE)
+            .map {
+                it ?: DEFAULT_ENTRIES_PER_PAGE
+            }
+
+    suspend fun setEntriesPerPage(
+        value: Int
+    ) {
+        setInt(PreferenceKey.ENTRIES_PER_PAGE, value)
+    }
+
     val colorScheme: Flow<ColorScheme> =
         getString(PreferenceKey.COLOR_SCHEME)
             .map {
                 if (it != null) {
                     ColorScheme.valueOf(it)
                 } else {
-                    ColorScheme.SYSTEM
+                    DEFAULT_COLOR_SCHEME
                 }
             }
 
@@ -240,6 +258,13 @@ class PreferenceStore @Inject constructor(
             preferences[key]
         }
 
+    private fun getInt(
+        key: Preferences.Key<Int>
+    ): Flow<Int?> =
+        context.dataStore.data.map { preferences ->
+            preferences[key]
+        }
+
     private suspend fun setByteArray(
         key: Preferences.Key<String>,
         value: ByteArray?
@@ -262,6 +287,19 @@ class PreferenceStore @Inject constructor(
     private suspend fun setString(
         key: Preferences.Key<String>,
         value: String?
+    ) {
+        context.dataStore.edit { preferences ->
+            if (value == null) {
+                preferences.remove(key)
+            } else {
+                preferences[key] = value
+            }
+        }
+    }
+
+    private suspend fun setInt(
+        key: Preferences.Key<Int>,
+        value: Int?
     ) {
         context.dataStore.edit { preferences ->
             if (value == null) {

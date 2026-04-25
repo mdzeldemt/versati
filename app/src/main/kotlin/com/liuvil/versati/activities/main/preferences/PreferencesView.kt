@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.liuvil.versati.activities.main.preferences.browsing.BrowsingPreferencesView
 import com.liuvil.versati.activities.main.preferences.connection.ConnectionPreferencesView
 import com.liuvil.versati.activities.main.preferences.miscellaneous.MiscellaneousPreferencesView
 import com.liuvil.versati.activities.main.preferences.overview.OverviewPreferencesView
@@ -16,6 +17,9 @@ private object NavigationDestination {
 
     @Serializable
     object Connections
+
+    @Serializable
+    object Browsing
 
     @Serializable
     object Miscellaneous
@@ -36,6 +40,9 @@ fun PreferencesView(
                 onConnectionClicked = {
                     navController.navigate(NavigationDestination.Connections)
                 },
+                onBrowsingClicked = {
+                    navController.navigate(NavigationDestination.Browsing)
+                },
                 onMiscellaneousClicked = {
                     navController.navigate(NavigationDestination.Miscellaneous)
                 },
@@ -45,6 +52,14 @@ fun PreferencesView(
 
         composable<NavigationDestination.Connections> {
             ConnectionPreferencesView(
+                onDismiss = {
+                    navController.safePop()
+                }
+            )
+        }
+
+        composable<NavigationDestination.Browsing> {
+            BrowsingPreferencesView(
                 onDismiss = {
                     navController.safePop()
                 }

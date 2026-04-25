@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Feed
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,6 +20,7 @@ import com.liuvil.versati.components.scaffold.action.BackButton
 @Composable
 fun OverviewPreferencesView(
     onConnectionClicked: () -> Unit,
+    onBrowsingClicked: () -> Unit,
     onMiscellaneousClicked: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -48,6 +50,12 @@ fun OverviewPreferencesView(
             }
 
             item {
+                BrowsingTile(
+                    onClick = onBrowsingClicked
+                )
+            }
+
+            item {
                 MiscellaneousTile(
                     onClick = onMiscellaneousClicked
                 )
@@ -64,6 +72,18 @@ private fun ConnectionTile(
         title = "Connection",
         subtitle = "Server connection details",
         icon = Icons.Default.Public,
+        onClick = onClick
+    )
+}
+
+@Composable
+private fun BrowsingTile(
+    onClick: () -> Unit
+) {
+    SimpleActionTile(
+        title = "Browsing",
+        subtitle = "List of entries and feeds preferences",
+        icon = Icons.AutoMirrored.Filled.Feed,
         onClick = onClick
     )
 }

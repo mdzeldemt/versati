@@ -19,6 +19,7 @@ import com.liuvil.versati.activities.main.main.home.browser.use_case.RemoveFeedU
 import com.liuvil.versati.framework.api.decodeBitmap
 import com.liuvil.versati.framework.viewmodel.BaseViewModel
 import com.liuvil.versati.framework.viewmodel.status.Status
+import com.liuvil.versati.preferences.PreferenceStore
 import com.liuvil.versati.repository.data.Category
 import com.liuvil.versati.repository.data.Feed
 import com.liuvil.versati.repository.data.Icon
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -35,9 +37,6 @@ import java.net.URL
 import java.time.OffsetDateTime
 import javax.inject.Inject
 import kotlin.math.max
-
-// TODO: Make configurable
-const val PAGE_ENTRY_COUNT = 10
 
 sealed interface Source {
     data object Unread: Source
@@ -108,6 +107,7 @@ internal sealed class Event {
 
 @HiltViewModel
 internal class BrowserViewModel @Inject constructor(
+    private val preferenceStore: PreferenceStore,
     private val getAllCategories: GetAllCategoriesUseCase,
     private val addCategory: AddCategoryUseCase,
     private val editCategory: EditCategoryUseCase,
@@ -280,7 +280,9 @@ internal class BrowserViewModel @Inject constructor(
 
     fun onGoToPreviousPage() {
         viewModelScope.launch {
-            _offset.update { max(it - PAGE_ENTRY_COUNT, 0) }
+            val entriesPerPage = preferenceStore.entriesPerPage.first()
+
+            _offset.update { max(it - entriesPerPage, 0) }
 
             reloadAllEntries()
         }
@@ -288,7 +290,9 @@ internal class BrowserViewModel @Inject constructor(
 
     fun onGoToNextPage() {
         viewModelScope.launch {
-            _offset.update { it + PAGE_ENTRY_COUNT }
+            val entriesPerPage = preferenceStore.entriesPerPage.first()
+
+            _offset.update { it + entriesPerPage }
 
             reloadAllEntries()
         }
@@ -445,7 +449,9 @@ internal class BrowserViewModel @Inject constructor(
     private suspend fun reloadAllEntries(): Result<Pair<List<Entry>, Int>> {
         _entriesStatus.value = Status.Loading
 
-        return getEntries.perform(_source.value, offset.value, PAGE_ENTRY_COUNT)
+        val entriesPerPage = preferenceStore.entriesPerPage.first()
+
+        return getEntries.perform(_source.value, offset.value, entriesPerPage)
             .onSuccess { (entries, total) ->
                 _entriesById.value = entries.associateBy { it.id }
                 _totalEntries.value = total
@@ -460,6 +466,7 @@ internal class BrowserViewModel @Inject constructor(
 
     private suspend fun markAllEntriesAsRead(): Result<Unit> {
         val entryIds = _entriesById.value.keys.toList()
+
         return markEntriesAsRead.perform(entryIds)
             .onSuccess {
                 _events.emit(Event.MarkAllEntriesAsRead.Success)
