@@ -12,11 +12,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-internal sealed class ViewState {
-    data object Loading: ViewState()
-    data class Ready(val colorScheme: ColorScheme): ViewState()
-}
-
 @HiltViewModel
 internal class MiscellaneousPreferencesViewModel @Inject constructor(
     private val preferenceStore: PreferenceStore
@@ -32,14 +27,7 @@ internal class MiscellaneousPreferencesViewModel @Inject constructor(
 
     fun onLoadPreferences() {
         viewModelScope.launch {
-            _colorSchemeStatus.value = Status.Loading
-
-            runCatching {
-                preferenceStore.colorScheme.first()
-            }.onSuccess { colorScheme ->
-                _colorScheme.value = colorScheme
-                _colorSchemeStatus.value = Status.Success
-            }
+            loadPreferences()
         }
     }
 
@@ -47,14 +35,31 @@ internal class MiscellaneousPreferencesViewModel @Inject constructor(
         value: ColorScheme
     ) {
         viewModelScope.launch {
-            _colorSchemeStatus.value = Status.Loading
+            updateColorScheme(value)
+        }
+    }
 
-            runCatching {
-                preferenceStore.setColorScheme(value)
-            }.onSuccess {
-                _colorScheme.value = value
-                _colorSchemeStatus.value = Status.Success
-            }
+    private suspend fun loadPreferences() {
+        _colorSchemeStatus.value = Status.Loading
+
+        runCatching {
+            preferenceStore.colorScheme.first()
+        }.onSuccess { colorScheme ->
+            _colorScheme.value = colorScheme
+            _colorSchemeStatus.value = Status.Success
+        }
+    }
+
+    private suspend fun updateColorScheme(
+        value: ColorScheme
+    ) {
+        _colorSchemeStatus.value = Status.Loading
+
+        runCatching {
+            preferenceStore.setColorScheme(value)
+        }.onSuccess {
+            _colorScheme.value = value
+            _colorSchemeStatus.value = Status.Success
         }
     }
 }
