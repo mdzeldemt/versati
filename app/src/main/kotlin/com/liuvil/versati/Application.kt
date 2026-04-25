@@ -2,21 +2,23 @@ package com.liuvil.versati
 
 import android.app.Application
 import android.content.Context
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
 import dagger.hilt.android.HiltAndroidApp
-import org.acra.BuildConfig
-import org.acra.data.StringFormat
-import org.acra.ktx.initAcra
 
 @HiltAndroidApp
-class Application: Application() {
+class Application: Application(), SingletonImageLoader.Factory {
 
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
 
-        initAcra {
-            buildConfigClass = BuildConfig::class.java
-            reportFormat = StringFormat.JSON
+        // Initialize global crash reports
+        with(ApplicationAcra) {
+            init()
         }
     }
 
+    override fun newImageLoader(context: PlatformContext) =
+        // Initialize global image loader and cache
+        ApplicationImageLoader.build(context)
 }
