@@ -7,15 +7,15 @@ import javax.inject.Inject
 internal class AddCategoryUseCase @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ) {
-    suspend operator fun invoke(
+    suspend fun perform(
         title: String
-    ): Result<Category> {
+    ): Result<Int> {
         val repository = repositoryFactory.create()
 
         return runCatching {
             repository.createCategory(
                 title = title
-            )
+            ).id
         }
     }
 }

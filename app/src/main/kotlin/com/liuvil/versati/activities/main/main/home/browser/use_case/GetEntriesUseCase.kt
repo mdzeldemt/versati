@@ -13,7 +13,7 @@ import javax.inject.Inject
 internal class GetEntriesUseCase @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ) {
-    suspend operator fun invoke(
+    suspend fun perform(
         source: Source,
         offset: Int,
         limit: Int

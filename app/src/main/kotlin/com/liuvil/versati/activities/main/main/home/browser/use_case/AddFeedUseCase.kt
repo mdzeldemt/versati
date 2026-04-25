@@ -8,19 +8,16 @@ import javax.inject.Inject
 internal class AddFeedUseCase @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ) {
-    suspend operator fun invoke(
+    suspend fun perform(
         feedUrl: URL,
         categoryId: Int
-    ): Result<Feed> {
+    ): Result<Int> {
         val repository = repositoryFactory.create()
 
         return runCatching {
-            val feedId = repository.createFeed(
+            repository.createFeed(
                 feedUrl = feedUrl,
                 categoryId = categoryId
-            )
-            repository.getFeedById(
-                id = feedId
             )
         }
     }

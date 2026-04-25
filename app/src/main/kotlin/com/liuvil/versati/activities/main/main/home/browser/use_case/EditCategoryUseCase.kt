@@ -7,7 +7,7 @@ import javax.inject.Inject
 internal class EditCategoryUseCase @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ) {
-    suspend operator fun invoke(
+    suspend fun perform(
         id: Int,
         title: String
     ): Result<Category> {

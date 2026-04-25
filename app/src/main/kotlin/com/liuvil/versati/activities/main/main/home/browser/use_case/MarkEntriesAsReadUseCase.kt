@@ -6,7 +6,7 @@ import javax.inject.Inject
 internal class MarkEntriesAsReadUseCase @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ) {
-    suspend operator fun invoke(
+    suspend fun perform(
         entryIds: List<Int>
     ): Result<Unit> {
         val repository = repositoryFactory.create()

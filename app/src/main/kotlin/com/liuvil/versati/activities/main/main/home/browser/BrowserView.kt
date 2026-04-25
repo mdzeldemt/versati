@@ -306,8 +306,19 @@ fun BrowserView(
                         activeModal = Dialog.RemoveFeed.Failure(event.reason)
                     }
 
-                is Event.LoadEntries.End ->
+                is Event.LoadEntries.Success ->
                     entryListState.scrollToStart()
+
+                is Event.LoadEntries.Failure ->
+                    snackbarHostState.showSnackbar("Failed to load entries")
+
+                is Event.MarkAllEntriesAsRead.Success ->
+                    snackbarHostState.showSnackbar("All entries successfully mark as read")
+
+                is Event.MarkAllEntriesAsRead.Failure ->
+                    snackbarHostState.showSnackbar("Failed to mark all entries as read", "Details") {
+                        activeModal = Dialog.MarkEntriesAsRead.Failure(event.reason)
+                    }
             }
         }
     }

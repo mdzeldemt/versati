@@ -7,7 +7,7 @@ import javax.inject.Inject
 internal class GetFeedUseCase @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ) {
-    suspend operator fun invoke(
+    suspend fun perform(
         id: Int
     ): Result<Feed> {
         val repository = repositoryFactory.create()

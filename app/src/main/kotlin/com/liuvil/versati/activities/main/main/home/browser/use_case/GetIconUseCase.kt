@@ -7,7 +7,7 @@ import javax.inject.Inject
 internal class GetIconUseCase @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ) {
-    suspend operator fun invoke(
+    suspend fun perform(
         id: Int
     ): Result<Icon> {
         val repository = repositoryFactory.create()

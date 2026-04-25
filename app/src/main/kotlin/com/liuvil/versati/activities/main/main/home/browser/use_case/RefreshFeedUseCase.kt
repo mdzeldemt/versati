@@ -7,7 +7,7 @@ import javax.inject.Inject
 internal class RefreshFeedUseCase @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ) {
-    suspend operator fun invoke(
+    suspend fun perform(
         id: Int
     ): Result<Unit> {
         val repository = repositoryFactory.create()

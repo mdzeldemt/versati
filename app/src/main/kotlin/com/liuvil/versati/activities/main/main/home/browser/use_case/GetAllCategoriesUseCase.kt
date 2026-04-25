@@ -7,7 +7,7 @@ import javax.inject.Inject
 internal class GetAllCategoriesUseCase @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ) {
-    suspend operator fun invoke(): Result<List<Category>> {
+    suspend fun perform(): Result<List<Category>> {
         val repository = repositoryFactory.create()
 
         return runCatching {

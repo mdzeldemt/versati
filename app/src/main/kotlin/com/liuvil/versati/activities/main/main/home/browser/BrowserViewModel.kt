@@ -22,9 +22,8 @@ import com.liuvil.versati.framework.viewmodel.status.Status
 import com.liuvil.versati.framework.viewmodel.status.fold
 import com.liuvil.versati.repository.data.Category
 import com.liuvil.versati.repository.data.Feed
+import com.liuvil.versati.repository.data.Icon
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -99,7 +98,13 @@ internal sealed class Event {
     }
 
     object LoadEntries {
-        data object End: Event()
+        data object Success: Event()
+        data class Failure(val reason: Throwable): Event()
+    }
+
+    object MarkAllEntriesAsRead {
+        data object Success: Event()
+        data class Failure(val reason: Throwable): Event()
     }
 }
 
@@ -137,7 +142,6 @@ internal class BrowserViewModel @Inject constructor(
     private val _editFeedStatus = MutableStateFlow<Status>(Status.Success)
     private val _removeFeedStatus = MutableStateFlow<Status>(Status.Success)
     private val _getEntriesStatus = MutableStateFlow<Status>(Status.Success)
-    private val _markEntriesAsReadStatus = MutableStateFlow<Status>(Status.Success)
 
     private val _events = MutableSharedFlow<Event>()
 
@@ -187,154 +191,7 @@ internal class BrowserViewModel @Inject constructor(
 
     fun onReloadAllCategories() {
         viewModelScope.launch {
-            _getCategoriesStatus.value = Status.Loading
-
-            getAllCategories()
-                .onSuccess { categories ->
-                    _categoriesById.value = categories.associateBy { it.id }
-                    _getCategoriesStatus.value = Status.Success
-                }
-                .onFailure { reason ->
-                    _getCategoriesStatus.value = Status.Failure(reason)
-                }
-        }
-    }
-
-    fun onReloadAllFeedsAndIcons() {
-        viewModelScope.launch {
-            _getFeedsStatus.value = Status.Loading
-
-            getAllFeeds()
-                .onSuccess { feeds ->
-                    _feedsById.value = feeds.associateBy { it.id }
-                    _getFeedsStatus.value = Status.Success
-
-                    feeds
-                        .map { feed ->
-                            async {
-                                getIcon(feed.iconId)
-                            }
-                        }
-                        .awaitAll()
-                        .mapNotNull { it.getOrNull() }
-                        .forEach { icon ->
-                            _iconsById.update {
-                                it + (icon.id to decodeBitmap(icon.data).asImageBitmap())
-                            }
-                        }
-                }
-                .onFailure { reason ->
-                    _getFeedsStatus.value = Status.Failure(reason)
-                }
-        }
-    }
-
-    fun onReloadAllEntries() {
-        viewModelScope.launch {
-            _getEntriesStatus.value = Status.Loading
-
-            getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
-                .onSuccess { (entries, total) ->
-                    _entriesById.value = entries.associateBy { it.id }
-                    _totalEntries.value = total
-                    _getEntriesStatus.value = Status.Success
-                }
-                .onFailure {
-                    _getEntriesStatus.value = Status.Failure(it)
-                }
-
-            _events.emit(Event.LoadEntries.End)
-        }
-    }
-
-    fun onSelectSource(
-        source: Source
-    ) {
-        viewModelScope.launch {
-            _source.value = source
-            _offset.value = 0
-
-            _getEntriesStatus.value = Status.Loading
-
-            getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
-                .onSuccess { (entries, total) ->
-                    _entriesById.value = entries.associateBy { it.id }
-                    _totalEntries.value = total
-                    _getEntriesStatus.value = Status.Success
-                }
-                .onFailure {
-                    _getEntriesStatus.value = Status.Failure(it)
-                }
-
-            _events.emit(Event.LoadEntries.End)
-        }
-    }
-
-    fun onGoToPreviousPage() {
-        viewModelScope.launch {
-            _offset.update { max(it - PAGE_ENTRY_COUNT, 0) }
-
-            _getEntriesStatus.value = Status.Loading
-
-            getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
-                .onSuccess { (entries, total) ->
-                    _entriesById.value = entries.associateBy { it.id }
-                    _totalEntries.value = total
-                    _getEntriesStatus.value = Status.Success
-                }
-                .onFailure {
-                    _getEntriesStatus.value = Status.Failure(it)
-                }
-
-            _events.emit(Event.LoadEntries.End)
-        }
-    }
-
-    fun onGoToNextPage() {
-        viewModelScope.launch {
-            _offset.update { it + PAGE_ENTRY_COUNT }
-
-            _getEntriesStatus.value = Status.Loading
-
-            getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
-                .onSuccess { (entries, total) ->
-                    _entriesById.value = entries.associateBy { it.id }
-                    _totalEntries.value = total
-                    _getEntriesStatus.value = Status.Success
-                }
-                .onFailure {
-                    _getEntriesStatus.value = Status.Failure(it)
-                }
-
-            _events.emit(Event.LoadEntries.End)
-        }
-    }
-
-    fun onMarkAllEntriesAsRead() {
-        viewModelScope.launch {
-            _markEntriesAsReadStatus.value = Status.Loading
-
-            val entryIds = entriesById.value.keys.toList()
-            markEntriesAsRead(entryIds)
-                .onSuccess {
-                    _markEntriesAsReadStatus.value = Status.Success
-
-                    _getEntriesStatus.value = Status.Loading
-
-                    getEntries(_source.value, offset.value, PAGE_ENTRY_COUNT)
-                        .onSuccess { (entries, total) ->
-                            _entriesById.value = entries.associateBy { it.id }
-                            _totalEntries.value = total
-                            _getEntriesStatus.value = Status.Success
-                        }
-                        .onFailure {
-                            _getEntriesStatus.value = Status.Failure(it)
-                        }
-
-                    _events.emit(Event.LoadEntries.End)
-                }.onFailure {
-                    _markEntriesAsReadStatus.value = Status.Failure(it)
-                }
+            reloadAllCategories()
         }
     }
 
@@ -342,19 +199,9 @@ internal class BrowserViewModel @Inject constructor(
         title: String
     ) {
         viewModelScope.launch {
-            _addCategoryStatus.value = Status.Loading
-
             addCategory(title)
-                .onSuccess { category ->
-                    _categoriesById.update { it + (category.id to category) }
-                    _addCategoryStatus.value = Status.Success
-
-                    _events.emit(Event.AddCategory.Success(category.id))
-                }
-                .onFailure { reason ->
-                    _addCategoryStatus.value = Status.Failure(reason)
-
-                    _events.emit(Event.AddCategory.Failure(reason))
+                .onSuccess {
+                    reloadAllCategories()
                 }
         }
     }
@@ -364,20 +211,7 @@ internal class BrowserViewModel @Inject constructor(
         title: String
     ) {
         viewModelScope.launch {
-            _editCategoryStatus.value = Status.Loading
-
             editCategory(id, title)
-                .onSuccess { category ->
-                    _categoriesById.update { it + (id to category) }
-                    _editCategoryStatus.value = Status.Success
-
-                    _events.emit(Event.EditCategory.Success(category.id))
-                }
-                .onFailure { reason ->
-                    _editCategoryStatus.value = Status.Failure(reason)
-
-                    _events.emit(Event.EditCategory.Failure(reason))
-                }
         }
     }
 
@@ -385,19 +219,19 @@ internal class BrowserViewModel @Inject constructor(
         id: Int
     ) {
         viewModelScope.launch {
-            _removeCategoryStatus.value = Status.Loading
-
             removeCategory(id)
-                .onSuccess {
-                    _categoriesById.update { it - id }
-                    _removeCategoryStatus.value = Status.Success
+        }
+    }
 
-                    _events.emit(Event.RemoveCategory.Success(id))
-                }
-                .onFailure { reason ->
-                    _removeCategoryStatus.value = Status.Failure(reason)
-
-                    _events.emit(Event.RemoveCategory.Failure(reason))
+    fun onReloadAllFeedsAndIcons() {
+        viewModelScope.launch {
+            reloadAllFeeds()
+                .onSuccess { feeds ->
+                    feeds.map { feed ->
+                        launch {
+                            reloadIcon(feed.iconId)
+                        }
+                    }
                 }
         }
     }
@@ -408,15 +242,7 @@ internal class BrowserViewModel @Inject constructor(
         viewModelScope.launch {
             refreshFeed(id)
                 .onSuccess {
-                    _events.emit(Event.RefreshFeed.Success(id))
-                }
-                .onFailure { reason ->
-                    _events.emit(Event.RefreshFeed.Failure(reason))
-                }
-
-            getFeed(id)
-                .onSuccess { feed ->
-                    _feedsById.update { it + (id to feed) }
+                    reloadFeed(id)
                 }
         }
     }
@@ -426,26 +252,12 @@ internal class BrowserViewModel @Inject constructor(
         categoryId: Int,
     ) {
         viewModelScope.launch {
-            _addFeedStatus.value = Status.Loading
-
             addFeed(feedUrl, categoryId)
-                .onSuccess { feed ->
-                    _feedsById.update { it + (feed.id to feed) }
-                    _addFeedStatus.value = Status.Success
-
-                    _events.emit(Event.AddFeed.Success(feed.id))
-
-                    getIcon(feed.iconId)
-                        .onSuccess { icon ->
-                            _iconsById.update {
-                                it + (icon.id to decodeBitmap(icon.data).asImageBitmap())
-                            }
+                .onSuccess { feedId ->
+                    reloadFeed(feedId)
+                        .onSuccess { feed ->
+                            reloadIcon(feed.iconId)
                         }
-                }
-                .onFailure { reason ->
-                    _addFeedStatus.value = Status.Failure(reason)
-
-                    _events.emit(Event.AddFeed.Failure(reason))
                 }
         }
     }
@@ -457,20 +269,7 @@ internal class BrowserViewModel @Inject constructor(
         categoryId: Int
     ) {
         viewModelScope.launch {
-            _editFeedStatus.value = Status.Loading
-
             editFeed(id, title, feedUrl, categoryId)
-                .onSuccess { feed ->
-                    _feedsById.update { it + (feed.id to feed) }
-                    _editFeedStatus.value = Status.Success
-
-                    _events.emit(Event.EditFeed.Success(feed.id))
-                }
-                .onFailure { reason ->
-                    _editFeedStatus.value = Status.Failure(reason)
-
-                    _events.emit(Event.EditFeed.Failure(reason))
-                }
         }
     }
 
@@ -478,20 +277,253 @@ internal class BrowserViewModel @Inject constructor(
         id: Int
     ) {
         viewModelScope.launch {
-            _removeFeedStatus.value = Status.Loading
-
             removeFeed(id)
+        }
+    }
+
+    fun onReloadAllEntries() {
+        viewModelScope.launch {
+            reloadAllEntries()
+        }
+    }
+
+    fun onSelectSource(
+        source: Source
+    ) {
+        viewModelScope.launch {
+            _source.value = source
+            _offset.value = 0
+
+            reloadAllEntries()
+        }
+    }
+
+    fun onGoToPreviousPage() {
+        viewModelScope.launch {
+            _offset.update { max(it - PAGE_ENTRY_COUNT, 0) }
+
+            reloadAllEntries()
+        }
+    }
+
+    fun onGoToNextPage() {
+        viewModelScope.launch {
+            _offset.update { it + PAGE_ENTRY_COUNT }
+
+            reloadAllEntries()
+        }
+    }
+
+    fun onMarkAllEntriesAsRead() {
+        viewModelScope.launch {
+            markAllEntriesAsRead()
                 .onSuccess {
-                    _feedsById.update { it - id }
-                    _removeFeedStatus.value = Status.Success
-
-                    _events.emit(Event.RemoveFeed.Success(id))
-                }
-                .onFailure { reason ->
-                    _removeFeedStatus.value = Status.Failure(reason)
-
-                    _events.emit(Event.RemoveFeed.Failure(reason))
+                    reloadAllEntries()
                 }
         }
+    }
+
+    private suspend fun reloadAllCategories(): Result<List<Category>> {
+        _getCategoriesStatus.value = Status.Loading
+
+        return getAllCategories.perform()
+            .onSuccess { categories ->
+                _categoriesById.value = categories.associateBy { it.id }
+                _getCategoriesStatus.value = Status.Success
+            }
+            .onFailure { reason ->
+                _getCategoriesStatus.value = Status.Failure(reason)
+            }
+    }
+
+    private suspend fun addCategory(
+        title: String
+    ): Result<Int> {
+        _addCategoryStatus.value = Status.Loading
+
+        return addCategory.perform(title)
+            .onSuccess { categoryId ->
+                _addCategoryStatus.value = Status.Success
+
+                _events.emit(Event.AddCategory.Success(categoryId))
+            }
+            .onFailure { reason ->
+                _addCategoryStatus.value = Status.Failure(reason)
+
+                _events.emit(Event.AddCategory.Failure(reason))
+            }
+    }
+
+    private suspend fun editCategory(
+        id: Int,
+        title: String
+    ): Result<Category> {
+        _editCategoryStatus.value = Status.Loading
+
+        return editCategory.perform(id, title)
+            .onSuccess { category ->
+                _categoriesById.update { it + (id to category) }
+                _editCategoryStatus.value = Status.Success
+
+                _events.emit(Event.EditCategory.Success(category.id))
+            }
+            .onFailure { reason ->
+                _editCategoryStatus.value = Status.Failure(reason)
+
+                _events.emit(Event.EditCategory.Failure(reason))
+            }
+    }
+
+    private suspend fun removeCategory(
+        id: Int
+    ): Result<Unit> {
+        _removeCategoryStatus.value = Status.Loading
+
+        return removeCategory.perform(id)
+            .onSuccess {
+                _categoriesById.update { it - id }
+                _removeCategoryStatus.value = Status.Success
+
+                _events.emit(Event.RemoveCategory.Success(id))
+            }
+            .onFailure { reason ->
+                _removeCategoryStatus.value = Status.Failure(reason)
+
+                _events.emit(Event.RemoveCategory.Failure(reason))
+            }
+    }
+
+    private suspend fun reloadAllFeeds(): Result<List<Feed>> {
+        _getFeedsStatus.value = Status.Loading
+
+        return getAllFeeds.perform()
+            .onSuccess { feeds ->
+                _feedsById.value = feeds.associateBy { it.id }
+                _getFeedsStatus.value = Status.Success
+            }
+            .onFailure { reason ->
+                _getFeedsStatus.value = Status.Failure(reason)
+            }
+    }
+
+    private suspend fun reloadFeed(
+        id: Int
+    ): Result<Feed> {
+        return getFeed.perform(id)
+            .onSuccess { feed ->
+                _feedsById.update { it + (id to feed) }
+            }
+    }
+
+    private suspend fun reloadIcon(
+        id: Int
+    ): Result<Icon> {
+        return getIcon.perform(id)
+            .onSuccess { icon ->
+                _iconsById.update {
+                    it + (icon.id to decodeBitmap(icon.data).asImageBitmap())
+                }
+            }
+    }
+
+    private suspend fun refreshFeed(
+        id: Int
+    ): Result<Unit> {
+        return refreshFeed.perform(id)
+            .onSuccess {
+                _events.emit(Event.RefreshFeed.Success(id))
+            }
+            .onFailure { reason ->
+                _events.emit(Event.RefreshFeed.Failure(reason))
+            }
+    }
+
+    private suspend fun addFeed(
+        feedUrl: URL,
+        categoryId: Int,
+    ): Result<Int> {
+        _addFeedStatus.value = Status.Loading
+
+        return addFeed.perform(feedUrl, categoryId)
+            .onSuccess { feedId ->
+                _addFeedStatus.value = Status.Success
+
+                _events.emit(Event.AddFeed.Success(feedId))
+            }
+            .onFailure { reason ->
+                _addFeedStatus.value = Status.Failure(reason)
+
+                _events.emit(Event.AddFeed.Failure(reason))
+            }
+    }
+
+    private suspend fun editFeed(
+        id: Int,
+        title: String,
+        feedUrl: URL,
+        categoryId: Int,
+    ): Result<Feed> {
+        _editFeedStatus.value = Status.Loading
+
+        return editFeed.perform(id, title, feedUrl, categoryId)
+            .onSuccess { feed ->
+                _feedsById.update { it + (feed.id to feed) }
+                _editFeedStatus.value = Status.Success
+
+                _events.emit(Event.EditFeed.Success(feed.id))
+            }
+            .onFailure { reason ->
+                _editFeedStatus.value = Status.Failure(reason)
+
+                _events.emit(Event.EditFeed.Failure(reason))
+            }
+    }
+
+    private suspend fun removeFeed(
+        id: Int,
+    ): Result<Unit> {
+        _removeFeedStatus.value = Status.Loading
+
+        return removeFeed.perform(id)
+            .onSuccess {
+                _feedsById.update { it - id }
+                _removeFeedStatus.value = Status.Success
+
+                _events.emit(Event.RemoveFeed.Success(id))
+            }
+            .onFailure { reason ->
+                _removeFeedStatus.value = Status.Failure(reason)
+
+                _events.emit(Event.RemoveFeed.Failure(reason))
+            }
+    }
+
+    private suspend fun reloadAllEntries(): Result<Pair<List<Entry>, Int>> {
+        _getEntriesStatus.value = Status.Loading
+
+        return getEntries.perform(_source.value, offset.value, PAGE_ENTRY_COUNT)
+            .onSuccess { (entries, total) ->
+                _entriesById.value = entries.associateBy { it.id }
+                _totalEntries.value = total
+                _getEntriesStatus.value = Status.Success
+
+                _events.emit(Event.LoadEntries.Success)
+            }
+            .onFailure { reason ->
+                _getEntriesStatus.value = Status.Failure(reason)
+
+                _events.emit(Event.LoadEntries.Failure(reason))
+            }
+    }
+
+    private suspend fun markAllEntriesAsRead(): Result<Unit> {
+        val entryIds = _entriesById.value.keys.toList()
+        return markEntriesAsRead.perform(entryIds)
+            .onSuccess {
+                _events.emit(Event.MarkAllEntriesAsRead.Success)
+            }
+            .onFailure { reason ->
+                _events.emit(Event.MarkAllEntriesAsRead.Failure(reason))
+            }
     }
 }
