@@ -59,6 +59,10 @@ internal data class Entry(
 )
 
 internal sealed class Event {
+    object LoadCategories {
+        data class Failure(val reason: Throwable): Event()
+    }
+
     object AddCategory {
         data class Success(val categoryId: Int): Event()
         data class Failure(val reason: Throwable): Event()
@@ -71,6 +75,10 @@ internal sealed class Event {
 
     object RemoveCategory {
         data class Success(val categoryId: Int): Event()
+        data class Failure(val reason: Throwable): Event()
+    }
+
+    object LoadFeeds {
         data class Failure(val reason: Throwable): Event()
     }
 
@@ -131,7 +139,6 @@ internal class BrowserViewModel @Inject constructor(
     private val _entriesById = MutableStateFlow(emptyMap<Int, Entry>())
     private val _totalEntries = MutableStateFlow(0)
 
-    private val _feedsStatus = MutableStateFlow<Status>(Status.Success)
     private val _entriesStatus = MutableStateFlow<Status>(Status.Success)
 
     private val _events = MutableSharedFlow<Event>()
@@ -144,13 +151,6 @@ internal class BrowserViewModel @Inject constructor(
     val iconsById = _iconsById.asStateFlow()
     val entriesById = _entriesById.asStateFlow()
     val totalEntries = _totalEntries.asStateFlow()
-
-    val feedsStatus = _feedsStatus
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(),
-            initialValue = Status.Loading
-        )
 
     val entriesStatus = _entriesStatus
         .stateIn(
@@ -304,6 +304,9 @@ internal class BrowserViewModel @Inject constructor(
             .onSuccess { categories ->
                 _categoriesById.value = categories.associateBy { it.id }
             }
+            .onFailure { reason ->
+                _events.emit(Event.LoadCategories.Failure(reason))
+            }
     }
 
     private suspend fun addCategory(
@@ -346,15 +349,12 @@ internal class BrowserViewModel @Inject constructor(
     }
 
     private suspend fun reloadAllFeeds(): Result<List<Feed>> {
-        _feedsStatus.value = Status.Loading
-
         return getAllFeeds.perform()
             .onSuccess { feeds ->
                 _feedsById.value = feeds.associateBy { it.id }
-                _feedsStatus.value = Status.Success
             }
             .onFailure { reason ->
-                _feedsStatus.value = Status.Failure(reason)
+                _events.emit(Event.LoadFeeds.Failure(reason))
             }
     }
 

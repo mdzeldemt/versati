@@ -69,7 +69,6 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
@@ -133,6 +132,10 @@ private sealed class Menu: Modal() {
 }
 
 private sealed class Dialog: Modal() {
+    object LoadCategories {
+        data class Failure(val reason: Throwable): Dialog()
+    }
+
     object AddCategory {
         data object Input: Dialog()
         data class Failure(val reason: Throwable): Dialog()
@@ -151,6 +154,10 @@ private sealed class Dialog: Modal() {
     data class FeedStatus(
         val id: Int
     ): Dialog()
+
+    object LoadFeeds {
+        data class Failure(val reason: Throwable): Dialog()
+    }
 
     object RefreshFeed {
         data class Confirmation(val id: Int): Dialog()
@@ -176,6 +183,10 @@ private sealed class Dialog: Modal() {
         val initialTerm: String
     ): Dialog()
 
+    object LoadEntries {
+        data class Failure(val reason: Throwable): Dialog()
+    }
+
     object MarkEntriesAsRead {
         data class Confirmation(val entryIds: List<Int>): Dialog()
         data class Failure(val reason: Throwable): Dialog()
@@ -196,7 +207,6 @@ fun BrowserView(
     val entriesById by viewModel.entriesById.collectAsState()
     val totalEntries by viewModel.totalEntries.collectAsState()
 
-    val feedsStatus by viewModel.feedsStatus.collectAsState()
     val entriesStatus by viewModel.entriesStatus.collectAsState()
 
     // Drawer
@@ -225,6 +235,11 @@ fun BrowserView(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
+                is Event.LoadCategories.Failure ->
+                    snackbarHostState.showSnackbar("Failed to load categories", "Details") {
+                        activeModal = Dialog.LoadCategories.Failure(event.reason)
+                    }
+
                 is Event.AddCategory.Success ->
                     snackbarHostState.showSnackbar("Category successfully added", "View") {
                         viewModel.onSelectSource(Source.Category(id = event.categoryId))
@@ -257,6 +272,11 @@ fun BrowserView(
                 is Event.RemoveCategory.Failure ->
                     snackbarHostState.showSnackbar("Failed to remove category", "Details") {
                         activeModal = Dialog.RemoveCategory.Failure(event.reason)
+                    }
+
+                is Event.LoadFeeds.Failure ->
+                    snackbarHostState.showSnackbar("Failed to load feeds", "Details") {
+                        activeModal = Dialog.LoadFeeds.Failure(event.reason)
                     }
 
                 is Event.RefreshFeed.Success ->
@@ -310,7 +330,9 @@ fun BrowserView(
                     entryListState.scrollToStart()
 
                 is Event.LoadEntries.Failure ->
-                    snackbarHostState.showSnackbar("Failed to load entries")
+                    snackbarHostState.showSnackbar("Failed to load entries", "Details") {
+                        activeModal = Dialog.LoadEntries.Failure(event.reason)
+                    }
 
                 is Event.MarkAllEntriesAsRead.Success ->
                     snackbarHostState.showSnackbar("All entries successfully marked as read")
@@ -375,14 +397,12 @@ fun BrowserView(
                             leadingContent = {
                                 DrawerSectionHeaderTitleLabel("Categories and feeds")
 
-                                if (feedsStatus == Status.Success) {
-                                    val totalFailingFeeds = feedsById.values
-                                        .count { it.parsingErrorCount > 0 }
-                                    if (totalFailingFeeds > 0) {
-                                        DrawerErrorLabel(
-                                            "($totalFailingFeeds)"
-                                        )
-                                    }
+                                val totalFailingFeeds = feedsById.values
+                                    .count { it.parsingErrorCount > 0 }
+                                if (totalFailingFeeds > 0) {
+                                    DrawerErrorLabel(
+                                        "($totalFailingFeeds)"
+                                    )
                                 }
                             },
                             trailingContent = {
@@ -618,164 +638,139 @@ fun BrowserView(
                         isBlocking = entriesStatus == Status.Loading
                     ) {
                         entriesStatus.let { entriesStatus ->
-                            when (entriesStatus) {
-                                is Status.Success, is Status.Loading -> {
-                                    val entries = entriesById.values.sortedByDescending { it.publishedAt }
-                                    if (entries.isNotEmpty()) {
-                                        Box(
-                                            modifier = Modifier.fillMaxSize()
-                                        ) {
-                                            LazyColumn(
-                                                state = entryListState,
-                                                verticalArrangement = Arrangement.Top,
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                contentPadding = PaddingValues(bottom = FAB_BAR_HEIGHT),
-                                                modifier = Modifier.fillMaxSize()
-                                            ) {
-                                                entries
-                                                    .groupBy {
-                                                        it.publishedAt
-                                                            .atZoneSameInstant(ZoneId.systemDefault())
-                                                            .toLocalDate()
-                                                    }
-                                                    .forEach { (date, entries) ->
-                                                        item {
-                                                            Text(
-                                                                text = date.formatHumanReadable(),
-                                                                color = MaterialTheme.colorScheme.primary,
-                                                                fontWeight = FontWeight.Bold,
-                                                                modifier = Modifier
-                                                                    .fillMaxWidth()
-                                                                    .padding(
-                                                                        start = 10.dp,
-                                                                        top = 10.dp,
-                                                                        end = 10.dp
-                                                                    )
-                                                            )
-                                                        }
-
-                                                        entries.forEach { entry ->
-                                                            item {
-                                                                EntryTile(
-                                                                    title = entry.title,
-                                                                    feedTitle = feedsById[entry.feedId]?.title ?: "...",
-                                                                    timeSincePublished = Duration.between(
-                                                                        entry.publishedAt,
-                                                                        OffsetDateTime.now()
-                                                                    ),
-                                                                    content = entry.text,
-                                                                    imageUrl = entry.imageUrl,
-                                                                    isRead = entry.isRead,
-                                                                    onClick = {
-                                                                        onEntryClicked(entry.id)
-                                                                    }
-                                                                )
-                                                            }
-                                                        }
-                                                    }
+                            val entries = entriesById.values.sortedByDescending { it.publishedAt }
+                            if (entries.isNotEmpty()) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    LazyColumn(
+                                        state = entryListState,
+                                        verticalArrangement = Arrangement.Top,
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        contentPadding = PaddingValues(bottom = FAB_BAR_HEIGHT),
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        entries
+                                            .groupBy {
+                                                it.publishedAt
+                                                    .atZoneSameInstant(ZoneId.systemDefault())
+                                                    .toLocalDate()
                                             }
+                                            .forEach { (date, entries) ->
+                                                item {
+                                                    Text(
+                                                        text = date.formatHumanReadable(),
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(
+                                                                start = 10.dp,
+                                                                top = 10.dp,
+                                                                end = 10.dp
+                                                            )
+                                                    )
+                                                }
 
-                                            Box(
-                                                modifier = Modifier
-                                                    .height(FAB_BAR_HEIGHT)
-                                                    .align(Alignment.BottomCenter)
-                                            ) {
-                                                Row(
-                                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .padding(12.dp)
-                                                ) {
-                                                    if (entries.any { !it.isRead }) {
-                                                        LargeActionButton(
-                                                            text = {
-                                                                Text("Mark all as read")
-                                                            },
-                                                            icon = {
-                                                                Icon(
-                                                                    imageVector = Icons.Default.Check,
-                                                                    contentDescription = "Confirm"
-                                                                )
-                                                            },
+                                                entries.forEach { entry ->
+                                                    item {
+                                                        EntryTile(
+                                                            title = entry.title,
+                                                            feedTitle = feedsById[entry.feedId]?.title ?: "...",
+                                                            timeSincePublished = Duration.between(
+                                                                entry.publishedAt,
+                                                                OffsetDateTime.now()
+                                                            ),
+                                                            content = entry.text,
+                                                            imageUrl = entry.imageUrl,
+                                                            isRead = entry.isRead,
                                                             onClick = {
-                                                                activeModal = Dialog.MarkEntriesAsRead.Confirmation(
-                                                                    entryIds = entries.map {
-                                                                        it.id
-                                                                    }
-                                                                )
-                                                            }
-                                                        )
-                                                    }
-
-                                                    Spacer(Modifier.weight(1f))
-
-                                                    if (offset > 0) {
-                                                        SmallActionButton(
-                                                            icon = {
-                                                                Icon(
-                                                                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                                                    contentDescription = null
-                                                                )
-                                                            },
-                                                            onClick = {
-                                                                coroutineScope.launch {
-                                                                    viewModel.onGoToPreviousPage()
-                                                                }
-                                                            }
-                                                        )
-                                                    }
-
-                                                    if (offset + entriesById.size < totalEntries) {
-                                                        SmallActionButton(
-                                                            icon = {
-                                                                Icon(
-                                                                    imageVector = Icons.AutoMirrored.Default.ArrowForward,
-                                                                    contentDescription = null
-                                                                )
-                                                            },
-                                                            onClick = {
-                                                                coroutineScope.launch {
-                                                                    viewModel.onGoToNextPage()
-                                                                }
+                                                                onEntryClicked(entry.id)
                                                             }
                                                         )
                                                     }
                                                 }
                                             }
-                                        }
-                                    } else if (entriesStatus == Status.Success) {
-                                        Box(
-                                            contentAlignment = Alignment.Center,
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .height(FAB_BAR_HEIGHT)
+                                            .align(Alignment.BottomCenter)
+                                    ) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier
-                                                .fillMaxSize()
-                                                .verticalScroll(rememberScrollState())
+                                                .fillMaxWidth()
+                                                .padding(12.dp)
                                         ) {
-                                            Text("No entries found.")
+                                            if (entries.any { !it.isRead }) {
+                                                LargeActionButton(
+                                                    text = {
+                                                        Text("Mark all as read")
+                                                    },
+                                                    icon = {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Check,
+                                                            contentDescription = "Confirm"
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        activeModal = Dialog.MarkEntriesAsRead.Confirmation(
+                                                            entryIds = entries.map {
+                                                                it.id
+                                                            }
+                                                        )
+                                                    }
+                                                )
+                                            }
+
+                                            Spacer(Modifier.weight(1f))
+
+                                            if (offset > 0) {
+                                                SmallActionButton(
+                                                    icon = {
+                                                        Icon(
+                                                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        coroutineScope.launch {
+                                                            viewModel.onGoToPreviousPage()
+                                                        }
+                                                    }
+                                                )
+                                            }
+
+                                            if (offset + entriesById.size < totalEntries) {
+                                                SmallActionButton(
+                                                    icon = {
+                                                        Icon(
+                                                            imageVector = Icons.AutoMirrored.Default.ArrowForward,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        coroutineScope.launch {
+                                                            viewModel.onGoToNextPage()
+                                                        }
+                                                    }
+                                                )
+                                            }
                                         }
                                     }
                                 }
-
-                                is Status.Failure ->
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .verticalScroll(rememberScrollState())
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Text(
-                                                text = "Failed to load entries",
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                            Text(
-                                                text = entriesStatus.reason.detailedMessage,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    }
+                            } else if (entriesStatus == Status.Success || entriesStatus is Status.Failure) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    Text("No entries found.")
+                                }
                             }
                         }
                     }
@@ -904,6 +899,15 @@ fun BrowserView(
                     }
                 }
 
+            is Dialog.LoadCategories.Failure ->
+                ErrorDialog(
+                    titleText = "Failed to load categories",
+                    bodyText = modal.reason.detailedMessage,
+                    onConfirm = {
+                        activeModal = null
+                    }
+                )
+
             is Dialog.AddCategory.Input ->
                 AddCategoryDialog(
                     onSubmit = {
@@ -987,6 +991,15 @@ fun BrowserView(
                         }
                     )
                 }
+
+            is Dialog.LoadFeeds.Failure ->
+                ErrorDialog(
+                    titleText = "Failed to load feeds",
+                    bodyText = modal.reason.detailedMessage,
+                    onConfirm = {
+                        activeModal = null
+                    }
+                )
 
             is Dialog.RefreshFeed.Confirmation ->
                 feedsById[modal.id]?.let { feed ->
@@ -1115,6 +1128,15 @@ fun BrowserView(
                         viewModel.onSelectSource(Source.Search(searchTerm))
                     },
                     onRespond = {
+                        activeModal = null
+                    }
+                )
+
+            is Dialog.LoadEntries.Failure ->
+                ErrorDialog(
+                    titleText = "Failed to load entries",
+                    bodyText = modal.reason.detailedMessage,
+                    onConfirm = {
                         activeModal = null
                     }
                 )
