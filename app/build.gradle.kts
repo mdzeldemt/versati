@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.liuvil.versati"
+    namespace = "com.mdzeldemt.versati"
 
     compileSdk = 35
 
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.liuvil.versati"
+        applicationId = "com.mdzeldemt.versati"
         minSdk = 26
     }
 
