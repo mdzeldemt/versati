@@ -7,7 +7,7 @@ import javax.inject.Inject
 internal class UpdateBaseUrlUseCase @Inject constructor(
     private val preferencesStore: PreferenceStore
 ) {
-    suspend operator fun invoke(
+    suspend fun perform(
         value: URL?
     ): Result<Unit> {
         return runCatching {

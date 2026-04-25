@@ -7,7 +7,7 @@ import javax.inject.Inject
 internal class GetDetailsUseCase @Inject constructor(
     private val repositoryFactory: RepositoryFactory
 ) {
-    suspend operator fun invoke(): Result<Details> {
+    suspend fun perform(): Result<Details> {
         val repository = repositoryFactory.create()
 
         return runCatching {

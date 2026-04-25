@@ -8,7 +8,7 @@ import javax.inject.Inject
 internal class GetPreferencesUseCase @Inject constructor(
     private val preferencesStore: PreferenceStore
 ) {
-    suspend operator fun invoke(): Result<Preferences> {
+    suspend fun perform(): Result<Preferences> {
         return runCatching {
             val baseUrl = preferencesStore.baseUrl.first()
             val credentials = preferencesStore.credentials.first()

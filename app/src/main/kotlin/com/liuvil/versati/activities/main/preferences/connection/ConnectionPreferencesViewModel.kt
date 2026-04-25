@@ -67,34 +67,13 @@ internal class ConnectionPreferencesViewModel @Inject constructor(
 
     fun onLoadPreferences() {
         viewModelScope.launch {
-            _preferencesStatus.value = Status.Loading
-
-            getPreferences()
-                .onSuccess { preferences ->
-                    _preferences.value = preferences
-                    _preferencesStatus.value = Status.Success
-                }.onFailure { reason ->
-                    _preferencesStatus.value = Status.Failure(reason)
-                }
+            loadPreferences()
         }
     }
 
     fun onReloadDetails() {
         viewModelScope.launch {
-            _detailsStatus.value = Status.Loading
-
-            getDetails()
-                .onSuccess { details ->
-                    _details.value = details
-                    _detailsStatus.value = Status.Success
-
-                    _events.emit(Event.LoadDetails.Success)
-                }
-                .onFailure { reason ->
-                    _detailsStatus.value = Status.Failure(reason)
-
-                    _events.emit(Event.LoadDetails.Failure(reason))
-                }
+            reloadDetails()
         }
     }
 
@@ -102,21 +81,7 @@ internal class ConnectionPreferencesViewModel @Inject constructor(
         value: URL?
     ) {
         viewModelScope.launch {
-            _preferencesStatus.value = Status.Loading
-
             updateBaseUrl(value)
-                .onSuccess {
-                    _preferences.update {
-                        it.copy(
-                            baseUrl = value
-                        )
-                    }
-
-                    _preferencesStatus.value = Status.Success
-                }
-                .onFailure { reason ->
-                    _preferencesStatus.value = Status.Failure(reason)
-                }
         }
     }
 
@@ -124,21 +89,76 @@ internal class ConnectionPreferencesViewModel @Inject constructor(
         value: Credentials?
     ) {
         viewModelScope.launch {
-            _preferencesStatus.value = Status.Loading
-
             updateCredentials(value)
-                .onSuccess {
-                    _preferences.update {
-                        it.copy(
-                            credentials = value
-                        )
-                    }
-
-                    _preferencesStatus.value = Status.Success
-                }
-                .onFailure { reason ->
-                    _preferencesStatus.value = Status.Failure(reason)
-                }
         }
+    }
+
+    private suspend fun loadPreferences(): Result<Preferences> {
+        _preferencesStatus.value = Status.Loading
+
+        return getPreferences.perform()
+            .onSuccess { preferences ->
+                _preferences.value = preferences
+                _preferencesStatus.value = Status.Success
+            }.onFailure { reason ->
+                _preferencesStatus.value = Status.Failure(reason)
+            }
+    }
+
+    private suspend fun reloadDetails(): Result<Details> {
+        _detailsStatus.value = Status.Loading
+
+        return getDetails.perform()
+            .onSuccess { details ->
+                _details.value = details
+                _detailsStatus.value = Status.Success
+
+                _events.emit(Event.LoadDetails.Success)
+            }
+            .onFailure { reason ->
+                _detailsStatus.value = Status.Failure(reason)
+
+                _events.emit(Event.LoadDetails.Failure(reason))
+            }
+    }
+
+    private suspend fun updateBaseUrl(
+        value: URL?
+    ) {
+        _preferencesStatus.value = Status.Loading
+
+        updateBaseUrl.perform(value)
+            .onSuccess {
+                _preferences.update {
+                    it.copy(
+                        baseUrl = value
+                    )
+                }
+
+                _preferencesStatus.value = Status.Success
+            }
+            .onFailure { reason ->
+                _preferencesStatus.value = Status.Failure(reason)
+            }
+    }
+
+    private suspend fun updateCredentials(
+        value: Credentials?
+    ): Result<Unit> {
+        _preferencesStatus.value = Status.Loading
+
+        return updateCredentials.perform(value)
+            .onSuccess {
+                _preferences.update {
+                    it.copy(
+                        credentials = value
+                    )
+                }
+
+                _preferencesStatus.value = Status.Success
+            }
+            .onFailure { reason ->
+                _preferencesStatus.value = Status.Failure(reason)
+            }
     }
 }
