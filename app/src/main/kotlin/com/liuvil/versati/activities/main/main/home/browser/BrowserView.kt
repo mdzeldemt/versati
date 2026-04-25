@@ -88,6 +88,8 @@ import com.liuvil.versati.activities.main.main.home.browser.dialog.feed.status.F
 import com.liuvil.versati.components.BlockingBox
 import com.liuvil.versati.components.ConfirmationDialog
 import com.liuvil.versati.components.ErrorDialog
+import com.liuvil.versati.components.LargeActionButton
+import com.liuvil.versati.components.SmallActionButton
 import com.liuvil.versati.components.WrapperLayout
 import com.liuvil.versati.components.drawer.DrawerErrorLabel
 import com.liuvil.versati.components.drawer.DrawerItem
@@ -98,8 +100,6 @@ import com.liuvil.versati.components.drawer.DrawerItemTitleLabel
 import com.liuvil.versati.components.drawer.DrawerSectionHeader
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderButton
 import com.liuvil.versati.components.drawer.DrawerSectionHeaderTitleLabel
-import com.liuvil.versati.components.LargeActionButton
-import com.liuvil.versati.components.SmallActionButton
 import com.liuvil.versati.components.sheet.ActionBottomSheet
 import com.liuvil.versati.components.sheet.ActionBottomSheetHeader
 import com.liuvil.versati.components.sheet.ActionBottomSheetItem
@@ -228,11 +228,13 @@ fun BrowserView(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is Event.AddCategory.Success -> {
-                    drawerState.close()
-                    viewModel.onSelectSource(Source.Category(id = event.categoryId))
-                    snackbarHostState.showSnackbar("Category successfully added")
-                }
+                is Event.AddCategory.Success ->
+                    snackbarHostState.showSnackbar("Category successfully added", "View") {
+                        viewModel.onSelectSource(Source.Category(id = event.categoryId))
+                        coroutineScope.launch {
+                            drawerState.close()
+                        }
+                    }
 
                 is Event.AddCategory.Failure ->
                     snackbarHostState.showSnackbar("Failed to add category", "Details") {
@@ -240,45 +242,46 @@ fun BrowserView(
                     }
 
                 is Event.EditCategory.Success ->
-                    viewModel.onSelectSource(Source.Category(id = event.categoryId))
+                    snackbarHostState.showSnackbar("Category successfully edited", "View") {
+                        viewModel.onSelectSource(Source.Category(id = event.categoryId))
+                        coroutineScope.launch {
+                            drawerState.close()
+                        }
+                    }
 
                 is Event.EditCategory.Failure ->
                     snackbarHostState.showSnackbar("Failed to edit category", "Details") {
                         activeModal = Dialog.EditCategory.Failure(event.reason)
                     }
 
-                is Event.RemoveCategory.Success -> {
-                    source.let { source ->
-                        if (source == Source.Category(id = event.categoryId)
-                            || source is Source.Feed && feedsById[source.id]?.categoryId == event.categoryId) {
-                            viewModel.onSelectSource(Source.Unread)
-                        }
-                    }
-
+                is Event.RemoveCategory.Success ->
                     snackbarHostState.showSnackbar("Category successfully removed")
-                }
 
                 is Event.RemoveCategory.Failure ->
                     snackbarHostState.showSnackbar("Failed to remove category", "Details") {
                         activeModal = Dialog.RemoveCategory.Failure(event.reason)
                     }
 
-                is Event.RefreshFeed.Success -> {
-                    drawerState.close()
-                    viewModel.onSelectSource(Source.Feed(id = event.feedId))
-                    snackbarHostState.showSnackbar("Feed successfully refreshed")
-                }
+                is Event.RefreshFeed.Success ->
+                    snackbarHostState.showSnackbar("Feed successfully refreshed", "View") {
+                        viewModel.onSelectSource(Source.Feed(id = event.feedId))
+                        coroutineScope.launch {
+                            drawerState.close()
+                        }
+                    }
 
                 is Event.RefreshFeed.Failure ->
                     snackbarHostState.showSnackbar("Failed to refresh feed", "Details") {
                         activeModal = Dialog.RefreshFeed.Failure(event.reason)
                     }
 
-                is Event.AddFeed.Success -> {
-                    drawerState.close()
-                    viewModel.onSelectSource(Source.Feed(id = event.feedId))
-                    snackbarHostState.showSnackbar("Feed successfully added")
-                }
+                is Event.AddFeed.Success ->
+                    snackbarHostState.showSnackbar("Feed successfully added", "View") {
+                        viewModel.onSelectSource(Source.Feed(id = event.feedId))
+                        coroutineScope.launch {
+                            drawerState.close()
+                        }
+                    }
 
                 is Event.AddFeed.Failure ->
                     snackbarHostState.showSnackbar("Failed to add feed", "Details") {
@@ -286,20 +289,20 @@ fun BrowserView(
                     }
 
                 is Event.EditFeed.Success ->
-                    viewModel.onSelectSource(Source.Feed(id = event.feedId))
+                    snackbarHostState.showSnackbar("Feed successfully edited", "View") {
+                        viewModel.onSelectSource(Source.Feed(id = event.feedId))
+                        coroutineScope.launch {
+                            drawerState.close()
+                        }
+                    }
 
                 is Event.EditFeed.Failure ->
                     snackbarHostState.showSnackbar("Failed to edit feed", "Details") {
                         activeModal = Dialog.EditFeed.Failure(event.reason)
                     }
 
-                is Event.RemoveFeed.Success -> {
-                    if (source == Source.Feed(id = event.feedId)) {
-                        viewModel.onSelectSource(Source.Unread)
-                    }
-
+                is Event.RemoveFeed.Success ->
                     snackbarHostState.showSnackbar("Feed successfully removed")
-                }
 
                 is Event.RemoveFeed.Failure ->
                     snackbarHostState.showSnackbar("Failed to remove feed", "Details") {
@@ -313,7 +316,7 @@ fun BrowserView(
                     snackbarHostState.showSnackbar("Failed to load entries")
 
                 is Event.MarkAllEntriesAsRead.Success ->
-                    snackbarHostState.showSnackbar("All entries successfully mark as read")
+                    snackbarHostState.showSnackbar("All entries successfully marked as read")
 
                 is Event.MarkAllEntriesAsRead.Failure ->
                     snackbarHostState.showSnackbar("Failed to mark all entries as read", "Details") {
