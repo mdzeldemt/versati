@@ -131,7 +131,6 @@ internal class BrowserViewModel @Inject constructor(
     private val _entriesById = MutableStateFlow(emptyMap<Int, Entry>())
     private val _totalEntries = MutableStateFlow(0)
 
-    private val _categoriesStatus = MutableStateFlow<Status>(Status.Success)
     private val _feedsStatus = MutableStateFlow<Status>(Status.Success)
     private val _entriesStatus = MutableStateFlow<Status>(Status.Success)
 
@@ -145,13 +144,6 @@ internal class BrowserViewModel @Inject constructor(
     val iconsById = _iconsById.asStateFlow()
     val entriesById = _entriesById.asStateFlow()
     val totalEntries = _totalEntries.asStateFlow()
-
-    val categoriesStatus = _categoriesStatus
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(),
-            initialValue = Status.Loading
-        )
 
     val feedsStatus = _feedsStatus
         .stateIn(
@@ -308,15 +300,9 @@ internal class BrowserViewModel @Inject constructor(
     }
 
     private suspend fun reloadAllCategories(): Result<List<Category>> {
-        _categoriesStatus.value = Status.Loading
-
         return getAllCategories.perform()
             .onSuccess { categories ->
                 _categoriesById.value = categories.associateBy { it.id }
-                _categoriesStatus.value = Status.Success
-            }
-            .onFailure { reason ->
-                _categoriesStatus.value = Status.Failure(reason)
             }
     }
 

@@ -38,7 +38,6 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.outlined.Today
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -110,7 +109,6 @@ import com.liuvil.versati.framework.kotlin.runIf
 import com.liuvil.versati.framework.throwable.detailedMessage
 import com.liuvil.versati.framework.time.toHumanReadable
 import com.liuvil.versati.framework.viewmodel.status.Status
-import com.liuvil.versati.framework.viewmodel.status.fold
 import com.liuvil.versati.framework.viewmodel.viewOf
 import kotlinx.coroutines.launch
 import java.net.URL
@@ -198,7 +196,6 @@ fun BrowserView(
     val entriesById by viewModel.entriesById.collectAsState()
     val totalEntries by viewModel.totalEntries.collectAsState()
 
-    val categoriesStatus by viewModel.categoriesStatus.collectAsState()
     val feedsStatus by viewModel.feedsStatus.collectAsState()
     val entriesStatus by viewModel.entriesStatus.collectAsState()
 
@@ -398,36 +395,63 @@ fun BrowserView(
                             }
                         )
 
-                        when (fold(categoriesStatus, feedsStatus)) {
-                            is Status.Loading ->
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    CircularProgressIndicator()
+                        val categories = categoriesById.values.sortedBy { it.title }
+                        val feedsByCategoryId = feedsById.values
+                            .sortedBy { it.title }
+                            .groupBy { it.categoryId }
+
+                        categories.forEach { category ->
+                            val expanded = expandedCategories.getOrDefault(category.id, false)
+                            DrawerItemGroup(
+                                label = {
+                                    DrawerItemTitleLabel(category.title)
+                                },
+                                expanded = expanded,
+                                selected = source == Source.Category(category.id),
+                                badge = {
+                                    val categoryFailingFeeds = feedsById.values
+                                        .filter { it.categoryId == category.id }
+                                        .count { it.parsingErrorCount > 0 }
+                                    if (categoryFailingFeeds > 0) {
+                                        DrawerErrorLabel(
+                                            "(${categoryFailingFeeds})"
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    coroutineScope.launch {
+                                        drawerState.close()
+                                    }
+
+                                    viewModel.onSelectSource(Source.Category(category.id))
+                                },
+                                onLongClick = {
+                                    activeModal = Menu.Category(category.id)
+                                },
+                                onToggle = {
+                                    if (expanded) {
+                                        expandedCategories.remove(category.id)
+                                    } else {
+                                        expandedCategories[category.id] = true
+                                    }
                                 }
-
-                            else -> {
-                                val categories = categoriesById.values.sortedBy { it.title }
-                                val feedsByCategoryId = feedsById.values
-                                    .sortedBy { it.title }
-                                    .groupBy { it.categoryId }
-
-                                categories.forEach { category ->
-                                    val expanded = expandedCategories.getOrDefault(category.id, false)
-                                    DrawerItemGroup(
+                            ) {
+                                feedsByCategoryId.getOrDefault(category.id, emptyList()).forEach { feed ->
+                                    DrawerItem(
                                         label = {
-                                            DrawerItemTitleLabel(category.title)
+                                            DrawerItemTitleLabel(feed.title)
                                         },
-                                        expanded = expanded,
-                                        selected = source == Source.Category(category.id),
+                                        icon = {
+                                            iconsById[feed.iconId]?.let {
+                                                DrawerItemIcon(it)
+                                            }
+                                        },
+                                        selected = source == Source.Feed(feed.id),
                                         badge = {
-                                            val categoryFailingFeeds = feedsById.values
-                                                .filter { it.categoryId == category.id }
-                                                .count { it.parsingErrorCount > 0 }
-                                            if (categoryFailingFeeds > 0) {
-                                                DrawerErrorLabel(
-                                                    "(${categoryFailingFeeds})"
+                                            if (feed.parsingErrorCount > 0) {
+                                                DrawerItemBadge(
+                                                    imageVector = Icons.Default.ErrorOutline,
+                                                    error = true
                                                 )
                                             }
                                         },
@@ -436,51 +460,12 @@ fun BrowserView(
                                                 drawerState.close()
                                             }
 
-                                            viewModel.onSelectSource(Source.Category(category.id))
+                                            viewModel.onSelectSource(Source.Feed(feed.id))
                                         },
                                         onLongClick = {
-                                            activeModal = Menu.Category(category.id)
+                                            activeModal = Menu.Feed(feed.id)
                                         },
-                                        onToggle = {
-                                            if (expanded) {
-                                                expandedCategories.remove(category.id)
-                                            } else {
-                                                expandedCategories[category.id] = true
-                                            }
-                                        }
-                                    ) {
-                                        feedsByCategoryId.getOrDefault(category.id, emptyList()).forEach { feed ->
-                                            DrawerItem(
-                                                label = {
-                                                    DrawerItemTitleLabel(feed.title)
-                                                },
-                                                icon = {
-                                                    iconsById[feed.iconId]?.let {
-                                                        DrawerItemIcon(it)
-                                                    }
-                                                },
-                                                selected = source == Source.Feed(feed.id),
-                                                badge = {
-                                                    if (feed.parsingErrorCount > 0) {
-                                                        DrawerItemBadge(
-                                                            imageVector = Icons.Default.ErrorOutline,
-                                                            error = true
-                                                        )
-                                                    }
-                                                },
-                                                onClick = {
-                                                    coroutineScope.launch {
-                                                        drawerState.close()
-                                                    }
-
-                                                    viewModel.onSelectSource(Source.Feed(feed.id))
-                                                },
-                                                onLongClick = {
-                                                    activeModal = Menu.Feed(feed.id)
-                                                },
-                                            )
-                                        }
-                                    }
+                                    )
                                 }
                             }
                         }
