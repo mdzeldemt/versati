@@ -469,7 +469,7 @@ internal class BrowserViewModel @Inject constructor(
                 .onFailure { reason ->
                     _editFeedStatus.value = Status.Failure(reason)
 
-                    _events.emit(Event.AddFeed.Failure(reason))
+                    _events.emit(Event.EditFeed.Failure(reason))
                 }
         }
     }
@@ -490,7 +490,7 @@ internal class BrowserViewModel @Inject constructor(
                 .onFailure { reason ->
                     _removeFeedStatus.value = Status.Failure(reason)
 
-                    _events.emit(Event.AddFeed.Failure(reason))
+                    _events.emit(Event.RemoveFeed.Failure(reason))
                 }
         }
     }
