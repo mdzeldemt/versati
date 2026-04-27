@@ -555,6 +555,8 @@ fun BrowserView(
                                 title?.let {
                                     Text(
                                         text = it,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
                                         style = MaterialTheme.typography.titleLarge,
                                         modifier = Modifier
                                             .fillMaxWidth()
