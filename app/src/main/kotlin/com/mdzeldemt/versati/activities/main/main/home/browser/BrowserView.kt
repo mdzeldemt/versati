@@ -109,6 +109,7 @@ import com.mdzeldemt.versati.framework.throwable.detailedMessage
 import com.mdzeldemt.versati.framework.time.toHumanReadable
 import com.mdzeldemt.versati.framework.viewmodel.status.Status
 import com.mdzeldemt.versati.framework.viewmodel.viewOf
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.net.URL
 import java.time.Duration
@@ -234,113 +235,115 @@ fun BrowserView(
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            when (event) {
-                is Event.LoadCategories.Failure ->
-                    snackbarHostState.showSnackbar("Failed to load categories", "Details") {
-                        activeModal = Dialog.LoadCategories.Failure(event.reason)
-                    }
-
-                is Event.AddCategory.Success ->
-                    snackbarHostState.showSnackbar("Category successfully added", "View") {
-                        viewModel.onSelectSource(Source.Category(id = event.categoryId))
-                        coroutineScope.launch {
-                            drawerState.close()
+            coroutineScope.launch {
+                when (event) {
+                    is Event.LoadCategories.Failure ->
+                        snackbarHostState.showSnackbar("Failed to load categories", "Details") {
+                            activeModal = Dialog.LoadCategories.Failure(event.reason)
                         }
-                    }
 
-                is Event.AddCategory.Failure ->
-                    snackbarHostState.showSnackbar("Failed to add category", "Details") {
-                        activeModal = Dialog.AddCategory.Failure(event.reason)
-                    }
-
-                is Event.EditCategory.Success ->
-                    snackbarHostState.showSnackbar("Category successfully edited", "View") {
-                        viewModel.onSelectSource(Source.Category(id = event.categoryId))
-                        coroutineScope.launch {
-                            drawerState.close()
+                    is Event.AddCategory.Success ->
+                        snackbarHostState.showSnackbar("Category successfully added", "View") {
+                            viewModel.onSelectSource(Source.Category(id = event.categoryId))
+                            coroutineScope.launch {
+                                drawerState.close()
+                            }
                         }
-                    }
 
-                is Event.EditCategory.Failure ->
-                    snackbarHostState.showSnackbar("Failed to edit category", "Details") {
-                        activeModal = Dialog.EditCategory.Failure(event.reason)
-                    }
-
-                is Event.RemoveCategory.Success ->
-                    snackbarHostState.showSnackbar("Category successfully removed")
-
-                is Event.RemoveCategory.Failure ->
-                    snackbarHostState.showSnackbar("Failed to remove category", "Details") {
-                        activeModal = Dialog.RemoveCategory.Failure(event.reason)
-                    }
-
-                is Event.LoadFeeds.Failure ->
-                    snackbarHostState.showSnackbar("Failed to load feeds", "Details") {
-                        activeModal = Dialog.LoadFeeds.Failure(event.reason)
-                    }
-
-                is Event.RefreshFeed.Success ->
-                    snackbarHostState.showSnackbar("Feed successfully refreshed", "View") {
-                        viewModel.onSelectSource(Source.Feed(id = event.feedId))
-                        coroutineScope.launch {
-                            drawerState.close()
+                    is Event.AddCategory.Failure ->
+                        snackbarHostState.showSnackbar("Failed to add category", "Details") {
+                            activeModal = Dialog.AddCategory.Failure(event.reason)
                         }
-                    }
 
-                is Event.RefreshFeed.Failure ->
-                    snackbarHostState.showSnackbar("Failed to refresh feed", "Details") {
-                        activeModal = Dialog.RefreshFeed.Failure(event.reason)
-                    }
-
-                is Event.AddFeed.Success ->
-                    snackbarHostState.showSnackbar("Feed successfully added", "View") {
-                        viewModel.onSelectSource(Source.Feed(id = event.feedId))
-                        coroutineScope.launch {
-                            drawerState.close()
+                    is Event.EditCategory.Success ->
+                        snackbarHostState.showSnackbar("Category successfully edited", "View") {
+                            viewModel.onSelectSource(Source.Category(id = event.categoryId))
+                            coroutineScope.launch {
+                                drawerState.close()
+                            }
                         }
-                    }
 
-                is Event.AddFeed.Failure ->
-                    snackbarHostState.showSnackbar("Failed to add feed", "Details") {
-                        activeModal = Dialog.AddFeed.Failure(event.reason)
-                    }
-
-                is Event.EditFeed.Success ->
-                    snackbarHostState.showSnackbar("Feed successfully edited", "View") {
-                        viewModel.onSelectSource(Source.Feed(id = event.feedId))
-                        coroutineScope.launch {
-                            drawerState.close()
+                    is Event.EditCategory.Failure ->
+                        snackbarHostState.showSnackbar("Failed to edit category", "Details") {
+                            activeModal = Dialog.EditCategory.Failure(event.reason)
                         }
-                    }
 
-                is Event.EditFeed.Failure ->
-                    snackbarHostState.showSnackbar("Failed to edit feed", "Details") {
-                        activeModal = Dialog.EditFeed.Failure(event.reason)
-                    }
+                    is Event.RemoveCategory.Success ->
+                        snackbarHostState.showSnackbar("Category successfully removed")
 
-                is Event.RemoveFeed.Success ->
-                    snackbarHostState.showSnackbar("Feed successfully removed")
+                    is Event.RemoveCategory.Failure ->
+                        snackbarHostState.showSnackbar("Failed to remove category", "Details") {
+                            activeModal = Dialog.RemoveCategory.Failure(event.reason)
+                        }
 
-                is Event.RemoveFeed.Failure ->
-                    snackbarHostState.showSnackbar("Failed to remove feed", "Details") {
-                        activeModal = Dialog.RemoveFeed.Failure(event.reason)
-                    }
+                    is Event.LoadFeeds.Failure ->
+                        snackbarHostState.showSnackbar("Failed to load feeds", "Details") {
+                            activeModal = Dialog.LoadFeeds.Failure(event.reason)
+                        }
 
-                is Event.LoadEntries.Success ->
-                    entryListState.scrollToStart()
+                    is Event.RefreshFeed.Success ->
+                        snackbarHostState.showSnackbar("Feed successfully refreshed", "View") {
+                            viewModel.onSelectSource(Source.Feed(id = event.feedId))
+                            coroutineScope.launch {
+                                drawerState.close()
+                            }
+                        }
 
-                is Event.LoadEntries.Failure ->
-                    snackbarHostState.showSnackbar("Failed to load entries", "Details") {
-                        activeModal = Dialog.LoadEntries.Failure(event.reason)
-                    }
+                    is Event.RefreshFeed.Failure ->
+                        snackbarHostState.showSnackbar("Failed to refresh feed", "Details") {
+                            activeModal = Dialog.RefreshFeed.Failure(event.reason)
+                        }
 
-                is Event.MarkAllEntriesAsRead.Success ->
-                    snackbarHostState.showSnackbar("All entries successfully marked as read")
+                    is Event.AddFeed.Success ->
+                        snackbarHostState.showSnackbar("Feed successfully added", "View") {
+                            viewModel.onSelectSource(Source.Feed(id = event.feedId))
+                            coroutineScope.launch {
+                                drawerState.close()
+                            }
+                        }
 
-                is Event.MarkAllEntriesAsRead.Failure ->
-                    snackbarHostState.showSnackbar("Failed to mark all entries as read", "Details") {
-                        activeModal = Dialog.MarkEntriesAsRead.Failure(event.reason)
-                    }
+                    is Event.AddFeed.Failure ->
+                        snackbarHostState.showSnackbar("Failed to add feed", "Details") {
+                            activeModal = Dialog.AddFeed.Failure(event.reason)
+                        }
+
+                    is Event.EditFeed.Success ->
+                        snackbarHostState.showSnackbar("Feed successfully edited", "View") {
+                            viewModel.onSelectSource(Source.Feed(id = event.feedId))
+                            coroutineScope.launch {
+                                drawerState.close()
+                            }
+                        }
+
+                    is Event.EditFeed.Failure ->
+                        snackbarHostState.showSnackbar("Failed to edit feed", "Details") {
+                            activeModal = Dialog.EditFeed.Failure(event.reason)
+                        }
+
+                    is Event.RemoveFeed.Success ->
+                        snackbarHostState.showSnackbar("Feed successfully removed")
+
+                    is Event.RemoveFeed.Failure ->
+                        snackbarHostState.showSnackbar("Failed to remove feed", "Details") {
+                            activeModal = Dialog.RemoveFeed.Failure(event.reason)
+                        }
+
+                    is Event.LoadEntries.Success ->
+                        entryListState.scrollToStart()
+
+                    is Event.LoadEntries.Failure ->
+                        snackbarHostState.showSnackbar("Failed to load entries", "Details") {
+                            activeModal = Dialog.LoadEntries.Failure(event.reason)
+                        }
+
+                    is Event.MarkAllEntriesAsRead.Success ->
+                        snackbarHostState.showSnackbar("All entries successfully marked as read")
+
+                    is Event.MarkAllEntriesAsRead.Failure ->
+                        snackbarHostState.showSnackbar("Failed to mark all entries as read", "Details") {
+                            activeModal = Dialog.MarkEntriesAsRead.Failure(event.reason)
+                        }
+                }
             }
         }
     }
